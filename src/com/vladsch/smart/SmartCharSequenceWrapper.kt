@@ -23,7 +23,7 @@ package com.vladsch.smart
 
 open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, endIndex: Int = chars.length) : SmartCharSequenceBase<SmartCharSequenceWrapper>() {
 
-    final protected val myVersion: SmartVersion = if (chars is SmartCharSequence) chars.version else SmartImmutableVersion
+    final protected val myVersion: SmartVersion = if (chars is SmartCharSequence) chars.version else SmartImmutableVersion()
     final protected val myChars: CharSequence = chars
     final protected val myStart: Int = startIndex
     final protected val myEnd: Int = endIndex

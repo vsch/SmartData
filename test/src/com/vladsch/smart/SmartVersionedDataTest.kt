@@ -62,27 +62,30 @@ class SmartVersionedDataTest {
         assertEquals(10, v1.value)
         assertEquals(11, v2.value)
 
+        val v1Version = v1.versionSerial
         v1.nextVersion()
+        assertEquals(v1Version, v1.versionSerial)
+        val v2Version = v2.versionSerial
         v2.nextVersion()
-        assertTrue(v1.versionSerial < v2.versionSerial)
+        assertEquals(v2Version, v2.versionSerial)
 
-        v1.nextVersion()
-        v2.nextVersion()
+        v1.value = 2
+        v2.value = 3
         assertTrue(v1.versionSerial < v2.versionSerial)
 
         SmartVersionManager.groupedUpdate(Runnable {
-            v1.nextVersion()
-            v2.nextVersion()
+            v1.value = 4
+            v2.value = 5
         })
 
         assertEquals(v1.versionSerial, v2.versionSerial)
 
-        v1.nextVersion()
-        v2.nextVersion()
+        v1.value = 6
+        v2.value = 7
 
         SmartVersionManager.groupedCompute({
-            v1.nextVersion()
-            v2.nextVersion()
+            v1.value = 8
+            v2.value = 9
         })
 
         assertEquals(v1.versionSerial, v2.versionSerial)
@@ -117,6 +120,7 @@ class SmartVersionedDataTest {
         assertEquals(sumEq(), dv.value)
 
         v3.value = 31
+        vc.value
         assertEquals(v3.versionSerial, vc.versionSerial)
         assertEquals(v3.value, vc.value)
 
@@ -150,6 +154,7 @@ class SmartVersionedDataTest {
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
         v2.value = 21
+        dv.value
         assertFalse(dv.isStale)
         assertEquals(sumEq(), dv.value)
 
@@ -161,6 +166,7 @@ class SmartVersionedDataTest {
         assertEquals(sumEq(), dv.value)
 
         v3.value = 31
+        dv.value
         assertEquals(v3.versionSerial, vc.versionSerial)
         assertEquals(v3.value, vc.value)
 
@@ -170,6 +176,7 @@ class SmartVersionedDataTest {
         assertEquals(sumEq(), dv.value)
 
         v3.value = 32
+        dv.value
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
         assertEquals(sumEq(), dv.value)
@@ -190,6 +197,7 @@ class SmartVersionedDataTest {
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
         v2.value = 21
+        dv.value
         assertFalse(dv.isStale)
         assertEquals(sumEq(), dv.value)
 
@@ -201,6 +209,7 @@ class SmartVersionedDataTest {
         assertEquals(sumEq(), dv.value)
 
         v3.value = 31
+        dv.value
         assertEquals(v3.versionSerial, vc.versionSerial)
         assertEquals(v3.value, vc.value)
 
@@ -210,6 +219,7 @@ class SmartVersionedDataTest {
         assertEquals(sumEq(), dv.value)
 
         v3.value = 32
+        dv.value
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
         assertEquals(sumEq(), dv.value)
@@ -219,8 +229,8 @@ class SmartVersionedDataTest {
     fun test_snapshot() {
         var v1 = SmartImmutableData("v1", 1)
         var v2 = SmartVolatileData("v2", 2)
-        var vs1 = SmartSnapshotData("vs1", v1)
-        var vs2 = SmartSnapshotData("vs2", v2)
+        var vs1 = SmartCacheData("vs1", v1)
+        var vs2 = SmartCacheData("vs2", v2)
 
         println("$v1, $v2, $vs1, $vs2")
 
@@ -230,14 +240,14 @@ class SmartVersionedDataTest {
         assertEquals(v1.versionSerial, vs1.versionSerial)
         assertEquals(v1.value, vs1.value)
 
-        assertTrue(vs2.isMutable)
+        assertFalse(vs2.isMutable)
         assertFalse(vs2.isStale)
         assertEquals(v2.versionSerial, vs2.versionSerial)
         assertEquals(v2.value, vs2.value)
 
         v2.value = 22
 
-        assertTrue(vs2.isMutable)
+        assertFalse(vs2.isMutable)
         assertTrue(vs2.isStale)
         assertNotEquals(v2.versionSerial, vs2.versionSerial)
         assertNotEquals(v2.value, vs2.value)
@@ -261,6 +271,7 @@ class SmartVersionedDataTest {
 
         v2.value = 22
         va = v2
+        vs.value
         assertTrue(vs.isMutable)
         assertFalse(vs.isStale)
         //        println("$v1, $v2, $v3, $vs")
@@ -269,6 +280,7 @@ class SmartVersionedDataTest {
 
         v3.value = 33
         va = v3
+        vs.value
         assertTrue(vs.isMutable)
         assertFalse(vs.isStale)
         //        println("$v1, $v2, $v3, $vs")
@@ -354,6 +366,7 @@ class SmartVersionedDataTest {
 
         ad.alias = v2
         va = v2
+        vd.value
         assertFalse(vd.isStale)
         assertEquals(va.value, ad.value)
         assertTrue(ad.isMutable)
@@ -361,6 +374,7 @@ class SmartVersionedDataTest {
 
         ad.alias = v3
         va = v3
+        vd.value
         assertFalse(vd.isStale)
         assertEquals(va.value, ad.value)
         assertTrue(ad.isMutable)
@@ -368,12 +382,14 @@ class SmartVersionedDataTest {
 
         ad.alias = vd
         va = vd
+        vd.value
         assertFalse(vd.isStale)
         assertEquals(va.value, ad.value)
         assertTrue(ad.isMutable)
         assertTrue(va.versionSerial <= ad.versionSerial)
 
         ad.touchVersionSerial()
+        vd.value
         assertFalse(vd.isStale)
         assertEquals(va.value, ad.value)
         assertTrue(ad.isMutable)

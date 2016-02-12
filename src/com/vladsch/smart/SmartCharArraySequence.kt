@@ -35,7 +35,7 @@ open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: Ch
     @JvmOverloads constructor(chars: CharArray, start: Int = 0, end: Int = chars.size) : this(null, chars, start, end)
 
     final protected val myOriginal: SmartCharSequenceBase<*>? = original
-    final protected val myVersion: SmartVersion = if (original != null ) SmartSnapshotVersion(original.version) else SmartImmutableVersion
+    final protected val myVersion: SmartVersion = if (original != null ) SmartCacheVersion(original.version) else SmartImmutableVersion()
     final protected val myChars: CharArray = chars
     final protected val myStart: Int = startIndex
     final protected val myEnd: Int = endIndex

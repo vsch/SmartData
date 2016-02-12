@@ -25,7 +25,7 @@ import java.util.*
 
 open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>, TrackingCharSequenceMarkerHolder {
     protected val myVersion: SmartVersion
-    protected val myCacheVersion: SmartUpdatingRunnableVersion
+    protected val myCacheVersion: SmartDependentRunnableVersionHolder
     private var myLengths = IntArray(0)
     private var myVariableContent: Boolean = false
     val segments: List<SmartCharSequence>
@@ -33,14 +33,14 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
     constructor(vararg charSequences: CharSequence) {
         val smartCharSequences = Companion.smart(charSequences.toList())
         segments = smartCharSequences
-        myVersion = SmartUpdatingVersionHolder(segments)
-        myCacheVersion = SmartUpdatingRunnableVersion(myVersion, Runnable { computeCachedData() })
+        myVersion = SmartDependentVersionHolder(segments)
+        myCacheVersion = SmartDependentRunnableVersionHolder(this, Runnable { computeCachedData() })
     }
 
     constructor(charSequences: Collection<CharSequence>) {
         segments = Companion.smart(charSequences)
-        myVersion = SmartUpdatingVersionHolder(segments)
-        myCacheVersion = SmartUpdatingRunnableVersion(myVersion, Runnable { computeCachedData() })
+        myVersion = SmartDependentVersionHolder(segments)
+        myCacheVersion = SmartDependentRunnableVersionHolder(this, Runnable { computeCachedData() })
     }
 
     internal fun computeCachedData() {

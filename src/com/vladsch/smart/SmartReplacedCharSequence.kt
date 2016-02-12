@@ -32,7 +32,7 @@ class SmartReplacedCharSequence(replacedChars: SmartCharSequence, val chars: Cha
         if (myChars is SmartCharSequence) {
             myVersion = myChars.version
         } else {
-            myVersion = SmartImmutableVersion
+            myVersion = SmartImmutableVersion()
         }
     }
 

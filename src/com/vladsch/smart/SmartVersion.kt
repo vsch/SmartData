@@ -135,13 +135,17 @@ object SmartVersionManager {
     fun computeVersionSnapshot(dependencies: Iterable<SmartVersion>): VersionSnapshot {
         return groupedCompute(DataComputable {
             var dependenciesSerial = NULL_SERIAL
+            var latestVersion: SmartVersion = NULL_VERSION
 
             for (dependency in dependencies) {
                 if (dependency.isStale) dependency.nextVersion()
-                if (dependenciesSerial < dependency.versionSerial) dependenciesSerial = dependency.versionSerial
+                if (dependenciesSerial < dependency.versionSerial) {
+                    dependenciesSerial = dependency.versionSerial
+                    latestVersion = dependency
+                }
             }
 
-            VersionSnapshot(currentVersion, dependenciesSerial)
+            VersionSnapshot(currentVersion, dependenciesSerial, latestVersion)
         })
     }
 
@@ -187,8 +191,10 @@ const val MIN_SERIAL = Integer.MIN_VALUE + 2
 const val MAX_SERIAL = Integer.MAX_VALUE - 1
 const val FRESH_SERIAL = Integer.MAX_VALUE
 
-val IMMUTABLE_VERSION_SNAPSHOT = VersionSnapshot(FRESH_SERIAL, NULL_SERIAL)
-val STALE_VERSION_SNAPSHOT = VersionSnapshot(NULL_SERIAL, STALE_SERIAL)
+val NULL_VERSION = SmartImmutableVersion(NULL_SERIAL)
+
+val NULL_VERSION_SNAPSHOT = VersionSnapshot(FRESH_SERIAL, NULL_SERIAL, NULL_VERSION)
+val STALE_VERSION_SNAPSHOT = VersionSnapshot(NULL_SERIAL, STALE_SERIAL, NULL_VERSION)
 val STALE_COMPUTED_VERSION_SNAPSHOT = STALE_VERSION_SNAPSHOT
 val EMPTY_DEPENDENCIES = listOf<SmartVersion>()
 
@@ -200,7 +206,7 @@ internal interface SnapshotHolder<V : SerialHolder> {
     var snapshot: V
 }
 
-data class VersionSnapshot(val snapshotSerial: Int, val dependenciesSerial: Int) : SerialHolder {
+data class VersionSnapshot(val snapshotSerial: Int, val dependenciesSerial: Int, val latestVersion: SmartVersion) : SerialHolder {
     override val serial: Int = snapshotSerial
 }
 
@@ -212,8 +218,10 @@ interface SmartVersion {
     fun nextVersion()                   // cause version to be updated
 }
 
-object SmartImmutableVersion : SmartVersion {
-    final override val versionSerial: Int get() = NULL_SERIAL
+class SmartImmutableVersion(versionSerial: Int) : SmartVersion {
+    constructor() : this(SmartVersionManager.nextVersion)
+
+    final override val versionSerial: Int = versionSerial
     final override val isStale: Boolean get() = false
     final override val isMutable: Boolean get() = false
     override val dependencies: Iterable<SmartVersion> get() = EMPTY_DEPENDENCIES
@@ -247,6 +255,7 @@ open class SmartDependentVersion(dependencies: Iterable<SmartVersion>) : SmartVe
     protected val myDependencies = dependencies
     protected var mySnapshot = STALE_COMPUTED_VERSION_SNAPSHOT
     protected var myMutable: Boolean? = null
+    protected var myIsStale: Boolean = false
 
     init {
         onInit()
@@ -255,7 +264,11 @@ open class SmartDependentVersion(dependencies: Iterable<SmartVersion>) : SmartVe
     final protected val isStaleRaw: Boolean get() = SmartVersionManager.isStale(myDependencies, mySnapshot.snapshotSerial, mySnapshot.dependenciesSerial)
 
     override val versionSerial: Int get() = mySnapshot.dependenciesSerial
-    override val isStale: Boolean get() = isStaleRaw
+    override val isStale: Boolean get() {
+        myIsStale = (myIsStale || isStaleRaw)
+        return myIsStale
+    }
+
     override val isMutable: Boolean
         get() {
             var mutable = myMutable
@@ -288,6 +301,7 @@ open class SmartDependentVersion(dependencies: Iterable<SmartVersion>) : SmartVe
         }
 
     protected open fun onNextVersion() {
+        myIsStale = false
         SmartVersionManager.freshenSnapshot(this, dependencies)
     }
 }
@@ -313,16 +327,19 @@ open class SmartDependentRunnableVersion(dependencies: Iterable<SmartVersion>, r
 }
 
 /**
- *  will reflect the frozen version as it was at time of instance creation
+ *  will reflect the frozen version as it was at time of instance creation with isStale reflecting
+ *  whether the frozen version is out of date from its dependencies
+ *
+ *  isMutable is always false
  */
-open class SmartSnapshotVersion(dependencies: Iterable<SmartVersion>) : SmartDependentVersion(dependencies) {
+open class SmartCacheVersion(dependencies: Iterable<SmartVersion>) : SmartDependentVersion(dependencies) {
     constructor(dependency: SmartVersion) : this(listOf(dependency))
 
     init {
-        onSuperInitNext()
+        onSnapshotInit()
     }
 
-    open fun onSuperInitNext() {
+    open fun onSnapshotInit() {
         super.onNextVersion()
     }
 
@@ -335,51 +352,24 @@ open class SmartSnapshotVersion(dependencies: Iterable<SmartVersion>) : SmartDep
 
     override fun nextVersion() {
     }
+
+    override val isMutable: Boolean
+        get() = false
 }
 
 /**
- *  will auto update its version on isStale, versionSerial or snapshot access as needed
+ *  will reflect the frozen version as it was at time of instance creation but isStale reports false
+ *  effectively isolating dependents on this version from its dependencies
+ *
+ *  isStale is always false
+ *  isMutable is always false
  */
-open class SmartUpdatingVersion(dependencies: Iterable<SmartVersion>) : SmartDependentVersion(dependencies) {
+open class SmartSnapshotVersion(dependencies: Iterable<SmartVersion>) : SmartCacheVersion(dependencies) {
     constructor(dependency: SmartVersion) : this(listOf(dependency))
 
-    val freshSnapshot: VersionSnapshot get() {
-        if (isStaleRaw) {
-            onNextVersion()
-        }
-        return mySnapshot
-    }
+    override val isStale: Boolean
+        get() = false
 
-    override val versionSerial: Int get() = freshSnapshot.dependenciesSerial
-
-    override val isStale: Boolean get() {
-        freshSnapshot
-        return false
-    }
-
-}
-
-/**
- *  will auto update its version on isStale, versionSerial or snapshot access and invoke runnable.run() when an update was necessary
- */
-open class SmartUpdatingRunnableVersion(dependencies: Iterable<SmartVersion>, runnable: Runnable) : SmartUpdatingVersion(dependencies) {
-    constructor(dependency: SmartVersion, runnable: Runnable) : this(listOf(dependency), runnable)
-
-    protected var myRunnable = runnable
-
-    init {
-        super.onSuperInit()
-    }
-
-    override fun onInit() {
-    }
-
-    override fun onNextVersion() {
-        SmartVersionManager.groupedUpdate(Runnable {
-            super.onNextVersion()
-            myRunnable.run()
-        })
-    }
 }
 
 open class SmartDependentVersionHolder(dependencies: Iterable<SmartVersionedData>) : SmartDependentVersion(SmartVersionedDataIterableAdapter(dependencies)) {
@@ -390,16 +380,8 @@ open class SmartDependentRunnableVersionHolder(dependencies: Iterable<SmartVersi
     constructor(dependency: SmartVersionedData, runnable: Runnable) : this(listOf(dependency), runnable)
 }
 
-open class SmartSnapshotVersionHolder(dependencies: Iterable<SmartVersionedData>) : SmartSnapshotVersion(SmartVersionedDataIterableAdapter(dependencies)) {
+open class SmartCacheVersionHolder(dependencies: Iterable<SmartVersionedData>) : SmartCacheVersion(SmartVersionedDataIterableAdapter(dependencies)) {
     constructor(dependency: SmartVersionedData) : this(listOf(dependency))
-}
-
-open class SmartUpdatingVersionHolder(dependencies: Iterable<SmartVersionedData>) : SmartUpdatingVersion(SmartVersionedDataIterableAdapter(dependencies)) {
-    constructor(dependency: SmartVersionedData) : this(listOf(dependency))
-}
-
-open class SmartUpdatingRunnableVersionHolder(dependencies: Iterable<SmartVersionedData>, runnable: Runnable) : SmartUpdatingRunnableVersion(SmartVersionedDataIterableAdapter(dependencies), runnable) {
-    constructor(dependency: SmartVersionedData, runnable: Runnable) : this(listOf(dependency), runnable)
 }
 
 /**
@@ -450,7 +432,7 @@ open class SmartVolatileData<V>(name: String, value: V) : SmartVolatileVersion()
 
     override fun setValue(value: V) {
         if (myValue.value != value) {
-            nextVersion()
+            super.nextVersion()
             SmartVersionManager.freshenSnapshot(this, DataSnapshot(versionSerial, value))
         }
     }
@@ -464,9 +446,13 @@ open class SmartVolatileData<V>(name: String, value: V) : SmartVolatileVersion()
     override fun toString(): String {
         return "$myName:(version: $myVersion, value: $myValue)"
     }
+
+    override fun nextVersion() {
+
+    }
 }
 
-open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHolder<V>) : SmartSnapshotVersion(dependency), SmartVersionedDataHolder<V> {
+open class SmartCacheData<V>(name: String, dependency: SmartVersionedDataHolder<V>) : SmartCacheVersion(dependency), SmartVersionedDataHolder<V> {
     constructor(dependency: SmartVersionedDataHolder<V>) : this("<unnamed>", dependency)
 
     val myName = name
@@ -477,7 +463,7 @@ open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHold
     }
 
     init {
-        onVolatileInit()
+        onDataSnapshotInit()
     }
 
     override var dataSnapshot: DataSnapshot<V>
@@ -486,8 +472,11 @@ open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHold
             throw UnsupportedOperationException()
         }
 
-    protected fun onVolatileInit() {
-        super.onSuperInitNext()
+    open fun onDataSnapshotInit() {
+        super.onSnapshotInit()
+    }
+
+    override fun onSnapshotInit() {
     }
 
     override fun getValue(): V = myValue
@@ -495,6 +484,20 @@ open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHold
     override fun toString(): String {
         return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
     }
+}
+
+/**
+ * isolating snapshot of dependent data
+ *
+ * isStale always false
+ * isMutable always false
+ */
+open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHolder<V>) : SmartCacheData<V>(name, dependency), SmartVersionedDataHolder<V> {
+    constructor(dependency: SmartVersionedDataHolder<V>) : this("<unnamed>", dependency)
+
+    override val isStale: Boolean
+        get() = false
+
 }
 
 open class SmartComputedData<V>(name: String, computable: DataComputable<V>) : SmartVolatileVersion(), SmartVersionedDataHolder<V> {
@@ -510,7 +513,7 @@ open class SmartComputedData<V>(name: String, computable: DataComputable<V>) : S
 
     open protected fun onCompute(): V {
         return SmartVersionManager.groupedCompute(DataComputable {
-            nextVersion()
+            super.nextVersion()
             SmartVersionManager.freshenSnapshot(this, DataSnapshot(myVersion, myComputable.compute()))
             myValue.value
         })
@@ -526,7 +529,7 @@ open class SmartComputedData<V>(name: String, computable: DataComputable<V>) : S
         return myValue.value
     }
 
-    open fun updateValue() {
+    override fun nextVersion() {
         onCompute()
     }
 
@@ -577,19 +580,12 @@ open class SmartUpdateDependentData<V>(name: String, dependencies: Iterable<Smar
         }
 
     open protected fun onCompute(): DataSnapshot<V> {
-        return SmartVersionManager.groupedCompute(DataComputable {
-            onNextVersion()
-            myValue
-        })
+        onNextVersion()
+        return myValue
     }
 
     override fun getValue(): V {
         return myValue.value
-    }
-
-
-    open fun updateValue() {
-        nextVersion()
     }
 
     override fun toString(): String {
@@ -598,7 +594,7 @@ open class SmartUpdateDependentData<V>(name: String, dependencies: Iterable<Smar
 }
 
 open class SmartDependentData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) :
-        SmartUpdateDependentData<V>(name,dependencies, computable), SmartVersionedDataHolder<V> {
+        SmartUpdateDependentData<V>(name, dependencies, computable), SmartVersionedDataHolder<V> {
 
     constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) : this("<unnamed>", dependencies, computable)
 
@@ -614,20 +610,6 @@ open class SmartDependentData<V>(name: String, dependencies: Iterable<SmartVersi
     constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(name, listOf(dependency), computable)
 
     constructor(dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(listOf(dependency), computable)
-
-    val freshSnapshot: VersionSnapshot get() {
-        if (isStaleRaw) {
-            onNextVersion()
-        }
-        return mySnapshot
-    }
-
-    override val versionSerial: Int get() = freshSnapshot.dependenciesSerial
-
-    override val isStale: Boolean get() {
-        freshSnapshot
-        return false
-    }
 
     override fun getValue(): V {
         nextVersion()
@@ -681,19 +663,12 @@ open class SmartUpdateIterableData<V>(name: String, dependencies: Iterable<Smart
         }
 
     open protected fun onCompute(): DataSnapshot<V> {
-        return SmartVersionManager.groupedCompute(DataComputable {
-            onNextVersion()
-            myValue
-        })
+        onNextVersion()
+        return myValue
     }
 
     override fun getValue(): V {
         return myValue.value
-    }
-
-
-    open fun updateValue() {
-        nextVersion()
     }
 
     override fun toString(): String {
@@ -702,7 +677,7 @@ open class SmartUpdateIterableData<V>(name: String, dependencies: Iterable<Smart
 }
 
 open class SmartIterableData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) :
-        SmartUpdateIterableData<V>(name,dependencies, computable), SmartVersionedDataHolder<V> {
+        SmartUpdateIterableData<V>(name, dependencies, computable), SmartVersionedDataHolder<V> {
 
     constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) : this("<unnamed>", dependencies, computable)
 
@@ -738,20 +713,6 @@ open class SmartIterableData<V>(name: String, dependencies: Iterable<SmartVersio
     constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(name, listOf(dependency), computable)
 
     constructor(dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(listOf(dependency), computable)
-
-    val freshSnapshot: VersionSnapshot get() {
-        if (isStaleRaw) {
-            onNextVersion()
-        }
-        return mySnapshot
-    }
-
-    override val versionSerial: Int get() = freshSnapshot.dependenciesSerial
-
-    override val isStale: Boolean get() {
-        freshSnapshot
-        return false
-    }
 
     override fun getValue(): V {
         nextVersion()
@@ -798,10 +759,8 @@ open class SmartUpdateVectorData<V>(name: String, dependencies: Iterable<SmartVe
         get() = IterableValueDependenciesAdapter(super.dependencies as Iterable<SmartVersionedDataHolder<V>>)
 
     open protected fun onCompute(): DataSnapshot<V> {
-        return SmartVersionManager.groupedCompute(DataComputable {
-            onNextVersion()
-            myValue
-        })
+        onNextVersion()
+        return myValue
     }
 
     override var dataSnapshot: DataSnapshot<V>
@@ -812,10 +771,6 @@ open class SmartUpdateVectorData<V>(name: String, dependencies: Iterable<SmartVe
 
     override fun getValue(): V {
         return myValue.value
-    }
-
-    open fun updateValue() {
-        nextVersion()
     }
 
     override fun toString(): String {
@@ -839,40 +794,26 @@ open class SmartVectorData<V>(name: String, dependencies: Iterable<SmartVersione
 
     constructor(dependency: SmartVersionedDataHolder<V>, computable: (Iterable<V>) -> V) : this(listOf(dependency), computable)
 
-    val freshSnapshot: VersionSnapshot get() {
-        if (isStaleRaw) {
-            onNextVersion()
-        }
-        return mySnapshot
-    }
-
-    override val versionSerial: Int get() = freshSnapshot.dependenciesSerial
-
-    override val isStale: Boolean get() {
-        freshSnapshot
-        return false
-    }
-
     override fun getValue(): V {
         nextVersion()
         return myValue.value
     }
 }
 
-open class LatestIterableDataComputable<V>(val dependencies: Iterable<SmartVersionedDataHolder<V>>) : DataComputable<DataSnapshot<V>> {
-    override fun compute(): DataSnapshot<V> {
-        val iterator = dependencies.iterator()
-        var latestDataSnapshot: DataSnapshot<V> = iterator.next().dataSnapshot
-        for (data in iterator) {
-            if (latestDataSnapshot.serial < data.dataSnapshot.serial) {
-                latestDataSnapshot = data.dataSnapshot
-            }
-        }
-        return latestDataSnapshot
-    }
-}
+//open class LatestIterableDataComputable<V>(val dependencies: Iterable<SmartVersionedDataHolder<V>>) : DataComputable<DataSnapshot<V>> {
+//    override fun compute(): DataSnapshot<V> {
+//        val iterator = dependencies.iterator()
+//        var latestDataSnapshot: DataSnapshot<V> = iterator.next().dataSnapshot
+//        for (data in iterator) {
+//            if (latestDataSnapshot.serial < data.dataSnapshot.serial) {
+//                latestDataSnapshot = data.dataSnapshot
+//            }
+//        }
+//        return latestDataSnapshot
+//    }
+//}
 
-open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, runnable: Runnable?) : SmartUpdatingVersion(dependencies), SmartVersionedDataHolder<V> {
+open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, runnable: Runnable?) : SmartDependentVersion(dependencies), SmartVersionedDataHolder<V> {
     constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>) : this(name, dependencies, null)
 
     constructor(dependencies: Iterable<SmartVersionedDataHolder<V>>) : this("<unnamed>", dependencies, null)
@@ -883,9 +824,16 @@ open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<Smar
 
     constructor(dependencies: Iterable<SmartVersionedDataHolder<V>>, runnable: () -> Unit) : this("<unnamed>", dependencies, Runnable { runnable() })
 
+    init {
+        if (dependencies.none()) throw IllegalArgumentException("dependencies for latest dependent data cannot be empty")
+    }
+
     val myName = name
     protected val myRunnable = runnable
-    protected val myComputable = LatestIterableDataComputable(dependencies)
+    protected val myComputable = DataComputable<DataSnapshot<V>> {
+        DataSnapshot(mySnapshot.snapshotSerial, (mySnapshot.latestVersion as SmartVersionedDataHolder<V>).dataSnapshot.value)
+    }
+
     protected var myValue = onCompute()
 
     override fun onNextVersion() {
@@ -903,10 +851,8 @@ open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<Smar
     }
 
     open protected fun onCompute(): DataSnapshot<V> {
-        return SmartVersionManager.groupedCompute(DataComputable {
-            onNextVersion()
-            myValue
-        })
+        onNextVersion()
+        return myValue
     }
 
     override var dataSnapshot: DataSnapshot<V>
@@ -916,11 +862,8 @@ open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<Smar
         }
 
     override fun getValue(): V {
-        return myValue.value
-    }
-
-    open fun updateValue() {
         nextVersion()
+        return myValue.value
     }
 
     override fun toString(): String {
@@ -947,43 +890,43 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
         get() = myAliased
         set(value) {
             myAliased = value
-            updateDataSnapshot()
             touchVersionSerial()
+            updateDataSnapshot()
         }
 
     fun touchVersionSerial() {
         myVersion = SmartVersionManager.nextVersion
     }
 
+    protected fun <T> guardRecursion(inRecursion: () -> T, notInRecursion: () -> T): T {
+        if (myInRecursion) return inRecursion()
+        else {
+            myInRecursion = true
+            try {
+                return notInRecursion()
+            } finally {
+                myInRecursion = false
+            }
+        }
+    }
+
     override val versionSerial: Int
-        get() {
-            if (myInRecursion) return myVersion.max(myLastDataSnapshot.serial)
-            else {
-                myInRecursion = true
-                try {
+        get() = guardRecursion(
+                { myVersion.max(myLastDataSnapshot.serial) },
+                {
                     val serial = myAliased.versionSerial
                     updateDataSnapshot()
-                    return myVersion.max(serial)
-                } finally {
-                    myInRecursion = false
-                }
-            }
-        }
+                    myVersion.max(serial)
+                })
 
     override val isStale: Boolean
-        get() {
-            if (myInRecursion) return false
-            else {
-                myInRecursion = true
-                try {
+        get() = guardRecursion(
+                { false },
+                {
                     val stale = myAliased.isStale
                     updateDataSnapshot()
-                    return stale
-                } finally {
-                    myInRecursion = false
-                }
-            }
-        }
+                    stale
+                })
 
     override val isMutable: Boolean
         get() = true
@@ -992,15 +935,12 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
         get() = myAliased.dependencies
 
     override fun nextVersion() {
-        if (!myInRecursion) {
-            myInRecursion = true
-            try {
-                myAliased.nextVersion()
-                updateDataSnapshot()
-            } finally {
-                myInRecursion = false
-            }
-        }
+        guardRecursion(
+                {},
+                {
+                    myAliased.nextVersion()
+                    updateDataSnapshot()
+                })
     }
 
     override var dataSnapshot: DataSnapshot<V>
@@ -1012,18 +952,12 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
             throw UnsupportedOperationException()
         }
 
-    override fun getValue(): V {
-        if (myInRecursion) return myLastDataSnapshot.value
-        else {
-            myInRecursion = true
-            try {
+    override fun getValue(): V = guardRecursion(
+            { myLastDataSnapshot.value },
+            {
                 updateDataSnapshot()
-                return myAliased.value
-            } finally {
-                myInRecursion = false
-            }
-        }
-    }
+                myAliased.value
+            })
 
     override fun setValue(value: V) {
         val versionedDataHolder = myAliased

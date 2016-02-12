@@ -27,7 +27,7 @@ import org.junit.Test
 class SmartVersionTest {
     @Test
     fun test_immutable() {
-        val v1 = SmartImmutableVersion
+        val v1 = SmartImmutableVersion()
 
         assertFalse(v1.isStale)
         assertFalse(v1.isMutable)
@@ -84,9 +84,9 @@ class SmartVersionTest {
         var v1 = SmartVolatileVersion()
         var v2 = SmartVolatileVersion()
         var v3 = SmartVolatileVersion()
-        var vc = SmartUpdatingVersion(v3)
+        var vc = SmartDependentVersion(v3)
         var dv = SmartDependentVersion(listOf(v1, v2, vc))
-        var dvn = SmartDependentVersion(listOf(SmartImmutableVersion))
+        var dvn = SmartDependentVersion(listOf(SmartImmutableVersion()))
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
@@ -102,7 +102,12 @@ class SmartVersionTest {
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
 
         v3.nextVersion()
+        assertTrue(vc.isStale)
+        assertTrue(dv.isStale)
+        assertNotEquals(v3.versionSerial, vc.versionSerial)
+        vc.nextVersion()
         assertEquals(v3.versionSerial, vc.versionSerial)
+        assertTrue(dv.isStale)
 
         //        println("v1: ${v1.versionSerial}, v2: ${v2.versionSerial}, v3: ${v3.versionSerial}, vc: ${vc.versionSerial} : dv: ${dv.versionSerial} ${dv.isStale}")
         assertTrue(dv.isStale)
@@ -113,48 +118,16 @@ class SmartVersionTest {
         v3.nextVersion()
         assertTrue(dv.isStale)
         dv.nextVersion()
-        assertFalse(dv.isStale)
-        assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-    }
-
-    @Test
-    fun test_dependentUpdating() {
-        var v1 = SmartVolatileVersion()
-        var v2 = SmartVolatileVersion()
-        var v3 = SmartVolatileVersion()
-        var vc = SmartUpdatingVersion(v3)
-        var dv = SmartUpdatingVersion(listOf(v1, v2, vc))
-        var dvn = SmartDependentVersion(listOf(SmartImmutableVersion))
-
-        assertTrue(dv.isMutable)
-        assertFalse(dv.isStale)
-        v2.nextVersion()
-        assertFalse(dv.isStale)
-
-
-        assertFalse(dvn.isMutable)
-        assertFalse(dvn.isStale)
-
-        assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-
-        v3.nextVersion()
-        assertEquals(v3.versionSerial, vc.versionSerial)
-
-        //        println("v1: ${v1.versionSerial}, v2: ${v2.versionSerial}, v3: ${v3.versionSerial}, vc: ${vc.versionSerial} : dv: ${dv.versionSerial} ${dv.isStale}")
-        assertFalse(dv.isStale)
-        assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-
-        v3.nextVersion()
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
     }
 
     @Test
     fun test_snapshot() {
-        var v1 = SmartImmutableVersion
+        var v1 = SmartImmutableVersion()
         var v2 = SmartVolatileVersion()
-        var vs1 = SmartSnapshotVersion(v1)
-        var vs2 = SmartSnapshotVersion(v2)
+        var vs1 = SmartCacheVersion(v1)
+        var vs2 = SmartCacheVersion(v2)
 
         println("v1: ${v1.versionSerial}, v2: ${v2.versionSerial}, vs1: ${vs1.versionSerial}, vs2: ${vs2.versionSerial}")
 
@@ -163,50 +136,27 @@ class SmartVersionTest {
         assertFalse(vs1.isStale)
         assertEquals(v1.versionSerial, vs1.versionSerial)
 
-        assertTrue(vs2.isMutable)
+        assertFalse(vs2.isMutable)
         assertFalse(vs2.isStale)
         assertEquals(v2.versionSerial, vs2.versionSerial)
 
         v2.nextVersion()
 
-        assertTrue(vs2.isMutable)
+        assertFalse(vs2.isMutable)
         assertTrue(vs2.isStale)
         assertNotEquals(v2.versionSerial, vs2.versionSerial)
     }
 
     @Test
-    fun test_updating() {
-        var v1 = SmartImmutableVersion
-        var v2 = SmartVolatileVersion()
-        var vs1 = SmartUpdatingVersion(v1)
-        var vs2 = SmartUpdatingVersion(v2)
-
-        assertFalse(vs1.isMutable)
-        assertFalse(vs1.isStale)
-        assertEquals(v1.versionSerial, vs1.versionSerial)
-
-        assertTrue(vs2.isMutable)
-        assertFalse(vs2.isStale)
-        assertEquals(v2.versionSerial, vs2.versionSerial)
-
-        v2.nextVersion()
-
-        assertTrue(vs2.isMutable)
-        assertFalse(vs2.isStale)
-        assertEquals(v2.versionSerial, vs2.versionSerial)
-    }
-
-
-    @Test
-    fun test_updatingRunnable() {
-        var v1 = SmartImmutableVersion
+    fun test_dependentRunnable() {
+        var v1 = SmartImmutableVersion()
         var v2 = SmartVolatileVersion()
         var called = 0
 
-        var vs1 = SmartUpdatingRunnableVersion(v1, Runnable { called++ })
+        var vs1 = SmartDependentRunnableVersion(v1, Runnable { called++ })
         assertEquals(1, called)
 
-        var vs2 = SmartUpdatingRunnableVersion(v2, Runnable { called++ })
+        var vs2 = SmartDependentRunnableVersion(v2, Runnable { called++ })
         assertEquals(2, called)
 
         assertFalse(vs1.isMutable)
@@ -223,6 +173,9 @@ class SmartVersionTest {
 
         assertEquals(2, called)
         assertTrue(vs2.isMutable)
+
+        assertTrue(vs2.isStale)
+        vs2.nextVersion()
         assertFalse(vs2.isStale)
         assertEquals(3, called)
         assertEquals(v2.versionSerial, vs2.versionSerial)
