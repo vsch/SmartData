@@ -46,8 +46,8 @@ class SmartDataScopeTest {
         val INDENT = SmartVolatileDataKey("INDENT", 0)
         val scope = manager.createDataScope("top")
 
-        val myIndent = scope.consumerDataPoint(INDENT, 0)
-        val myIndent2 = scope.consumerDataPoint(INDENT, 2)
+        val myIndent = scope.dataPoint(INDENT, 0)
+        val myIndent2 = scope.dataPoint(INDENT, 2)
 
         assertEquals(1, scope.consumers.size)
         assertTrue(scope.consumers.containsKey(INDENT))
@@ -66,8 +66,8 @@ class SmartDataScopeTest {
         val scope = manager.createDataScope("top")
 
         val indent = SmartVolatileData(0)
-        val myIndent = scope.consumerDataPoint(INDENT, 0)
-        val myIndent2 = scope.consumerDataPoint(INDENT, 2)
+        val myIndent = scope.dataPoint(INDENT, 0)
+        val myIndent2 = scope.dataPoint(INDENT, 2)
         scope.setValue(INDENT, 0, indent)
 
         assertEquals(1, scope.consumers.size)
@@ -97,7 +97,7 @@ class SmartDataScopeTest {
 
         val indent = SmartVolatileData(0)
         scope.setValue(INDENT, 0, indent)
-        val myIndent = scope.consumerDataPoint(INDENT, 0)
+        val myIndent = scope.dataPoint(INDENT, 0)
 
         assertEquals(0, indent.value)
         assertEquals(0, myIndent.value)
@@ -120,7 +120,7 @@ class SmartDataScopeTest {
 
         val indent = SmartVolatileData(0)
         scope.setValue(INDENT, 0, indent)
-        val myIndent = child.consumerDataPoint(INDENT, 0)
+        val myIndent = child.dataPoint(INDENT, 0)
 
         assertEquals(0, scope.consumers.size)
         assertEquals(1, child.consumers.size)
@@ -162,7 +162,7 @@ class SmartDataScopeTest {
         val childIndent = SmartVolatileData(0)
         scope.setValue(INDENT, 0, indent)
         child.setValue(INDENT, 0, childIndent)
-        val myIndent = child.consumerDataPoint(INDENT, 0)
+        val myIndent = child.dataPoint(INDENT, 0)
 
         assertEquals(0, indent.value)
         assertEquals(0, childIndent.value)
@@ -188,8 +188,8 @@ class SmartDataScopeTest {
 
         val indent = SmartVolatileData("indent", 0)
         scope.setValue(INDENT, 0, indent)
-        val myIndent2 = child2.consumerDataPoint(INDENT, 0)
-        val myIndent21 = grandChild21.consumerDataPoint(INDENT, 0)
+        val myIndent2 = child2.dataPoint(INDENT, 0)
+        val myIndent21 = grandChild21.dataPoint(INDENT, 0)
 
         val parentValue = scope.getValue(INDENT, 0)
 
@@ -219,7 +219,7 @@ class SmartDataScopeTest {
     @Test
     fun test_ParentComputed_Complex() {
         val INDENT = SmartParentComputedDataKey("INDENT", 0, { it + 4 })
-        val scope = manager.createDataScope("top")
+        val scope = SmartDataScopeManager.createDataScope("top")
         val child1 = scope.createDataScope("child1")
         val child2 = scope.createDataScope("child2")
         val grandChild11 = child1.createDataScope("grandChild11")
@@ -229,10 +229,10 @@ class SmartDataScopeTest {
         scope.setValue(INDENT, 0, indent)
         child1.setValue(INDENT, 0, indent)
 
-        val myIndent1 = child1.consumerDataPoint(INDENT, 0)
-        val myIndent2 = child2.consumerDataPoint(INDENT, 0)
-        val myIndent11 = grandChild11.consumerDataPoint(INDENT, 0)
-        val myIndent21 = grandChild21.consumerDataPoint(INDENT, 0)
+        val myIndent1 = child1.dataPoint(INDENT, 0)
+        val myIndent2 = child2.dataPoint(INDENT, 0)
+        val myIndent11 = grandChild11.dataPoint(INDENT, 0)
+        val myIndent21 = grandChild21.dataPoint(INDENT, 0)
 
         val parentValue = scope.getValue(INDENT, 0)
 
@@ -265,6 +265,45 @@ class SmartDataScopeTest {
         assertEquals(10, indent.value)
     }
 
+    @Test
+    fun test_AggregatedDataScopes() {
+        val WIDTH = SmartVolatileDataKey("WIDTH", 0)
+        val MAX_WIDTH = SmartAggregatedDataKey("MAX_WIDTH", 0, WIDTH, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() } )
+
+        val topScope = SmartDataScopeManager.createDataScope("top")
+        val child1 = topScope.createDataScope("child1")
+        val child2 = topScope.createDataScope("child2")
+        val grandChild11 = child1.createDataScope("grandChild11")
+        val grandChild21 = child2.createDataScope("grandChild21")
+
+        WIDTH[child1, 0] = 10
+        assertTrue(child1.getRawValue(WIDTH, 0) is SmartVolatileData)
+
+        WIDTH[child2, 0] = 15
+        assertTrue(child2.getRawValue(WIDTH, 0) is SmartVolatileData)
+
+        WIDTH[grandChild11, 0] = 8
+        assertTrue(grandChild11.getRawValue(WIDTH, 0) is SmartVolatileData)
+        WIDTH[grandChild21, 0] = 20
+        assertTrue(grandChild21.getRawValue(WIDTH, 0) is SmartVolatileData)
+
+        val maxWidth = topScope[MAX_WIDTH, 0]
+        assertTrue(maxWidth is SmartVersionedDataAlias)
+        assertTrue(topScope.consumers.containsKey(MAX_WIDTH))
+
+        topScope.finalizeAllScopes()
+
+        assertEquals(20, maxWidth.value)
+
+        WIDTH[grandChild11, 0] = 12
+        WIDTH[grandChild21, 0] = 17
+
+        assertEquals(17, maxWidth.value)
+
+        WIDTH[grandChild21, 0] = 10
+        assertEquals(15, maxWidth.value)
+    }
+
     //    @Test
     //    fun test_DataKey_registerParentComputedBasic() {
     //        val INDENT2 = SmartParentComputedDataKey("INDENT2", 0, { it + 4 })
@@ -288,4 +327,76 @@ class SmartDataScopeTest {
     //        assertEquals(1, manager.keyComputeLevel[MAX_INDENT])
     //        assertEquals(2, manager.keyComputeLevel[ADD_INDENT])
     //    }
+
+    @Test
+    fun formatTable() {
+        val COLUMN_WIDTH = SmartVolatileDataKey("COLUMN_WIDTH", 0)
+        val MAX_COLUMN_WIDTH = SmartAggregatedDataKey("MAX_COLUMN_WIDTH", 0, COLUMN_WIDTH, setOf(SmartScopes.TOP, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() } )
+        val ALIGNMENT = SmartVolatileDataKey("ALIGNMENT", TextAlignment.LEFT)
+        val COLUMN_ALIGNMENT = SmartLatestDataKey("COLUMN_ALIGNMENT", TextAlignment.LEFT, ALIGNMENT, setOf(SmartScopes.TOP, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS))
+
+        val tableDataScope = manager.createDataScope("tableDataScope")
+        var formattedTable = EditableCharSequence()
+
+        val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
+ --------|:-------- |:--------:|-------:
+Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
+Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
+""".toCharArray())
+
+        SmartVersionManager.groupedUpdate(Runnable {
+            val tableRows = table.splitPartsSegmented('\n', false)
+
+            var row = 0
+            for (line in tableRows.segments) {
+                var formattedRow = EditableCharSequence()
+                val rowDataScope = tableDataScope.createDataScope("row:$row")
+                var col = 0
+                for (column in line.splitPartsSegmented('|', false).segments) {
+                    val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
+                    val formattedCol = SmartVariableCharSequence(column, if (headerParts != null) EMPTY_SEQUENCE else column)
+                    val discretionary = 1
+
+                    if (headerParts != null) {
+                        val haveLeft = headerParts.segments[2] != NULL_SEQUENCE
+                        val haveRight = headerParts.segments[4] != NULL_SEQUENCE
+
+                        formattedCol.leftPadChar = '-'
+                        formattedCol.rightPadChar = '-'
+                        when {
+                            haveLeft && haveRight -> {
+                                ALIGNMENT[rowDataScope, col] = TextAlignment.CENTER
+                                formattedCol.prefix = ":"
+                                formattedCol.suffix = ":"
+                            }
+                            haveRight -> {
+                                ALIGNMENT[rowDataScope, col] = TextAlignment.RIGHT
+                                formattedCol.suffix = ":"
+                            }
+                            else -> {
+                                ALIGNMENT[rowDataScope, col] = TextAlignment.LEFT
+                                if (discretionary == 1 || discretionary == 0 && haveLeft) formattedCol.prefix = ":"
+                            }
+                        }
+                    }
+
+                    if (col > 0) formattedRow.append(" | ")
+                    formattedRow.append(formattedCol)
+                    rowDataScope[COLUMN_WIDTH, col] = formattedCol.widthDataPoint
+                    formattedCol.alignmentDataPoint = COLUMN_ALIGNMENT.dataPoint(tableDataScope, col)
+                    formattedCol.widthDataPoint = MAX_COLUMN_WIDTH.dataPoint(tableDataScope, col)
+                    col++
+                }
+
+                formattedTable.append("| ", formattedRow, " |\n")
+                row++
+            }
+        })
+
+        tableDataScope.finalizeAllScopes()
+
+        println("Unformatted Table\n$table\n")
+        println("Formatted Table\n$formattedTable\n")
+    }
+
 }

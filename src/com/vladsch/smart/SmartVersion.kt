@@ -415,7 +415,9 @@ interface DataSnapshotHolder<V> {
 open class SmartImmutableData<V>(name: String, value: V) : SmartVersionedDataHolder<V> {
     constructor(value: V) : this("<unnamed>", value)
 
-    final override val versionSerial: Int get() = NULL_SERIAL
+    protected val myVersion = SmartVersionManager.nextVersion
+
+    final override val versionSerial: Int get() = myVersion
     final override val isStale: Boolean get() = false
     final override val isMutable: Boolean get() = false
     override val dependencies: Iterable<SmartVersion> get() = EMPTY_DEPENDENCIES
@@ -428,13 +430,13 @@ open class SmartImmutableData<V>(name: String, value: V) : SmartVersionedDataHol
     protected val myValue = value
     override fun getValue(): V = myValue
     override var dataSnapshot: DataSnapshot<V>
-        get() = DataSnapshot(NULL_SERIAL, myValue)
+        get() = DataSnapshot(myVersion, myValue)
         set(value) {
             throw UnsupportedOperationException()
         }
 
     override fun toString(): String {
-        return "$myName:(version: ${NULL_SERIAL}, value: $value)"
+        return "$myName:(version: $myVersion, value: $myValue)"
     }
 }
 
@@ -460,7 +462,7 @@ open class SmartVolatileData<V>(name: String, value: V) : SmartVolatileVersion()
         }
 
     override fun toString(): String {
-        return "$myName:(version: $myVersion, value: $value)"
+        return "$myName:(version: $myVersion, value: $myValue)"
     }
 }
 
@@ -491,7 +493,7 @@ open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHold
     override fun getValue(): V = myValue
 
     override fun toString(): String {
-        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $value)"
+        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
     }
 }
 
@@ -529,25 +531,24 @@ open class SmartComputedData<V>(name: String, computable: DataComputable<V>) : S
     }
 
     override fun toString(): String {
-        return "$myName:(version: $myVersion, value: $value)"
+        return "$myName:(version: $myVersion, value: $myValue)"
     }
 }
 
-open class SmartDependentData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) :
+open class SmartUpdateDependentData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) :
         SmartDependentVersion(dependencies), SmartVersionedDataHolder<V> {
+
     constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) : this("<unnamed>", dependencies, computable)
 
-    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this(name, dependencies, DataComputable { computable() })
+    // plain function returning value
+    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this(name, dependencies, DataComputable<V> { computable() })
 
-    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this(dependencies, DataComputable { computable() })
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this("<unnamed>", dependencies, computable)
 
+    // single dependency versions
     constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: DataComputable<V>) : this(name, listOf(dependency), computable)
 
-    constructor(name: String, dependency: SmartVersionedDataHolder<V>) : this(name, listOf(dependency), DataComputable { dependency.value })
-
     constructor(dependency: SmartVersionedDataHolder<*>, computable: DataComputable<V>) : this(listOf(dependency), computable)
-
-    constructor(dependency: SmartVersionedDataHolder<V>) : this(listOf(dependency), DataComputable { dependency.value })
 
     constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(name, listOf(dependency), computable)
 
@@ -566,6 +567,8 @@ open class SmartDependentData<V>(name: String, dependencies: Iterable<SmartVersi
             }
         })
     }
+
+    open val dataDependencies: Iterable<SmartVersionedDataHolder<*>> get() = dependencies as Iterable<SmartVersionedDataHolder<*>>
 
     override var dataSnapshot: DataSnapshot<V>
         get() = myValue
@@ -590,25 +593,23 @@ open class SmartDependentData<V>(name: String, dependencies: Iterable<SmartVersi
     }
 
     override fun toString(): String {
-        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $value)"
+        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
     }
 }
 
-open class SmartUpdatingData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) :
-        SmartDependentData<V>(name, dependencies, computable), SmartVersionedDataHolder<V> {
+open class SmartDependentData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) :
+        SmartUpdateDependentData<V>(name,dependencies, computable), SmartVersionedDataHolder<V> {
+
     constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) : this("<unnamed>", dependencies, computable)
-
-    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this(name, dependencies, DataComputable { computable() })
-
-    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this(dependencies, DataComputable { computable() })
 
     constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: DataComputable<V>) : this(name, listOf(dependency), computable)
 
-    constructor(name: String, dependency: SmartVersionedDataHolder<V>) : this(name, listOf(dependency), DataComputable { dependency.value })
-
     constructor(dependency: SmartVersionedDataHolder<*>, computable: DataComputable<V>) : this(listOf(dependency), computable)
 
-    constructor(dependency: SmartVersionedDataHolder<V>) : this(listOf(dependency), DataComputable { dependency.value })
+    // plain function returning value
+    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this(name, dependencies, DataComputable<V> { computable() })
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this("<unnamed>", dependencies, computable)
 
     constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(name, listOf(dependency), computable)
 
@@ -632,9 +633,137 @@ open class SmartUpdatingData<V>(name: String, dependencies: Iterable<SmartVersio
         nextVersion()
         return myValue.value
     }
+
+    override fun toString(): String {
+        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
+    }
 }
 
-open class SmartUpdateIterableData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, computable: IterableDataComputable<V>) :
+open class SmartUpdateIterableData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) :
+        SmartDependentVersion(dependencies), SmartVersionedDataHolder<V> {
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) : this("<unnamed>", dependencies, computable)
+
+    // function taking iterable
+    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: (Iterable<SmartVersionedDataHolder<*>>) -> V) : this(name, dependencies, DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> { computable(it) })
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: (Iterable<SmartVersionedDataHolder<*>>) -> V) : this("<unnamed>", dependencies, computable)
+
+    // single dependency versions
+    constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) : this(name, listOf(dependency), computable)
+
+    constructor(dependency: SmartVersionedDataHolder<*>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) : this(listOf(dependency), computable)
+
+    constructor(name: String, dependency: SmartVersionedDataHolder<V>) : this(name, listOf(dependency), DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> { dependency.value })
+
+    constructor(dependency: SmartVersionedDataHolder<V>) : this("<unnamed>", dependency)
+
+    val myName = name
+    protected var myComputable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>? = computable
+    protected var myValue: DataSnapshot<V> = onCompute()
+
+    override fun onNextVersion() {
+        SmartVersionManager.groupedUpdate(Runnable {
+            val computable = myComputable
+            if (computable != null) {
+                super.onNextVersion()
+                SmartVersionManager.freshenSnapshot(this, DataSnapshot(mySnapshot.dependenciesSerial, computable.compute(dataDependencies)))
+            }
+        })
+    }
+
+    open val dataDependencies: Iterable<SmartVersionedDataHolder<*>> get() = dependencies as Iterable<SmartVersionedDataHolder<*>>
+
+    override var dataSnapshot: DataSnapshot<V>
+        get() = myValue
+        set(value) {
+            myValue = value
+        }
+
+    open protected fun onCompute(): DataSnapshot<V> {
+        return SmartVersionManager.groupedCompute(DataComputable {
+            onNextVersion()
+            myValue
+        })
+    }
+
+    override fun getValue(): V {
+        return myValue.value
+    }
+
+
+    open fun updateValue() {
+        nextVersion()
+    }
+
+    override fun toString(): String {
+        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
+    }
+}
+
+open class SmartIterableData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) :
+        SmartUpdateIterableData<V>(name,dependencies, computable), SmartVersionedDataHolder<V> {
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) : this("<unnamed>", dependencies, computable)
+
+    // function taking iterable
+    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: (Iterable<SmartVersionedDataHolder<*>>) -> V) : this(name, dependencies, DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> { computable(it) })
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: (Iterable<SmartVersionedDataHolder<*>>) -> V) : this("<unnamed>", dependencies, computable)
+
+    // data computable
+    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) : this(name, dependencies, DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> { computable.compute() })
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: DataComputable<V>) : this("<unnamed>", dependencies, computable)
+
+    // plain function returning value
+    constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this(name, dependencies, DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> { computable() })
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<*>>, computable: () -> V) : this("<unnamed>", dependencies, computable)
+
+
+    // single dependency versions
+    constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) : this(name, listOf(dependency), computable)
+
+    constructor(dependency: SmartVersionedDataHolder<*>, computable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V>) : this(listOf(dependency), computable)
+
+    constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: DataComputable<V>) : this(name, listOf(dependency), computable)
+
+    constructor(dependency: SmartVersionedDataHolder<*>, computable: DataComputable<V>) : this(listOf(dependency), computable)
+
+    constructor(name: String, dependency: SmartVersionedDataHolder<V>) : this(name, listOf(dependency), DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> { dependency.value })
+
+    constructor(dependency: SmartVersionedDataHolder<V>) : this("<unnamed>", dependency)
+
+    constructor(name: String, dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(name, listOf(dependency), computable)
+
+    constructor(dependency: SmartVersionedDataHolder<*>, computable: () -> V) : this(listOf(dependency), computable)
+
+    val freshSnapshot: VersionSnapshot get() {
+        if (isStaleRaw) {
+            onNextVersion()
+        }
+        return mySnapshot
+    }
+
+    override val versionSerial: Int get() = freshSnapshot.dependenciesSerial
+
+    override val isStale: Boolean get() {
+        freshSnapshot
+        return false
+    }
+
+    override fun getValue(): V {
+        nextVersion()
+        return myValue.value
+    }
+
+    override fun toString(): String {
+        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
+    }
+}
+
+open class SmartUpdateVectorData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, computable: IterableDataComputable<V>) :
         SmartDependentVersion(dependencies),
         SmartVersionedDataHolder<V> {
     constructor(dependencies: Iterable<SmartVersionedDataHolder<V>>, computable: IterableDataComputable<V>) : this("<unnamed>", dependencies, computable)
@@ -690,12 +819,12 @@ open class SmartUpdateIterableData<V>(name: String, dependencies: Iterable<Smart
     }
 
     override fun toString(): String {
-        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $value)"
+        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
     }
 }
 
-open class SmartIterableData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, computable: IterableDataComputable<V>) :
-        SmartUpdateIterableData<V>(name, dependencies, computable), SmartVersionedDataHolder<V> {
+open class SmartVectorData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, computable: IterableDataComputable<V>) :
+        SmartUpdateVectorData<V>(name, dependencies, computable), SmartVersionedDataHolder<V> {
     constructor(dependencies: Iterable<SmartVersionedDataHolder<V>>, computable: IterableDataComputable<V>) : this("<unnamed>", dependencies, computable)
 
     constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, computable: (Iterable<V>) -> V) : this(name, dependencies, IterableDataComputable { computable(it) })
@@ -730,7 +859,7 @@ open class SmartIterableData<V>(name: String, dependencies: Iterable<SmartVersio
     }
 }
 
-class LatestIterableDataComputable<V>(val dependencies: Iterable<SmartVersionedDataHolder<V>>) : DataComputable<DataSnapshot<V>> {
+open class LatestIterableDataComputable<V>(val dependencies: Iterable<SmartVersionedDataHolder<V>>) : DataComputable<DataSnapshot<V>> {
     override fun compute(): DataSnapshot<V> {
         val iterator = dependencies.iterator()
         var latestDataSnapshot: DataSnapshot<V> = iterator.next().dataSnapshot
@@ -746,9 +875,9 @@ class LatestIterableDataComputable<V>(val dependencies: Iterable<SmartVersionedD
 open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, runnable: Runnable?) : SmartUpdatingVersion(dependencies), SmartVersionedDataHolder<V> {
     constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>) : this(name, dependencies, null)
 
-    constructor(dependencies: Iterable<SmartVersionedDataHolder<V>>, runnable: Runnable) : this("<unnamed>", dependencies, runnable)
-
     constructor(dependencies: Iterable<SmartVersionedDataHolder<V>>) : this("<unnamed>", dependencies, null)
+
+    constructor(dependencies: Iterable<SmartVersionedDataHolder<V>>, runnable: Runnable) : this("<unnamed>", dependencies, runnable)
 
     constructor(name: String, dependencies: Iterable<SmartVersionedDataHolder<V>>, runnable: () -> Unit) : this(name, dependencies, Runnable { runnable() })
 
@@ -795,11 +924,14 @@ open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<Smar
     }
 
     override fun toString(): String {
-        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $value)"
+        return "$myName:(version: ${mySnapshot.dependenciesSerial}, value: $myValue)"
     }
 }
 
-open class SmartVersionedDataAlias<V>(aliased: SmartVersionedDataHolder<V>) : SmartVersionedDataHolder<V>, SmartVersionedVolatileDataHolder<V> {
+open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataHolder<V>) : SmartVersionedDataHolder<V>, SmartVersionedVolatileDataHolder<V> {
+    constructor(aliased: SmartVersionedDataHolder<V>) : this("<unnamed>", aliased)
+
+    protected val myName = name
     protected var myVersion: Int = SmartVersionManager.nextVersion
 
     // unwrap nested alias references
@@ -901,5 +1033,9 @@ open class SmartVersionedDataAlias<V>(aliased: SmartVersionedDataHolder<V>) : Sm
         } else {
             throw UnsupportedOperationException()
         }
+    }
+
+    override fun toString(): String {
+        return "$myName: (version: $myVersion, alias: $myAliased)"
     }
 }

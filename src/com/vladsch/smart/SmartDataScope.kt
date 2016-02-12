@@ -29,7 +29,8 @@ enum class SmartScopes(val flags: Int) {
     ANCESTORS(4),
     CHILDREN(8),
     DESCENDANTS(16),
-    INDICES(32);               // across indices within a scope, maybe?
+    TOP(32),                    // across indices within a scope, maybe?
+    INDICES(64);                // across indices within a scope, maybe?
 
     companion object : BitSetEnum<SmartScopes>(SmartScopes::class.java, { it.flags }) {
 
@@ -52,16 +53,16 @@ enum class SmartScopes(val flags: Int) {
 }
 
 abstract class SmartDataKey<V : Any> {
-    val id: String
-    val nullValue: V
-    val nullData: SmartImmutableData<V>
-    val scopes: Int
+    val myId: String
+    val myNullValue: V
+    val myNullData: SmartImmutableData<V>
+    val myScopes: Int
 
     constructor(id: String, nullValue: V, scopes: Set<SmartScopes>) {
-        this.id = id
-        this.nullValue = nullValue
-        this.nullData = SmartImmutableData(nullValue)
-        this.scopes = SmartScopes.asFlags(scopes)
+        this.myId = id
+        this.myNullValue = nullValue
+        this.myNullData = SmartImmutableData(nullValue)
+        this.myScopes = SmartScopes.asFlags(scopes)
     }
 
     fun onInit() {
@@ -85,6 +86,10 @@ abstract class SmartDataKey<V : Any> {
         return value as V
     }
 
+    fun value(values: HashMap<SmartDataKey<*>, *>): V {
+        return (values[this] ?: myNullValue) as V
+    }
+
     fun list(list: List<*>): List<V> {
         return list as List<V>
     }
@@ -94,7 +99,7 @@ abstract class SmartDataKey<V : Any> {
     }
 
     fun createDataAlias(): SmartVersionedDataAlias<V> {
-        return SmartVersionedDataAlias(nullData)
+        return SmartVersionedDataAlias(myNullData)
     }
 
     fun createDataAlias(data: SmartVersionedDataHolder<*>): SmartVersionedDataAlias<V> {
@@ -102,13 +107,13 @@ abstract class SmartDataKey<V : Any> {
     }
 
     fun createDataAlias(scope: SmartDataScope, index: Int): SmartVersionedDataAlias<V> {
-        val alias = SmartVersionedDataAlias(nullData)
+        val alias = SmartVersionedDataAlias(myNullData)
         scope.setValue(this, index, alias)
         return alias
     }
 
     fun createData(): SmartVersionedDataHolder<V> {
-        return SmartVolatileData(nullValue)
+        return SmartVolatileData(myNullValue)
     }
 
     fun createList(): ArrayList<V> {
@@ -116,7 +121,7 @@ abstract class SmartDataKey<V : Any> {
     }
 
     override fun toString(): String {
-        return super.toString() + " id: $id"
+        return super.toString() + " id: $myId"
     }
 
     fun addItem(list: ArrayList<*>, item: Any) {
@@ -128,22 +133,45 @@ abstract class SmartDataKey<V : Any> {
     }
 
     fun setAlias(item: SmartVersionedDataAlias<*>, scope: SmartDataScope, index: Int) {
-        val value = scope.getValue(this, index) as SmartVersionedDataHolder<V>
+        val value = scope.getValue(this, index) as SmartVersionedDataHolder<V>? ?: myNullData
         (item as SmartVersionedDataAlias<V>).alias = if (value is SmartVersionedDataAlias<V>) value.alias else value
     }
 
     fun setNullData(scope: SmartDataScope, index: Int) {
-        scope.setValue(this, index, nullData)
+        scope.setValue(this, index, myNullData)
+    }
+
+    fun setValue(scope: SmartDataScope, index: Int, value: SmartVersionedDataHolder<*>) {
+        scope.setValue(this, index, value as SmartVersionedDataHolder<V>)
+    }
+
+    fun dataPoint(scope: SmartDataScope, index: Int): SmartVersionedDataAlias<V> {
+        return scope.dataPoint(this, index) as SmartVersionedDataAlias<V>
     }
 }
 
 // values computed from corresponding parent values
-class SmartVolatileDataKey<V : Any>(id: String, nullValue: V) : SmartDataKey<V>(id, nullValue, setOf(SmartScopes.SELF)) {
+open class SmartVolatileDataKey<V : Any>(id: String, nullValue: V) : SmartDataKey<V>(id, nullValue, setOf(SmartScopes.SELF)) {
     override val dependencies: List<SmartDataKey<*>>
         get() = listOf()
 
     init {
         onInit()
+    }
+
+    open operator fun set(scope: SmartDataScope, index: Int, value: V) {
+        val dataPoint = scope.getRawValue(this, index)
+        if (dataPoint == null) {
+            scope.setValue(this, index, SmartVolatileData(myId, value))
+        } else if (dataPoint is SmartVersionedVolatileDataHolder<*>) {
+            dataPoint.value = value
+        } else {
+            throw IllegalStateException("non alias or volatile data point for volatile data key")
+        }
+    }
+
+    open operator fun get(scope: SmartDataScope, index: Int): V {
+        return ((scope.getRawValue(this, index) ?: myNullData) as SmartVersionedDataHolder<V>).value
     }
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
@@ -152,7 +180,7 @@ class SmartVolatileDataKey<V : Any>(id: String, nullValue: V) : SmartDataKey<V>(
             for (index in indices) {
                 val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
                 val resultItem = result.getValue(this, index)
-                result.setValue(this, index, nullData)
+                result.setValue(this, index, myNullData)
             }
 
             break
@@ -160,7 +188,7 @@ class SmartVolatileDataKey<V : Any>(id: String, nullValue: V) : SmartDataKey<V>(
     }
 }
 
-class SmartParentComputedDataKey<V : Any>(id: String, nullValue: V, val computable: DataValueComputable<V, V>) : SmartDataKey<V>(id, nullValue, setOf(SmartScopes.PARENT)) {
+open class SmartParentComputedDataKey<V : Any>(id: String, nullValue: V, val computable: DataValueComputable<V, V>) : SmartDataKey<V>(id, nullValue, setOf(SmartScopes.PARENT)) {
     constructor(id: String, nullValue: V, computable: (V) -> V) : this(id, nullValue, DataValueComputable { computable(it) })
 
     val myComputable: IterableDataComputable<V> = IterableDataComputable { computable.compute(it.first()) }
@@ -178,7 +206,7 @@ class SmartParentComputedDataKey<V : Any>(id: String, nullValue: V, val computab
             for (index in indices) {
                 val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
                 val resultItem = result.getValue(this, index)
-                result.setValue(this, index, SmartIterableData(listOf(dependent), myComputable))
+                result.setValue(this, index, SmartVectorData(listOf(dependent), myComputable))
             }
 
             break
@@ -186,11 +214,11 @@ class SmartParentComputedDataKey<V : Any>(id: String, nullValue: V, val computab
     }
 }
 
-class SmartComputedDataKey<V : Any>(id: String, nullValue: V, scopes: Set<SmartScopes>, override val dependencies: List<SmartDataKey<*>>, val computable: DataValueComputable<HashMap<SmartDataKey<*>, List<*>>, V>) : SmartDataKey<V>(id, nullValue, scopes) {
+open class SmartComputedDataKey<V : Any>(id: String, nullValue: V, scopes: Set<SmartScopes>, override val dependencies: List<SmartDataKey<*>>, val computable: DataValueComputable<HashMap<SmartDataKey<*>, List<*>>, V>) : SmartDataKey<V>(id, nullValue, scopes) {
 
     constructor(id: String, nullValue: V, scopes: Set<SmartScopes>, dependencies: List<SmartDataKey<*>>, computable: (dependencies: HashMap<SmartDataKey<*>, List<*>>) -> V) : this(id, nullValue, scopes, dependencies, DataValueComputable { computable(it) })
 
-    val myComputable: IterableDataComputable<V> = IterableDataComputable {
+    val myComputable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> = DataValueComputable {
         // here we create a hash map of by out dependent keys to lists of passed in source scopes
         val params = HashMap<SmartDataKey<*>, List<*>>()
         val iterator = it.iterator()
@@ -206,17 +234,17 @@ class SmartComputedDataKey<V : Any>(id: String, nullValue: V, scopes: Set<SmartS
     }
 
     init {
-        if (SmartScopes.isValidSet(this.scopes)) throw IllegalArgumentException("Scopes cannot contain both parent/ancestors and children/descendants")
+        if (SmartScopes.isValidSet(this.myScopes)) throw IllegalArgumentException("Scopes cannot contain both parent/ancestors and children/descendants")
         onInit()
     }
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
-            var dependents = ArrayList<SmartVersionedDataHolder<V>>()
+            var dependents = ArrayList<SmartVersionedDataHolder<*>>()
 
             for (dependencyKey in dependencies) {
                 for (source in sources) {
-                    val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
+                    val dependent = dependencyKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
                     dependents.add(dependent)
                 }
             }
@@ -226,15 +254,11 @@ class SmartComputedDataKey<V : Any>(id: String, nullValue: V, scopes: Set<SmartS
     }
 }
 
-class SmartTransformedDataKey<V : Any, R : Any>(id: String, nullValue: V, override val dependencies: List<SmartDataKey<*>>, scope: SmartScopes, val computable: DataValueComputable<HashMap<SmartDataKey<*>, *>, V>) : SmartDataKey<V>(id, nullValue, setOf(scope)) {
+open class SmartDependentDataKey<V : Any>(id: String, nullValue: V, override val dependencies: List<SmartDataKey<*>>, scope: SmartScopes, val computable: DataValueComputable<HashMap<SmartDataKey<*>, *>, V>) : SmartDataKey<V>(id, nullValue, setOf(scope)) {
 
     constructor(id: String, nullValue: V, dependencies: List<SmartDataKey<*>>, scope: SmartScopes, computable: (dependencies: HashMap<SmartDataKey<*>, *>) -> V) : this(id, nullValue, dependencies, scope, DataValueComputable { computable(it) })
 
-    constructor(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: DataValueComputable<R, V>) : this(id, nullValue, listOf(dependency), scope, DataValueComputable { computable.compute(dependency.value(it[dependency]!!)) })
-
-    constructor(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: (R) -> V) : this(id, nullValue, listOf(dependency), scope, DataValueComputable { computable(dependency.value(it[dependency]!!)) })
-
-    val myComputable: IterableDataComputable<V> = IterableDataComputable {
+    val myComputable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> = DataValueComputable {
         // here we create a hash map of by out dependent keys to lists of passed in source scopes
         val params = HashMap<SmartDataKey<*>, Any>()
         val iterator = it.iterator()
@@ -255,11 +279,11 @@ class SmartTransformedDataKey<V : Any, R : Any>(id: String, nullValue: V, overri
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
-            var dependents = ArrayList<SmartVersionedDataHolder<V>>()
+            var dependents = ArrayList<SmartVersionedDataHolder<*>>()
 
             for (dependencyKey in dependencies) {
                 for (source in sources) {
-                    val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
+                    val dependent = dependencyKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
                     dependents.add(dependent)
 
                     break
@@ -271,8 +295,13 @@ class SmartTransformedDataKey<V : Any, R : Any>(id: String, nullValue: V, overri
     }
 }
 
-class SmartAggregatedDataKey<V : Any>(id: String, nullValue: V, val dataKey: SmartDataKey<*>, scopes: Set<SmartScopes>, val computable: IterableDataComputable<V>) : SmartDataKey<V>(id, nullValue, scopes) {
-    constructor(id: String, nullValue: V, dataKey: SmartDataKey<*>, scopes: Set<SmartScopes>, computable: (Iterable<V>) -> V) : this(id, nullValue, dataKey, scopes, IterableDataComputable { computable(it) })
+class SmartTransformedDataKey<V : Any, R : Any>(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: DataValueComputable<R, V>) : SmartDependentDataKey<V>(id, nullValue, listOf(dependency), scope, DataValueComputable { computable.compute(dependency.value(it[dependency]!!)) }) {
+
+    constructor(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: (R) -> V) : this(id, nullValue, dependency, scope, DataValueComputable { computable(it) })
+}
+
+class SmartAggregatedDataKey<V : Any>(id: String, nullValue: V, val dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>, val computable: IterableDataComputable<V>) : SmartDataKey<V>(id, nullValue, scopes) {
+    constructor(id: String, nullValue: V, dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>, computable: (Iterable<V>) -> V) : this(id, nullValue, dataKey, scopes, IterableDataComputable { computable(it) })
 
     override val dependencies: List<SmartDataKey<*>>
         get() = listOf(dataKey)
@@ -288,11 +317,33 @@ class SmartAggregatedDataKey<V : Any>(id: String, nullValue: V, val dataKey: Sma
             var dependents = ArrayList<SmartVersionedDataHolder<V>>()
 
             for (source in sources) {
-                val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
+                val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
                 dependents.add(dependent)
             }
 
-            result.setValue(this, index, SmartIterableData(dependents, myComputable))
+            result.setValue(this, index, SmartVectorData(dependents, myComputable))
+        }
+    }
+}
+
+class SmartLatestDataKey<V : Any>(id: String, nullValue: V, val dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>) : SmartDataKey<V>(id, nullValue, scopes) {
+    override val dependencies: List<SmartDataKey<V>>
+        get() = listOf(dataKey)
+
+    init {
+        onInit()
+    }
+
+    override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
+        for (index in indices) {
+            var dependents = ArrayList<SmartVersionedDataHolder<V>>()
+
+            for (source in sources) {
+                val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
+                dependents.add(dependent)
+            }
+
+            result.setValue(this, index, SmartLatestDependentData(dependents))
         }
     }
 }
@@ -339,6 +390,8 @@ class SmartDataScopeManager {
 
     fun computeKeyOrder(keys: Set<SmartDataKey<*>>): List<List<SmartDataKey<*>>> {
         val needKeys = HashSet<SmartDataKey<*>>()
+
+        needKeys.addAll(keys)
 
         for (key in keys) {
             needKeys.addAll(key.dependencies)
@@ -422,7 +475,7 @@ class SmartDataScopeManager {
 //
 // data points for which no consumers exist will not be created, and will not cause intermediate data points be created nor computed
 //
-class SmartDataScope(val name: String, val parent: SmartDataScope?) {
+open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
     protected val myValues = HashMap<SmartDataKey<*>, HashMap<Int, SmartVersionedDataHolder<*>>>()
     protected val myChildren = HashSet<SmartDataScope>()    // children
     protected val myDescendants = HashSet<SmartDataScope>() // descendants
@@ -493,17 +546,22 @@ class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         }
     }
 
-    fun consumerDataPoint(key: SmartDataKey<*>, index: Int): SmartVersionedDataHolder<*> {
-        var dataPoint = getRawValue(key, index)
+    open operator fun get(dataKey: SmartDataKey<*>, index: Int): SmartVersionedDataHolder<*> = dataPoint(dataKey, index)
+    open operator fun set(dataKey: SmartDataKey<*>, index: Int, value:SmartVersionedDataHolder<*>) {
+        dataKey.setValue(this, index, value)
+    }
+
+    fun dataPoint(dataKey: SmartDataKey<*>, index: Int): SmartVersionedDataHolder<*> {
+        var dataPoint = getRawValue(dataKey, index)
         if (dataPoint == null) {
             // not yet computed
-            dataPoint = key.createDataAlias(this, index)
-            myConsumers.putIfAbsent(key, arrayListOf())
-            myConsumers[key]!!.add(index)
+            dataPoint = dataKey.createDataAlias(this, index)
+            myConsumers.putIfAbsent(dataKey, arrayListOf())
+            myConsumers[dataKey]!!.add(index)
         } else if (dataPoint !is SmartVersionedDataAlias<*>) {
             // wrap it in aliased as per convention
-            dataPoint = key.createDataAlias(dataPoint)
-            myValues[key]!![index] = dataPoint
+            dataPoint = dataKey.createDataAlias(dataPoint)
+            myValues[dataKey]!![index] = dataPoint
         }
         return dataPoint
     }
@@ -522,7 +580,7 @@ class SmartDataScope(val name: String, val parent: SmartDataScope?) {
             val scopesSet = keys[entry.key]!!
 
             // include self in computations if scopes were added on our behalf
-            if (addKeyScopes(entry.key.scopes, scopesSet) > 0) scopesSet.add(this)
+            if (addKeyScopes(entry.key.myScopes, scopesSet) > 0) scopesSet.add(this)
         }
     }
 
@@ -564,7 +622,7 @@ class SmartDataScope(val name: String, val parent: SmartDataScope?) {
 
         for (index in indices) {
             val rawValue = getRawValue(dataKey, index)
-            if (rawValue == null || (rawValue is SmartVersionedDataAlias<*> && rawValue.alias === dataKey.nullData)) {
+            if (rawValue == null || (rawValue is SmartVersionedDataAlias<*> && rawValue.alias === dataKey.myNullData)) {
                 indicesSet.add(index)
             }
         }
@@ -606,7 +664,7 @@ class SmartDataScope(val name: String, val parent: SmartDataScope?) {
                 for (index in entry.value) {
                     val value = getRawValue(entry.key, index)
                     if (value is SmartVersionedDataAlias<*>) {
-                        if (value.alias === entry.key.nullData) {
+                        if (value.alias === entry.key.myNullData) {
                             // see if the parent has a value
                             entry.key.setAlias(value, parent, index)
                         }
@@ -644,7 +702,7 @@ class SmartDataScope(val name: String, val parent: SmartDataScope?) {
 
     private fun finalizeKeyScope(dataKey: SmartDataKey<*>, topScope: SmartDataScope) {
         val scopesSet = HashSet<SmartDataScope>()
-        addKeyScopes(dataKey.scopes, scopesSet)
+        addKeyScopes(dataKey.myScopes, scopesSet)
         if (!scopesSet.isEmpty()) {
             val indicesSet = HashSet<Int>()
 

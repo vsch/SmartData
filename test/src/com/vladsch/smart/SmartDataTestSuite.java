@@ -26,7 +26,6 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        SmartDataTest.class,
         SmartScopesTest.class,
         BitSetEnumTest.class,
         SmartDataScopeManagerTest.class,
