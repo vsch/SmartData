@@ -149,7 +149,7 @@ class SmartVersionedDataTest {
         val sumEq = { v1.value + v2.value + v3.value }
         var dv = SmartDependentData(listOf(v1, v2, vc), sum)
         var vi = SmartImmutableData(10)
-        var dvn = SmartIterableData(listOf(vi), { it->vi.value })
+        var dvn = SmartIterableData(listOf(vi), { it -> vi.value })
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
@@ -192,7 +192,7 @@ class SmartVersionedDataTest {
         val sumEq = { v1.value + v2.value + v3.value }
         var dv = SmartVectorData(listOf(v1, v2, vc), sum)
         var vi = SmartImmutableData(10)
-        var dvn = SmartIterableData(listOf(vi), { it->vi.value })
+        var dvn = SmartIterableData(listOf(vi), { it -> vi.value })
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
@@ -395,4 +395,165 @@ class SmartVersionedDataTest {
         assertTrue(ad.isMutable)
         assertTrue(va.versionSerial <= ad.versionSerial)
     }
+
+    @Test
+    fun test_property() {
+        val v1 = SmartVolatileData(1)
+        val v2 = SmartVolatileData(20)
+        val va = SmartVersionedDataAlias(v1)
+        val vp = SmartVersionedProperty(0)
+
+        assertTrue(vp.isMutable)
+        assertEquals(0, vp.value)
+
+        va.value = 2
+        vp.connect(va)
+        assertTrue(vp.isStale)
+        assertEquals(2, vp.value)
+
+        vp.value = 2
+        assertTrue(vp.isStale)
+        assertEquals(2, vp.value)
+
+        vp.disconnect()
+        assertTrue(vp.isStale)
+        assertEquals(2, vp.value)
+
+        vp.value = 5
+        assertTrue(vp.isStale)
+        assertEquals(5, vp.value)
+
+        vp.connect(va)
+        assertTrue(vp.isStale)
+        assertEquals(5, vp.value)
+
+        va.alias = v2
+        assertEquals(20, va.value)
+        assertTrue(vp.isStale)
+        assertEquals(5, vp.value)
+
+        vp.connectionFinalized()
+        assertTrue(vp.isStale)
+        assertEquals(5, vp.value)
+
+        va.alias = v1
+        v1.value = 100
+        assertFalse(vp.isStale)
+        assertEquals(5, vp.value)
+
+        v2.value = 200
+        assertTrue(vp.isStale)
+        assertEquals(200, vp.value)
+    }
+
+    class DistributingIterator(val size: Int, sumValue: Int) : Iterator<Int> {
+        protected var index = 0
+        protected val whole = sumValue / size
+        protected val remainder = sumValue - whole * size
+
+        override fun hasNext(): Boolean {
+            return index < size
+        }
+
+        override fun next(): Int {
+            return whole + if (index++ < remainder) 1 else 0
+        }
+    }
+
+    @Test
+    fun test_propertyArrayDistribute() {
+        val v1 = SmartVolatileData(1)
+        val v2 = SmartVolatileData(20)
+        val v3 = SmartVolatileData(20)
+        val va1 = SmartVersionedDataAlias(v1)
+        val va2 = SmartVersionedDataAlias(v2)
+        val va3 = SmartVersionedDataAlias(v3)
+        var called = 0
+
+        val pa = SmartVersionedPropertyArray<Int>("pa", 3, 0, DataValueComputable {
+            println("aggregating")
+            called++
+            it.sum()
+        }, DataValueComputable {
+            println("distributing")
+            called++
+            DistributingIterator(3, it)
+        })
+
+        // test as distributing
+        pa.value
+        assertEquals(0, pa.value)
+        println("called: $called")
+        //        println(pa)
+
+        for (i in 0..10) {
+            pa.value = i
+            assertEquals(i, pa.value)
+            print("i:$i ")
+            for (c in 0..2) {
+                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
+                print("[$c] -> $col ")
+            }
+            println()
+
+            for (c in 0..2) {
+                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
+                assertEquals(col, pa[c].value)
+            }
+            //            println(pa)
+            assertEquals(i, pa.value)
+            //            println(pa)
+            println("called: $called")
+        }
+    }
+
+    @Test
+    fun test_propertyArrayAggregate() {
+        val v1 = SmartVolatileData(1)
+        val v2 = SmartVolatileData(20)
+        val va = SmartVersionedDataAlias(v1)
+        var called = 0
+
+        val pa = SmartVersionedPropertyArray<Int>("pa", 3, 0, DataValueComputable {
+            println("aggregating")
+            called++
+            it.sum()
+        }, DataValueComputable {
+            println("distributing")
+            called++
+            DistributingIterator(3, it)
+        })
+
+        // test as aggregating
+        pa.value
+        assertEquals(0, pa.value)
+        println("called: $called")
+
+        pa[0].value = 1
+        pa.value
+        println(pa)
+        assertEquals(1, pa.value)
+        println("called: $called")
+
+        pa[1].value = 2
+        assertEquals(3, pa.value)
+        println("called: $called")
+
+        pa[2].value = 3
+        assertEquals(6, pa.value)
+        println("called: $called")
+
+        for (a in 1..6) {
+            pa[0].value = a
+            for (b in 1..6) {
+                pa[1].value = b
+                for (c in 1..6) {
+                    pa[2].value = c
+                    assertEquals(a + b + c, pa.value)
+                }
+            }
+        }
+        println("called: $called")
+    }
+
 }

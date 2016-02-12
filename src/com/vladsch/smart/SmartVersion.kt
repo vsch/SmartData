@@ -21,6 +21,8 @@
 
 package com.vladsch.smart
 
+import java.util.*
+
 object SmartVersionManager {
     private var mySerial = Integer.MIN_VALUE + 1
 
@@ -240,6 +242,10 @@ open class SmartVolatileVersion() : SmartVersion {
     override val versionSerial: Int
         get() = myVersion
 
+    internal fun setVersion(versionSerial: Int) {
+        myVersion = versionSerial
+    }
+
     override val isStale: Boolean get() = false
     override val isMutable: Boolean get() = true
     override fun nextVersion() {
@@ -249,19 +255,12 @@ open class SmartVolatileVersion() : SmartVersion {
     override val dependencies: Iterable<SmartVersion> = EMPTY_DEPENDENCIES
 }
 
-open class SmartDependentVersion(dependencies: Iterable<SmartVersion>) : SmartVersion, SnapshotHolder<VersionSnapshot> {
-    constructor(dependency: SmartVersion) : this(listOf(dependency))
-
-    protected val myDependencies = dependencies
+abstract class SmartDependentVersionBase : SmartVersion, SnapshotHolder<VersionSnapshot> {
     protected var mySnapshot = STALE_COMPUTED_VERSION_SNAPSHOT
     protected var myMutable: Boolean? = null
     protected var myIsStale: Boolean = false
 
-    init {
-        onInit()
-    }
-
-    final protected val isStaleRaw: Boolean get() = SmartVersionManager.isStale(myDependencies, mySnapshot.snapshotSerial, mySnapshot.dependenciesSerial)
+    final protected val isStaleRaw: Boolean get() = SmartVersionManager.isStale(dependencies, mySnapshot.snapshotSerial, mySnapshot.dependenciesSerial)
 
     override val versionSerial: Int get() = mySnapshot.dependenciesSerial
     override val isStale: Boolean get() {
@@ -273,13 +272,12 @@ open class SmartDependentVersion(dependencies: Iterable<SmartVersion>) : SmartVe
         get() {
             var mutable = myMutable
             if (mutable == null) {
-                mutable = SmartVersionManager.isMutable(myDependencies)
+                mutable = SmartVersionManager.isMutable(dependencies)
                 myMutable = mutable
             }
             return mutable
         }
 
-    override val dependencies: Iterable<SmartVersion> get() = myDependencies
     override fun nextVersion() {
         if (isStaleRaw) {
             onNextVersion()
@@ -303,6 +301,17 @@ open class SmartDependentVersion(dependencies: Iterable<SmartVersion>) : SmartVe
     protected open fun onNextVersion() {
         myIsStale = false
         SmartVersionManager.freshenSnapshot(this, dependencies)
+    }
+}
+
+open class SmartDependentVersion(dependencies: Iterable<SmartVersion>) : SmartDependentVersionBase() {
+    constructor(dependency: SmartVersion) : this(listOf(dependency))
+
+    protected val myDependencies = dependencies
+    override val dependencies: Iterable<SmartVersion> get() = myDependencies
+
+    init {
+        onInit()
     }
 }
 
@@ -394,10 +403,12 @@ interface DataSnapshotHolder<V> {
     var dataSnapshot: DataSnapshot<V>
 }
 
-open class SmartImmutableData<V>(name: String, value: V) : SmartVersionedDataHolder<V> {
+open class SmartImmutableData<V>(name: String, value: V, versionSerial: Int) : SmartVersionedDataHolder<V> {
+    constructor(name: String, value: V) : this(name, value, SmartVersionManager.nextVersion)
+
     constructor(value: V) : this("<unnamed>", value)
 
-    protected val myVersion = SmartVersionManager.nextVersion
+    protected val myVersion = versionSerial
 
     final override val versionSerial: Int get() = myVersion
     final override val isStale: Boolean get() = false
@@ -435,6 +446,12 @@ open class SmartVolatileData<V>(name: String, value: V) : SmartVolatileVersion()
             super.nextVersion()
             SmartVersionManager.freshenSnapshot(this, DataSnapshot(versionSerial, value))
         }
+    }
+
+    // used to create distributed or derived values so that the derived value has the same version from which it was derived
+    internal fun setVersionedValue(value: V, versionSerial: Int) {
+        myValue = DataSnapshot(versionSerial, value)
+        setVersion(versionSerial)
     }
 
     override var dataSnapshot: DataSnapshot<V>
@@ -879,7 +896,7 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
 
     // unwrap nested alias references
     protected var myAliased = if (aliased is SmartVersionedDataAlias<V>) aliased.alias else aliased
-    protected var myInRecursion = false
+    protected var myRecursion = RecursionGuard()
     protected var myLastDataSnapshot: DataSnapshot<V> = myAliased.dataSnapshot
 
     protected fun updateDataSnapshot() {
@@ -898,20 +915,8 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
         myVersion = SmartVersionManager.nextVersion
     }
 
-    protected fun <T> guardRecursion(inRecursion: () -> T, notInRecursion: () -> T): T {
-        if (myInRecursion) return inRecursion()
-        else {
-            myInRecursion = true
-            try {
-                return notInRecursion()
-            } finally {
-                myInRecursion = false
-            }
-        }
-    }
-
     override val versionSerial: Int
-        get() = guardRecursion(
+        get() = myRecursion.guarded(
                 { myVersion.max(myLastDataSnapshot.serial) },
                 {
                     val serial = myAliased.versionSerial
@@ -920,7 +925,7 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
                 })
 
     override val isStale: Boolean
-        get() = guardRecursion(
+        get() = myRecursion.guarded(
                 { false },
                 {
                     val stale = myAliased.isStale
@@ -935,12 +940,10 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
         get() = myAliased.dependencies
 
     override fun nextVersion() {
-        guardRecursion(
-                {},
-                {
-                    myAliased.nextVersion()
-                    updateDataSnapshot()
-                })
+        myRecursion.guarded() {
+            myAliased.nextVersion()
+            updateDataSnapshot()
+        }
     }
 
     override var dataSnapshot: DataSnapshot<V>
@@ -952,7 +955,7 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
             throw UnsupportedOperationException()
         }
 
-    override fun getValue(): V = guardRecursion(
+    override fun getValue(): V = myRecursion.guarded(
             { myLastDataSnapshot.value },
             {
                 updateDataSnapshot()
@@ -973,3 +976,221 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
         return "$myName: (version: $myVersion, alias: $myAliased)"
     }
 }
+
+/**
+ *  This behaves like volatile data but has an optional data point connection that will allow its value to be changed by a dependency
+ *
+ *  The final value is the latest value between the volatile version and the external dependency version, effectively just like volatile data will hold the last value written
+ *
+ */
+open class SmartVersionedProperty<V>(name: String, initialValue: V, runnable: ValueRunnable<V>?) : SmartDependentVersionBase(), SmartVersionedPropertyHolder<V> {
+    constructor(name: String, initialValue: V, runnable: (V) -> Unit) : this(name, initialValue, ValueRunnable { runnable(it) })
+
+    constructor(initialValue: V, runnable: (V) -> Unit) : this(initialValue, ValueRunnable { runnable(it) })
+
+    constructor(initialValue: V, runnable: ValueRunnable<V>?) : this("<unnamed>", initialValue, runnable)
+
+    constructor(initialValue: V) : this("<unnamed>", initialValue, null)
+
+    protected val myName = name
+    protected val myRunnable = runnable
+    internal val myValue = SmartVolatileData<V>("$myName.value", initialValue)
+    protected var myExternal: SmartVersionedDataHolder<V> = SmartImmutableData("", initialValue, NULL_SERIAL)
+    protected var myDependenciesVersion = SmartImmutableVersion()
+
+    protected var myDataSnapshot: DataSnapshot<V> = myValue.dataSnapshot
+    protected var myDependencies: Iterable<SmartVersion> = listOf(myValue)
+
+    override val dependencies: Iterable<SmartVersion> get() = myDependencies
+
+    init {
+        onInit()
+    }
+
+    override fun connect(aliased: SmartVersionedDataHolder<V>) {
+        myExternal = aliased
+        myDependencies = listOf(myValue, myExternal, myDependenciesVersion)
+        nextDependencies()
+    }
+
+    override fun disconnect() {
+        myExternal = SmartImmutableData("", myDataSnapshot.value, NULL_SERIAL)
+        myDependencies = listOf(myValue, myDependenciesVersion)
+        nextDependencies()
+    }
+
+    override fun connectionFinalized() {
+        val external = myExternal
+        if (external is SmartVersionedDataAlias<V>) {
+            connect(external.alias)
+        }
+    }
+
+    private fun nextDependencies() {
+        myDependenciesVersion = SmartImmutableVersion()
+        myDataSnapshot = DataSnapshot(STALE_SERIAL, myDataSnapshot.value)
+        mySnapshot = STALE_VERSION_SNAPSHOT
+    }
+
+    open fun onCompute(): DataSnapshot<V> {
+        if (myExternal.isStale) myExternal.nextVersion()
+        return if (myValue.versionSerial >= myExternal.versionSerial) myValue.dataSnapshot
+        else myExternal.dataSnapshot
+    }
+
+    // used by property array during distribution/aggregation to set version to the version of the property from which it is derived
+    internal fun setVersionedValue(value: V, versionSerial: Int) {
+        myValue.setVersionedValue(value, versionSerial)
+        mySnapshot = VersionSnapshot(versionSerial, versionSerial, NULL_VERSION)
+        myDataSnapshot = DataSnapshot(versionSerial, value)
+    }
+
+    override fun onNextVersion() {
+        SmartVersionManager.groupedUpdate {
+            super.onNextVersion()
+            val runnable = myRunnable
+            if (SmartVersionManager.freshenSnapshot(this, onCompute()) && runnable != null) {
+                runnable.run(myDataSnapshot.value)
+            }
+        }
+    }
+
+    override val isMutable: Boolean
+        get() = true
+
+    override var dataSnapshot: DataSnapshot<V>
+        get() = myDataSnapshot
+        set(value) {
+            myDataSnapshot = value
+        }
+
+    override fun getValue(): V {
+        nextVersion()
+        return myDataSnapshot.value
+    }
+
+    override fun setValue(value: V) {
+        myValue.value = value
+    }
+
+    override fun toString(): String {
+        return if (myExternal is SmartImmutableData) "$myName: ($myValue, external: unconnected)"
+        else "$myName: ($myValue, external: $myExternal)"
+    }
+}
+
+class MutableIteratorAdapter<V>(val iterator: Iterator<V>) : MutableIterator<V> {
+    override fun hasNext(): Boolean {
+        return iterator.hasNext()
+    }
+
+    override fun next(): V {
+        return iterator.next()
+    }
+
+    override fun remove() {
+        throw UnsupportedOperationException()
+    }
+}
+
+open class SmartVersionedPropertyArray<V>(name: String, size: Int, initialValue: V, aggregate: DataValueComputable<Iterable<V>, V>, distribute: DataValueComputable<V, Iterator<V>>) : SmartDependentVersionBase(), SmartVersionedPropertyArrayHolder<V> {
+
+    protected val myName = name
+    protected val myAggregateComputable = aggregate
+    protected val myDistributeComputable = distribute
+    protected val myProperty: SmartVersionedProperty<V>
+    protected val myProperties: List<SmartVersionedProperty<V>>
+//    protected var myRecursion = RecursionGuard()
+
+    // distribute the given value, versionSerial of distributed properties will be the same as the versionSerial of the current snapshot
+    // that way the distributed version is the same as the version being distributed
+    protected fun onDistribute(value: V) {
+//        myRecursion.guarded() {
+            val iterator = myDistributeComputable.compute(value)
+            for (i in 1..myProperties.lastIndex) {
+                if (!iterator.hasNext()) break
+                myProperties[i].setVersionedValue(iterator.next(), myProperty.versionSerial)
+            }
+//        }
+    }
+
+    // aggregate the array values, versionSerial of aggregated property will be the same as the versionSerial of the current snapshot
+    // that way the aggregated version is the same as the version of the dependencies being aggregated
+    protected fun onAggregate() {
+//        myRecursion.guarded() {
+            val aggregated = myAggregateComputable.compute(IterableValueDependenciesAdapter(myProperties.subList(1, myProperties.size)))
+            myProperty.setVersionedValue(aggregated, mySnapshot.dependenciesSerial)
+//        }
+    }
+
+    init {
+        val properties = ArrayList<SmartVersionedProperty<V>>()
+        val distributed = myDistributeComputable.compute(initialValue)
+
+        myProperty = SmartVersionedProperty("$myName.value", initialValue, ValueRunnable<V> { onDistribute(it) })
+        properties.add(myProperty)
+
+        val aggregateRunnable = ValueRunnable<V> { onAggregate() }
+        for (i in 1..size) {
+            val value = distributed.next()
+            properties.add(SmartVersionedProperty("$myName[$i]", value, aggregateRunnable))
+        }
+        myProperties = properties
+    }
+
+    override val dependencies: Iterable<SmartVersion>
+        get() = myProperties
+
+    override fun connect(aliased: SmartVersionedDataHolder<V>) {
+        myProperty.connect(aliased)
+    }
+
+    override fun disconnect() {
+        myProperty.disconnect()
+    }
+
+    override fun connectionFinalized() {
+        myProperty.connectionFinalized()
+    }
+
+    override val isMutable: Boolean
+        get() = true
+
+    override var dataSnapshot: DataSnapshot<V>
+        get() = myProperty.dataSnapshot
+        set(value) {
+            myProperty.dataSnapshot = value
+        }
+
+    override fun getValue(): V {
+        nextVersion()
+        return myProperty.value
+    }
+
+    override fun setValue(value: V) {
+        myProperty.value = value
+    }
+
+    override fun get(index: Int): SmartVersionedPropertyHolder<V> {
+        return myProperties[index + 1]
+    }
+
+    override fun iterator(): MutableIterator<SmartVersionedPropertyHolder<V>> {
+        return MutableIteratorAdapter(myProperties.subList(1, myProperties.size).iterator())
+    }
+
+    override fun toString(): String {
+        val sb = StringBuilder()
+        sb += myName + "[${myProperties.size}] ("
+        var first = true
+        for (prop in myProperties) {
+            if (!first) sb += ", "
+            else first = false
+
+            sb += prop
+        }
+        sb += ")"
+        return sb.toString()
+    }
+}
+
