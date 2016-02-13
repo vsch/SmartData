@@ -1,7 +1,7 @@
 SmartData Library
 =================
        
-A collection of smart data elements in Kotlin that are usable in java programs. 
+A collection of smart data elements in Kotlin that are usable in java programs. This is a very early version in constant development. I am using it to implement Markdown formatting in my idea-multimarkdown plugin and make changes as the need arises.
 
 The library consists of several inter-operating smart data classes:
 
