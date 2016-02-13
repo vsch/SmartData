@@ -29,8 +29,8 @@ import kotlin.test.assertNotEquals
 class SmartVersionManagerTest {
     @Test
     fun test_basicNextVersion() {
-        var version1 = SmartVersionManager.nextVersion
-        var version2 = SmartVersionManager.nextVersion
+        var version1 = SmartVersionManager.nextSerial
+        var version2 = SmartVersionManager.nextSerial
 
         assertNotEquals(version1, version2)
         assertTrue(version1 < version2)
@@ -42,18 +42,18 @@ class SmartVersionManagerTest {
         var version2: Int = 2
 
         SmartVersionManager.groupedUpdate(Runnable {
-            version1 = SmartVersionManager.nextVersion
-            version2 = SmartVersionManager.nextVersion
+            version1 = SmartVersionManager.nextSerial
+            version2 = SmartVersionManager.nextSerial
         })
 
         assertEquals(version1, version2)
 
         SmartVersionManager.groupedUpdate(Runnable {
-            version1 = SmartVersionManager.nextVersion
+            version1 = SmartVersionManager.nextSerial
         })
 
         SmartVersionManager.groupedUpdate(Runnable {
-            version2 = SmartVersionManager.nextVersion
+            version2 = SmartVersionManager.nextSerial
         })
 
         assertNotEquals(version1, version2)

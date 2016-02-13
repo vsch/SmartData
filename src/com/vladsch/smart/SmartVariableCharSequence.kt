@@ -28,8 +28,8 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     constructor(replacedChars: SmartCharSequence) : this(replacedChars, replacedChars)
 
     protected val myReplacedChars = replacedChars
-    protected var myLeftPadding: CharSequence = EMPTY_SEQUENCE
-    protected var myRightPadding: CharSequence = EMPTY_SEQUENCE
+    protected var myLeftPadding:CharSequence = EMPTY_SEQUENCE
+    protected var myRightPadding:CharSequence = EMPTY_SEQUENCE
 
     // versioned properties
     protected val myLeftPadChar = SmartVolatileData(' ')
@@ -40,25 +40,20 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     protected val myVariableChars = SmartVolatileData(SmartReplacedCharSequence(myReplacedChars, chars))
     protected val myFixedLength = SmartDependentData(listOf(myPrefix, myVariableChars, mySuffix), { myVariableChars.value.length + myPrefix.value.length + mySuffix.value.length })
 
-    protected val myWidthProperty = SmartVolatileData(0)
-    protected var myWidthDataPoint:SmartVersionedDataHolder<Int> = myWidthProperty
-    protected var myWidth = SmartVersionedDataAlias(SmartLatestDependentData(listOf(myWidthProperty, myWidthDataPoint)))
+    protected var myWidth = SmartVersionedProperty("varCharSeq:Width", 0)
+    protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment",TextAlignment.LEFT)
 
-    protected val myAlignmentProperty = SmartVolatileData(TextAlignment.LEFT)
-    protected var myAlignmentDataPoint:SmartVersionedDataHolder<TextAlignment> = myAlignmentProperty
-    protected var myAlignment = SmartVersionedDataAlias(SmartLatestDependentData(listOf(myAlignmentProperty, myAlignmentDataPoint)))
-
-    protected var myResultSequence = SmartDependentData(listOf(myFixedLength, myAlignment, myWidth, myVariableChars, mySuffix, myPrefix, myLeftPadChar, myRightPadChar), DataComputable { computeResultSequence() })
+    protected var myResultSequence = SmartDependentData(listOf(myFixedLength, myAlignment, myWidth, myLeftPadChar, myRightPadChar), DataComputable { computeResultSequence() })
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
 
     var alignment: TextAlignment get() = myAlignment.value
         set(value) {
-            myAlignmentProperty.value = value
+            myAlignment.value = value
         }
 
     var width: Int get() = myWidth.value
         set(value) {
-            myWidthProperty.value = value
+            myWidth.value = value
         }
 
     var prefix: CharSequence get() = myPrefix.value
@@ -92,26 +87,24 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     }
 
     var alignmentDataPoint: SmartVersionedDataHolder<TextAlignment>
-        get() = SmartLatestDependentData(listOf(myAlignment))
+        get() = myAlignment
         set(value) {
-            myAlignmentDataPoint = value
-            myAlignment.alias = SmartLatestDependentData(listOf(myAlignmentProperty, myAlignmentDataPoint))
+            myAlignment.connect(value)
         }
 
     var widthDataPoint: SmartVersionedDataHolder<Int>
-        get() = SmartLatestDependentData(listOf(myWidth))
+        get() = myWidth
         set(value) {
-            myWidthDataPoint = value
-            myWidth.alias = SmartLatestDependentData(listOf(myWidthProperty, myWidthDataPoint))
+            myWidth.connect(value)
         }
 
-    protected val resultSequence: SmartSegmentedCharSequence
+    val lengthDataPoint: SmartVersionedDataHolder<Int>
+        get() = myFixedLength
+
+    protected val resultSequence: SmartCharArraySequence
         get() = myResultSequence.value
 
-    protected fun computeResultSequence(): SmartSegmentedCharSequence {
-        myRightPadding = EMPTY_SEQUENCE
-        myLeftPadding = EMPTY_SEQUENCE
-
+    protected fun computeResultSequence(): SmartCharArraySequence {
         val paddingSize = myWidth.value - myFixedLength.value
         var leftPadding = 0
         var rightPadding = 0
@@ -120,7 +113,7 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
             when (myAlignment.value) {
                 TextAlignment.RIGHT -> leftPadding = paddingSize
                 TextAlignment.CENTER -> {
-                    val even = paddingSize shr 1
+                    val even = paddingSize / 2
                     if (even > 0) leftPadding = even
                     rightPadding = paddingSize - even
                 }
@@ -130,8 +123,12 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
         }
 
         if (leftPadding > 0) myLeftPadding = RepeatedCharSequence(myLeftPadChar.value, leftPadding)
+        else myLeftPadding = EMPTY_SEQUENCE
+
         if (rightPadding > 0) myRightPadding = RepeatedCharSequence(myRightPadChar.value, rightPadding)
-        return SmartSegmentedCharSequence(myPrefix.value, myLeftPadding, myVariableChars.value, myRightPadding, mySuffix.value)
+        else myRightPadding = EMPTY_SEQUENCE
+
+        return SmartSegmentedCharSequence(myPrefix.value, myLeftPadding, myVariableChars.value, myRightPadding, mySuffix.value).cachedProxy as SmartCharArraySequence
     }
 
     fun leftAlign(width: Int) {

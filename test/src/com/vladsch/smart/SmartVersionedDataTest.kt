@@ -398,10 +398,10 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_property() {
-        val v1 = SmartVolatileData(1)
-        val v2 = SmartVolatileData(20)
-        val va = SmartVersionedDataAlias(v1)
-        val vp = SmartVersionedProperty(0)
+        val v1 = SmartVolatileData("v1", 1)
+        val v2 = SmartVolatileData("v2", 20)
+        val va = SmartVersionedDataAlias("va", v1)
+        val vp = SmartVersionedProperty("vp", 0)
 
         assertTrue(vp.isMutable)
         assertEquals(0, vp.value)
@@ -425,21 +425,23 @@ class SmartVersionedDataTest {
 
         vp.connect(va)
         assertTrue(vp.isStale)
-        assertEquals(5, vp.value)
+        assertEquals(2, vp.value)
 
         va.alias = v2
         assertEquals(20, va.value)
         assertTrue(vp.isStale)
-        assertEquals(5, vp.value)
+        assertEquals(20, vp.value)
 
+        println(vp)
         vp.connectionFinalized()
-        assertTrue(vp.isStale)
-        assertEquals(5, vp.value)
+        println(vp)
+        assertFalse(vp.isStale)
+        assertEquals(20, vp.value)
 
         va.alias = v1
         v1.value = 100
         assertFalse(vp.isStale)
-        assertEquals(5, vp.value)
+        assertEquals(20, vp.value)
 
         v2.value = 200
         assertTrue(vp.isStale)
@@ -469,15 +471,33 @@ class SmartVersionedDataTest {
         val va2 = SmartVersionedDataAlias(v2)
         val va3 = SmartVersionedDataAlias(v3)
         var called = 0
+        var inAggr = false
 
         val pa = SmartVersionedPropertyArray<Int>("pa", 3, 0, DataValueComputable {
-            println("aggregating")
-            called++
-            it.sum()
-        }, DataValueComputable {
-            println("distributing")
-            called++
-            DistributingIterator(3, it)
+            assertFalse(inAggr)
+            try {
+                inAggr = true
+//                print("aggregating: ")
+//                for (n in it) {
+//                    print("$n ")
+//                }
+//                println()
+                called++
+                it.sum()
+            } finally {
+                inAggr = false
+            }
+        }, DataValueComputable
+        {
+            assertFalse(inAggr)
+            try {
+                inAggr = true
+//                println("distributing")
+                called++
+                DistributingIterator(3, it)
+            } finally {
+                inAggr = false
+            }
         })
 
         // test as distributing
@@ -489,12 +509,34 @@ class SmartVersionedDataTest {
         for (i in 0..10) {
             pa.value = i
             assertEquals(i, pa.value)
-            print("i:$i ")
+//            print("i:$i ")
+//            for (c in 0..2) {
+//                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
+//                print("[$c] -> $col ")
+//            }
+//            println()
+
             for (c in 0..2) {
                 val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
-                print("[$c] -> $col ")
+                assertEquals(col, pa[c].value)
             }
-            println()
+            //            println(pa)
+            assertEquals(i, pa.value)
+            //            println(pa)
+            println("called: $called")
+        }
+
+        // test connected distribution
+        pa.connect(v1)
+        for (i in 0..10) {
+            v1.value = i
+            assertEquals(i, pa.value)
+//            print("i:$i ")
+//            for (c in 0..2) {
+//                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
+//                print("[$c] -> $col ")
+//            }
+//            println()
 
             for (c in 0..2) {
                 val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
@@ -511,17 +553,36 @@ class SmartVersionedDataTest {
     fun test_propertyArrayAggregate() {
         val v1 = SmartVolatileData(1)
         val v2 = SmartVolatileData(20)
+        val v3 = SmartVolatileData(3)
         val va = SmartVersionedDataAlias(v1)
         var called = 0
+        var inAggr = false
 
         val pa = SmartVersionedPropertyArray<Int>("pa", 3, 0, DataValueComputable {
-            println("aggregating")
-            called++
-            it.sum()
-        }, DataValueComputable {
-            println("distributing")
-            called++
-            DistributingIterator(3, it)
+            assertFalse(inAggr)
+            try {
+                inAggr = true
+//                print("aggregating: ")
+//                for (n in it) {
+//                    print("$n ")
+//                }
+//                println()
+                called++
+                it.sum()
+            } finally {
+                inAggr = false
+            }
+        }, DataValueComputable
+        {
+            assertFalse(inAggr)
+            try {
+                inAggr = true
+//                println("distributing")
+                called++
+                DistributingIterator(3, it)
+            } finally {
+                inAggr = false
+            }
         })
 
         // test as aggregating
@@ -549,6 +610,55 @@ class SmartVersionedDataTest {
                 pa[1].value = b
                 for (c in 1..6) {
                     pa[2].value = c
+                    assertEquals(a + b + c, pa.value)
+                }
+            }
+        }
+
+        // test a connected array property
+        pa[0].connect(v1)
+        pa.value
+        println(pa)
+
+        v1.value = 10
+        pa[1].value = 20
+        pa[2].value = 30
+        println("about to value")
+        pa.value
+        println(pa)
+        assertEquals(60, pa.value)
+
+
+        for (a in 1..6) {
+            v1.value = a
+            for (b in 1..6) {
+                pa[1].value = b
+                for (c in 1..6) {
+                    pa[2].value = c
+                    assertEquals(a + b + c, pa.value)
+                }
+            }
+        }
+
+        pa[1].connect(v2)
+        for (a in 1..6) {
+            v1.value = a
+            for (b in 1..6) {
+                v2.value = b
+                for (c in 1..6) {
+                    pa[2].value = c
+                    assertEquals(a + b + c, pa.value)
+                }
+            }
+        }
+
+        pa[2].connect(v3)
+        for (a in 1..6) {
+            v1.value = a
+            for (b in 1..6) {
+                v2.value = b
+                for (c in 1..6) {
+                    v3.value = c
                     assertEquals(a + b + c, pa.value)
                 }
             }

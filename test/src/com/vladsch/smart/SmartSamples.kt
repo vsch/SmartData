@@ -89,9 +89,9 @@ class SmartSamples {
     @Test
     fun test_DataScopes() {
         val WIDTH = SmartVolatileDataKey("WIDTH", 0)
-        val MAX_WIDTH = SmartAggregatedDataKey("MAX_WIDTH", 0, WIDTH, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() } )
+        val MAX_WIDTH = SmartAggregatedDataKey("MAX_WIDTH", 0, WIDTH, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
         val ALIGNMENT = SmartVolatileDataKey("ALIGNMENT", TextAlignment.LEFT)
-        val COLUMN_ALIGNMENT = SmartDependentDataKey("COLUMN_ALIGNMENT", TextColumnAlignment.NULL_VALUE, listOf(ALIGNMENT, MAX_WIDTH), SmartScopes.SELF, { TextColumnAlignment(WIDTH.value(it), ALIGNMENT.value(it) ) })
+        val COLUMN_ALIGNMENT = SmartDependentDataKey("COLUMN_ALIGNMENT", TextColumnAlignment.NULL_VALUE, listOf(ALIGNMENT, MAX_WIDTH), SmartScopes.SELF, { TextColumnAlignment(WIDTH.value(it), ALIGNMENT.value(it)) })
 
         val topScope = SmartDataScopeManager.createDataScope("top")
         val child1 = topScope.createDataScope("child1")
@@ -120,6 +120,151 @@ class SmartSamples {
         println("MAX_WIDTH: ${maxWidth.value}")
     }
 
+    @Test
+    fun test_VariableSequence() {
+        val columns = SmartCharArraySequence("Column1|Column2|Column3".toCharArray())
+
+        // split into pieces
+        val splitColumns = columns.splitParts('|', includeDelimiter = false)
+        val col1 = SmartVariableCharSequence(splitColumns[0])
+        val col2 = SmartVariableCharSequence(splitColumns[1])
+        val col3 = SmartVariableCharSequence(splitColumns[2])
+
+        val delimiter = SmartCharArraySequence("|".toCharArray())
+
+        // splice them into a single sequence
+        val formattedColumns = SmartSegmentedCharSequence(delimiter, col1, delimiter, col2, delimiter, col3,delimiter)
+
+        // connect width and alignment of column 2 and 3 to corresponding properties of column 1
+        col2.widthDataPoint = col1.widthDataPoint
+        col3.widthDataPoint = col1.widthDataPoint
+        col2.alignmentDataPoint = col1.alignmentDataPoint
+        col3.alignmentDataPoint = col1.alignmentDataPoint
+
+        // output formatted sequence, all columns follow the setting of column 1
+        println("Unformatted Columns: $formattedColumns\n")
+        col1.width = 15
+        println("Formatted Columns: $formattedColumns\n")
+        col1.alignment = TextAlignment.CENTER
+        println("Formatted Columns: $formattedColumns\n")
+        col1.alignment = TextAlignment.RIGHT
+        println("Formatted Columns: $formattedColumns\n")
+    }
+
+    @Test
+    fun test_VariableSequenceSnapshot() {
+        val columns = SmartCharArraySequence("Column1|Column2|Column3".toCharArray())
+
+        // split into pieces
+        val splitColumns = columns.splitParts('|', includeDelimiter = false)
+        val col1 = SmartVariableCharSequence(splitColumns[0])
+        val col2 = SmartVariableCharSequence(splitColumns[1])
+        val col3 = SmartVariableCharSequence(splitColumns[2])
+
+        val delimiter = SmartCharArraySequence("|".toCharArray())
+
+        // splice them into a single sequence
+        val formattedColumns = SmartSegmentedCharSequence(delimiter, col1, delimiter, col2, delimiter, col3,delimiter)
+
+        // connect width and alignment of column 2 and 3 to corresponding properties of column 1
+        col2.widthDataPoint = col1.widthDataPoint
+        col3.widthDataPoint = col1.widthDataPoint
+        col2.alignmentDataPoint = col1.alignmentDataPoint
+        col3.alignmentDataPoint = col1.alignmentDataPoint
+
+        // output formatted sequence, all columns follow the setting of column 1
+        println("Unformatted Columns: $formattedColumns\n")
+        col1.width = 15
+        val cashedProxyLeft15 = formattedColumns.cachedProxy
+        println("Formatted Columns: $formattedColumns\n")
+        col1.alignment = TextAlignment.CENTER
+        val cashedProxyCenter15 = formattedColumns.cachedProxy
+        println("Formatted Columns: $formattedColumns\n")
+        col1.alignment = TextAlignment.RIGHT
+        val cashedProxyRight15 = formattedColumns.cachedProxy
+        println("Formatted Columns: $formattedColumns\n")
+
+        println("cachedProxyLeft15 isStale(${cashedProxyLeft15.version.isStale}): $cashedProxyLeft15\n")
+        println("cachedProxyCenter15 isStale(${cashedProxyCenter15.version.isStale}): $cashedProxyCenter15\n")
+        println("cachedProxyRight15 isStale(${cashedProxyRight15.version.isStale}): $cashedProxyRight15\n")
+    }
+
+    @Test
+    fun formatTable() {
+        // width of text in the column, without formatting
+        val COLUMN_WIDTH = SmartVolatileDataKey("COLUMN_WIDTH", 0)
+
+        // alignment of the column
+        val ALIGNMENT = SmartVolatileDataKey("ALIGNMENT", TextAlignment.LEFT)
+
+        // max column width across all rows in the table
+        val MAX_COLUMN_WIDTH = SmartAggregatedDataKey("MAX_COLUMN_WIDTH", 0, COLUMN_WIDTH, setOf(SmartScopes.RESULT_TOP, SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
+
+        // alignment of each in the top data scope, a copy of one provided by header row
+        val COLUMN_ALIGNMENT = SmartLatestDataKey("COLUMN_ALIGNMENT", TextAlignment.LEFT, ALIGNMENT, setOf(SmartScopes.RESULT_TOP, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS))
+
+        val tableDataScope = SmartDataScopeManager.createDataScope("tableDataScope")
+        var formattedTable = EditableCharSequence()
+
+        val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
+ --------|:-------- |:--------:|-------:
+Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
+Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
+""".toCharArray())
+
+        val tableRows = table.splitPartsSegmented('\n', false)
+
+        var row = 0
+        for (line in tableRows.segments) {
+            var formattedRow = EditableCharSequence()
+            val rowDataScope = tableDataScope.createDataScope("row:$row")
+            var col = 0
+            for (column in line.splitPartsSegmented('|', false).segments) {
+                val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
+                val formattedCol = SmartVariableCharSequence(column, if (headerParts != null) EMPTY_SEQUENCE else column)
+
+                // treatment of discretionary left align marker `:` in header. 1 to always add, 0 to leave as is, any other value to remove it
+                val discretionary = 1
+
+                if (headerParts != null) {
+                    val haveLeft = headerParts.segments[2] != NULL_SEQUENCE
+                    val haveRight = headerParts.segments[4] != NULL_SEQUENCE
+
+                    formattedCol.leftPadChar = '-'
+                    formattedCol.rightPadChar = '-'
+                    when {
+                        haveLeft && haveRight -> {
+                            ALIGNMENT[rowDataScope, col] = TextAlignment.CENTER
+                            formattedCol.prefix = ":"
+                            formattedCol.suffix = ":"
+                        }
+                        haveRight -> {
+                            ALIGNMENT[rowDataScope, col] = TextAlignment.RIGHT
+                            formattedCol.suffix = ":"
+                        }
+                        else -> {
+                            ALIGNMENT[rowDataScope, col] = TextAlignment.LEFT
+                            if (discretionary == 1 || discretionary == 0 && haveLeft) formattedCol.prefix = ":"
+                        }
+                    }
+                }
+
+                if (col > 0) formattedRow.append(" | ")
+                formattedRow.append(formattedCol)
+                rowDataScope[COLUMN_WIDTH, col] = formattedCol.lengthDataPoint
+                formattedCol.alignmentDataPoint = COLUMN_ALIGNMENT.dataPoint(tableDataScope, col)
+                formattedCol.widthDataPoint = MAX_COLUMN_WIDTH.dataPoint(tableDataScope, col)
+                col++
+            }
+
+            formattedTable.append("| ", formattedRow, " |\n")
+            row++
+        }
+
+        tableDataScope.finalizeAllScopes()
+        println("Unformatted Table\n$table\n")
+        println("Formatted Table\n$formattedTable\n")
+    }
 }
 
 

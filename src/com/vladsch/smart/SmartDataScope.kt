@@ -29,7 +29,7 @@ enum class SmartScopes(val flags: Int) {
     ANCESTORS(4),
     CHILDREN(8),
     DESCENDANTS(16),
-    TOP(32),                    // across indices within a scope, maybe?
+    RESULT_TOP(32), // result always in top scope, else SELF
     INDICES(64);                // across indices within a scope, maybe?
 
     companion object : BitSetEnum<SmartScopes>(SmartScopes::class.java, { it.flags }) {
@@ -61,7 +61,7 @@ abstract class SmartDataKey<V : Any> {
     constructor(id: String, nullValue: V, scopes: Set<SmartScopes>) {
         this.myId = id
         this.myNullValue = nullValue
-        this.myNullData = SmartImmutableData(nullValue)
+        this.myNullData = SmartImmutableData("$myId.nullValue", nullValue)
         this.myScopes = SmartScopes.asFlags(scopes)
     }
 
@@ -214,9 +214,9 @@ open class SmartParentComputedDataKey<V : Any>(id: String, nullValue: V, val com
     }
 }
 
-open class SmartComputedDataKey<V : Any>(id: String, nullValue: V, scopes: Set<SmartScopes>, override val dependencies: List<SmartDataKey<*>>, val computable: DataValueComputable<HashMap<SmartDataKey<*>, List<*>>, V>) : SmartDataKey<V>(id, nullValue, scopes) {
+open class SmartComputedDataKey<V : Any>(id: String, nullValue: V, override val dependencies: List<SmartDataKey<*>>, scopes: Set<SmartScopes>, val computable: DataValueComputable<HashMap<SmartDataKey<*>, List<*>>, V>) : SmartDataKey<V>(id, nullValue, scopes) {
 
-    constructor(id: String, nullValue: V, scopes: Set<SmartScopes>, dependencies: List<SmartDataKey<*>>, computable: (dependencies: HashMap<SmartDataKey<*>, List<*>>) -> V) : this(id, nullValue, scopes, dependencies, DataValueComputable { computable(it) })
+    constructor(id: String, nullValue: V, dependencies: List<SmartDataKey<*>>, scopes: Set<SmartScopes>, computable: (dependencies: HashMap<SmartDataKey<*>, List<*>>) -> V) : this(id, nullValue, dependencies, scopes, DataValueComputable { computable(it) })
 
     val myComputable: DataValueComputable<Iterable<SmartVersionedDataHolder<*>>, V> = DataValueComputable {
         // here we create a hash map of by out dependent keys to lists of passed in source scopes
@@ -264,7 +264,7 @@ open class SmartDependentDataKey<V : Any>(id: String, nullValue: V, override val
         val iterator = it.iterator()
 
         for (depKey in dependencies) {
-            params[depKey] = iterator.next()
+            params[depKey] = iterator.next().value
         }
 
         if (iterator.hasNext()) throw IllegalStateException("iterator hasNext() is true after all parameters have been used up")
@@ -314,14 +314,17 @@ class SmartAggregatedDataKey<V : Any>(id: String, nullValue: V, val dataKey: Sma
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
+//            println("creating connections for $myId[$index] on scope: ${result.name}")
             var dependents = ArrayList<SmartVersionedDataHolder<V>>()
 
             for (source in sources) {
                 val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
+//                println("adding dependent: $dependent")
                 dependents.add(dependent)
             }
 
             result.setValue(this, index, SmartVectorData(dependents, myComputable))
+//            println("created connections for $myId[$index] on scope: ${result.name}")
         }
     }
 }
@@ -546,8 +549,13 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         }
     }
 
+    private fun canSetDataPoint(key: SmartDataKey<*>, index: Int): Boolean {
+        val item = getRawValue(key, index)
+        return item == null || item is SmartVersionedDataAlias<*>
+    }
+
     open operator fun get(dataKey: SmartDataKey<*>, index: Int): SmartVersionedDataHolder<*> = dataPoint(dataKey, index)
-    open operator fun set(dataKey: SmartDataKey<*>, index: Int, value:SmartVersionedDataHolder<*>) {
+    open operator fun set(dataKey: SmartDataKey<*>, index: Int, value: SmartVersionedDataHolder<*>) {
         dataKey.setValue(this, index, value)
     }
 
@@ -558,20 +566,8 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
             dataPoint = dataKey.createDataAlias(this, index)
             myConsumers.putIfAbsent(dataKey, arrayListOf())
             myConsumers[dataKey]!!.add(index)
-        } else if (dataPoint !is SmartVersionedDataAlias<*>) {
-            // wrap it in aliased as per convention
-            dataPoint = dataKey.createDataAlias(dataPoint)
-            myValues[dataKey]!![index] = dataPoint
         }
         return dataPoint
-    }
-
-    private fun addConsumedKeys(keys: HashMap<SmartDataKey<*>, HashSet<SmartDataScope>>) {
-        addConsumedScopes(keys)
-
-        for (scope in myChildren.union(myDescendants)) {
-            scope.addConsumedScopes(keys)
-        }
     }
 
     private fun addConsumedScopes(keys: HashMap<SmartDataKey<*>, HashSet<SmartDataScope>>) {
@@ -610,8 +606,6 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
     }
 
     private fun addConsumedKeyIndices(dataKey: SmartDataKey<*>, scopesSet: Set<SmartDataScope>, indices: HashSet<Int>) {
-        addKeyIndices(dataKey, indices)
-
         for (scope in scopesSet) {
             scope.addKeyIndices(dataKey, indices)
         }
@@ -628,6 +622,12 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         }
     }
 
+    private fun addConsumedKeys(keys: HashSet<SmartDataKey<*>>) {
+        for (entry in myConsumers) {
+            keys.add(entry.key)
+        }
+    }
+
     /**
      * used to create smart data relationships
      *
@@ -635,15 +635,19 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
      */
     fun finalizeAllScopes() {
         if (parent != null) throw IllegalStateException("finalizeScope can only be invoked on top level dataScope object")
-        val consumedKeys = HashMap<SmartDataKey<*>, HashSet<SmartDataScope>>()
-        addConsumedKeys(consumedKeys)
+        val consumedKeys = HashSet<SmartDataKey<*>>()
+        val keyScopes = myChildren.union(myDescendants).union(setOf(this))
 
-        val computeKeys = SmartDataScopeManager.computeKeyOrder(consumedKeys.keys)
+        for (scope in keyScopes) {
+            scope.addConsumedKeys(consumedKeys)
+        }
 
+        val computeKeys = SmartDataScopeManager.computeKeyOrder(consumedKeys)
+
+        // compute the keys in order
         for (keyList in computeKeys) {
             for (key in keyList) {
-                val scopeSet = consumedKeys[key] ?: continue
-                finalizeKey(key, scopeSet)
+                finalizeKey(key, consumedKeys)
             }
         }
 
@@ -651,11 +655,23 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         finalizeParentProvided()
 
         // TODO: validate that all have been computed before clearing consumers for possible next batch
-        myConsumers.clear()
+        traceAndClear()
 
-        for (scope in myChildren.union(myDescendants)) {
-            scope.myConsumers.clear()
+        for (scope in keyScopes) {
+            scope.traceAndClear()
         }
+    }
+
+    private fun traceAndClear() {
+        for ((dataKey, indices) in consumers) {
+            print("$name: consumer of ${dataKey.myId} ")
+            for (index in indices) {
+                print("[$index: ${dataKey.value(this, index)?.value}] ")
+            }
+            println()
+        }
+
+        myConsumers.clear()
     }
 
     private fun finalizeParentProvided() {
@@ -678,11 +694,13 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         }
     }
 
-    private fun finalizeKey(dataKey: SmartDataKey<*>, keyScopes: HashSet<SmartDataScope>) {
+    private fun finalizeKey(dataKey: SmartDataKey<*>, consumedKeys: Set<SmartDataKey<*>>) {
         if (parent != null) throw IllegalStateException("finalizeKey should only be called from top level scope")
 
+        val keyScopes = myChildren.union(myDescendants).union(setOf(this))
         val indicesSet = HashSet<Int>()
-        addConsumedKeyIndices(dataKey, myChildren.union(myDescendants), indicesSet)
+
+        addConsumedKeyIndices(dataKey, keyScopes, indicesSet)
 
         if (!indicesSet.isEmpty()) {
             // we add a value at the top level for all dependencies of this key if one does not exist, this will provide the missing default for all descendants
@@ -694,21 +712,33 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
                 }
             }
 
-            for (scope in keyScopes.sortedBy { it.level }) {
-                scope.finalizeKeyScope(dataKey, this)
+            // now we compute
+            if (dataKey.myScopes and SmartScopes.RESULT_TOP.flags > 0) {
+                // results go to the top scope
+                finalizeKeyScope(dataKey, consumedKeys, keyScopes, indicesSet)
+            } else {
+                // results go to the individual scopes, finalization is done top down
+                val sortedScopes = keyScopes.sortedBy { it.level }
+                for (scope in sortedScopes) {
+                    scope.finalizeKeyScope(dataKey, consumedKeys, keyScopes, indicesSet)
+                }
             }
         }
     }
 
-    private fun finalizeKeyScope(dataKey: SmartDataKey<*>, topScope: SmartDataScope) {
+    private fun finalizeKeyScope(dataKey: SmartDataKey<*>, consumedKeys: Set<SmartDataKey<*>>, allScopeSet: Set<SmartDataScope>, allIndicesSet: Set<Int>) {
         val scopesSet = HashSet<SmartDataScope>()
+
         addKeyScopes(dataKey.myScopes, scopesSet)
+
         if (!scopesSet.isEmpty()) {
             val indicesSet = HashSet<Int>()
+            for (index in allIndicesSet) {
+                if (canSetDataPoint(dataKey, index)) indicesSet.add(index)
+            }
 
-            addConsumedKeyIndices(dataKey, setOf(this), indicesSet)
-            //println("finalizing $name[$dataKey] indices $indicesSet")
             if (!indicesSet.isEmpty()) {
+//                println("finalizing $name[$dataKey] indices $indicesSet on ${scopesSet.fold("") { a, b -> a +" "+ b.name }}")
                 dataKey.createData(this, scopesSet, indicesSet)
             }
         }
