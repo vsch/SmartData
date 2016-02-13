@@ -296,9 +296,9 @@ A data scope is a SmartVersionedData container where each value is identified by
 
 Scopes can be top level or have parent/child relationships to other scopes. A value not found at the child scope level will be taken from the parent and the parent's parent, as needed.  
 
-Automatically computed values can be used to connect to properties or as dependents of other computed data points. The wiring is done on `finalizeAllScopes()` method call on a top level scope. Only data points for which there is a consumer, or which are dependencies of other data points for which there is a consumer, will be created with all others are ignored. 
+Automatically computed values can be used to connect to properties or as dependents of other computed data points. The wiring is done on `finalizeAllScopes()` method call on a top level scope. Only data points for which there is a consumer, or which are dependencies of other data points for which there is a consumer, will be created with all others ignored. 
 
-All keys provide a default value so that if only a sub-set of dependent data points is available, defaults will be used for the missing values. 
+All keys provide a default value so that if only a subset of dependent data points is available, defaults will be used for the missing values. 
 
 Once a call to `finalizeAllScopes()` is done, the data scope is no longer involved and all computations and data propagation is done through `SmartVersionedData` classes, which **do not** keep a reference to the data scope that created them, so the data scopes can be garbage collected while the smart data classes live on. 
 
@@ -427,7 +427,7 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
     }
 ```
 
-The outputs shows the unformatted and formatted Markdown table:
+The output shows unformatted and formatted Markdown table:
 
 ```text
 Unformatted Table
