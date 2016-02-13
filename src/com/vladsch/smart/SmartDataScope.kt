@@ -314,17 +314,17 @@ class SmartAggregatedDataKey<V : Any>(id: String, nullValue: V, val dataKey: Sma
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
-//            println("creating connections for $myId[$index] on scope: ${result.name}")
+            //            println("creating connections for $myId[$index] on scope: ${result.name}")
             var dependents = ArrayList<SmartVersionedDataHolder<V>>()
 
             for (source in sources) {
                 val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
-//                println("adding dependent: $dependent")
+                //                println("adding dependent: $dependent")
                 dependents.add(dependent)
             }
 
             result.setValue(this, index, SmartVectorData(dependents, myComputable))
-//            println("created connections for $myId[$index] on scope: ${result.name}")
+            //            println("created connections for $myId[$index] on scope: ${result.name}")
         }
     }
 }
@@ -555,7 +555,13 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
     }
 
     open operator fun get(dataKey: SmartDataKey<*>, index: Int): SmartVersionedDataHolder<*> = dataPoint(dataKey, index)
+
     open operator fun set(dataKey: SmartDataKey<*>, index: Int, value: SmartVersionedDataHolder<*>) {
+        dataKey.setValue(this, index, value)
+    }
+
+    open operator fun set(dataKey: SmartDataKey<*>, value: SmartVersionedDataHolder<*>) {
+        val index = myValues[dataKey]?.size ?: 0
         dataKey.setValue(this, index, value)
     }
 
@@ -738,7 +744,7 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
             }
 
             if (!indicesSet.isEmpty()) {
-//                println("finalizing $name[$dataKey] indices $indicesSet on ${scopesSet.fold("") { a, b -> a +" "+ b.name }}")
+                //                println("finalizing $name[$dataKey] indices $indicesSet on ${scopesSet.fold("") { a, b -> a +" "+ b.name }}")
                 dataKey.createData(this, scopesSet, indicesSet)
             }
         }
