@@ -473,7 +473,7 @@ open class SmartVolatileData<V>(name: String, value: V) : SmartVolatileVersion()
     }
 }
 
-open class SmartCacheData<V>(name: String, dependency: SmartVersionedDataHolder<V>) : SmartCacheVersion(dependency), SmartVersionedDataHolder<V> {
+open class SmartCachedData<V>(name: String, dependency: SmartVersionedDataHolder<V>) : SmartCacheVersion(dependency), SmartVersionedDataHolder<V> {
     constructor(dependency: SmartVersionedDataHolder<V>) : this("<unnamed>", dependency)
 
     val myName = name
@@ -513,7 +513,7 @@ open class SmartCacheData<V>(name: String, dependency: SmartVersionedDataHolder<
  * isStale always false
  * isMutable always false
  */
-open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHolder<V>) : SmartCacheData<V>(name, dependency), SmartVersionedDataHolder<V> {
+open class SmartSnapshotData<V>(name: String, dependency: SmartVersionedDataHolder<V>) : SmartCachedData<V>(name, dependency), SmartVersionedDataHolder<V> {
     constructor(dependency: SmartVersionedDataHolder<V>) : this("<unnamed>", dependency)
 
     override val isStale: Boolean

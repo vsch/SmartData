@@ -50,16 +50,44 @@ The library consists of several inter-operating smart data classes:
 
 - `SmartImmutableData<V>`: immutable value of V, never changes, equivalent to a constant
 - `SmartVolatileData<V>`:  volatile value of V, updated via `instance.value = aValue`
-- `SmartSnapshotData<V>`: immutable copy of a changing value, can us `instance.isStale` to test whether the copy is out of date 
+- `SmartCachedData<V>`: immutable copy of a changing value, can us `instance.isStale` to test whether the copy is out of date 
+- `SmartSnapshotData<V>`: immutable copy of a changing value, `instance.isStale` is always false, use to create immutable copy of mutable data. 
 - `SmartComputedData<V>`: computed value, update via `instance.nextVersion()`
-- `SmartUpdateDependentData<V>`: computed value that is based on 1..n other versioned data instances. Test via `instance.isStale` and use `instance.nextVersion()` to update
-- `SmartDependentData<V>`: computed value same as SmartDependentData, except automatically updates on access to any of its properties if dependent data changed since last update, otherwise returns previously computed value 
+- `SmartUpdateDependentData<V>`: computed value that is dependent on other smart data values. Test via `instance.isStale` and use `instance.nextVersion()` to update
+- `SmartDependentData<V>`: computed value same as SmartDependentData, except automatically updates on access to its value property if dependent data changed since last update, otherwise returns previously computed value 
 - `SmartUpdateIterableData<V>`: computed value based on iteration over dependent data, Test via `instance.isStale` and use `instance.nextVersion()`
-- `SmartIterableData<V>`: computed based on iteration over dependent data, except automatically updates on access to any of its properties if dependent data changed since last update, otherwise returns previously computed value
-- `SmartLatestDependentData<V>`: computed value based on the value of the dependent that has the greatest `versionSerial`. In the event more than one dependent has the same serial which is greatest, then the value of the first one is returned. 
+- `SmartIterableData<V>`: computed based on iteration over dependent data, except automatically updates on access to any of its value property if dependent data changed since last update, otherwise returns previously computed value
+- `SmartUpdateVectorData<V>`: computed value based on iteration over dependent data of the same type `V`, Test via `instance.isStale` and use `instance.nextVersion()`
+- `SmartVectorData<V>`: computed based on iteration over dependent data of the same type `V`, except automatically updates on access to any of its value property if dependent data changed since last update, otherwise returns previously computed value
+- `SmartLatestDependentData<V>`: computed value based on the value of the dependent that has the greatest `versionSerial`. In the event more than one dependent has the same serial which is greatest, then the value of the first one is returned. Automatically updates its value property on access if it is stale. 
 - `SmartVersionedDataAlias<V>`: a versioned value that holds another versioned value, returned versionSerial will be the greater of versionSerial of the contained value or the value returned by SmartVersionManager.nextSerial at the time when the alias was set. This allows versioned aliases to be switched causing any other versioned values that depend on their values to be updated, similarly if the contained value is updated it too will cause dependent updates.  
+- `SmartVersionedProperty<V>`: a versioned value that can be connected to any other smart data value of the same type `V`. It exposes a `value` getter/setter that cab be programmatically modified and `connect(aliased: SmartVersionedDataHolder<V>)` and `disconnect()` methods to connect data points. The `value` property will return the latest version value either set with the value setter or via the connected data point value change. 
+
+    ```kotlin
+    fun prop() {
+        val prop = SmartVersionedProperty(0)
+        val control = SmartVolatileData(5)
         
-For example the following code will create a computed value that is always the sum of its dependents:
+        prop.value == 0  // true
+        prop.connect(control)
+        
+        prop.value == 5 // true
+        prop.value = 10
+        
+        prop.value == 10 // true
+        
+        control.value = 6
+        prop.value == 6
+    }
+    ```
+    
+- `SmartVersionedPropertyArray<V>`: a property that is also an array of properties accessible via get(int). Changes to its value can be done through the `value` property on the instance or through the `value` property of its array of properties. If the latest change is done on the `value` of the instance then the `value` will be distributed to the array properties via a user provided function. If the latest change is in one of the contained array properties then the `instance.value` will be the aggregated `value` computed on the instances via a user provided aggregate function. Used to aggregate and distribute column widths in a table column that spans multiple columns. You may find other uses for it. 
+
+    The instance `connect()` method can be used to get/set the `value` property. Similarly, `get(n).connect(...)` can be used to do the same for contained array of properties. The reverse is also true, you can use the instance to provide a value to another property, and the same for contained array of properties.
+    
+    This way the class can be used as an aggregator of properties or distributor, depending on how it is wired to other data points.
+    
+I don't think in prose so it may be easier to understand the uses with some sample code. For example the following code will create a computed value that is always the sum of its dependents:
    
 ```kotlin
     fun test_Sum() {
@@ -164,9 +192,9 @@ Prod of 100 200 300 is 6000000
 
 ### Smart Character Sequences
 
-These are CharSequences that have extra characteristics like ability to keep track of offset into original CharSequence even after being chopped up with subSequence() and spliced with append()
+These are CharSequences that have extra characteristics, including the ability to keep track of offset into original CharSequence even after being chopped up with subSequence() and spliced with append(). That way formatted text can still be traced back to the unformatted offsets in the document.
 
-Some are dynamic and will return a different result if their properties change. They also support SmartVersionedData and SmartVersionedProperties allowing their properties to be taken from data points "connected" to their properties. 
+Some are dynamic and will return a different result if their properties change. They also support SmartVersionedData and SmartVersionedProperties allowing their properties to be taken from data points "connected" to their properties instead of being manually configured. 
 
 The example below shows this at work:
 
@@ -215,7 +243,7 @@ Formatted Columns: |        Column1|        Column2|        Column3|
 
 ```
 
-Note that it is the same sequence instance but its content is changed to reflect property changes of its contained sub-sequences. 
+Note that it is the same sequence instance but its content reflects property changes of its contained sub-sequences. 
 
 This allows the creation of self-formatting smart sequences what expose formatting options to vary the formatting style. To prevent the sequence from being modified simply get `cachedProxy` sequence from any of the `SmartCharSequence` implementations which will give you a SmartCharArraySequence that is immutable, but you can always test its version's isStale property to see if the original has changed.    
 
@@ -264,7 +292,15 @@ cachedProxyRight15 isStale(false): |        Column1|        Column2|        Colu
 
 ### Smart Data Scopes
 
-A data scope is a SmartVersionedData container where each value is identified by a key: `SmartDataKey<V:Any>` which defines the data type, default value and optionally how the value is computed and over what related scopes: ANCESTORS, PARENT, SELF, CHILDREN, DESCENDANTS. Each data point represents N values indexed by an arbitrary integer.
+A data scope is a SmartVersionedData container where each value is identified by a key: `SmartDataKey<V:Any>` which defines the data type, default value and optionally how the value is computed and over what related scopes: ANCESTORS, PARENT, SELF, CHILDREN, DESCENDANTS and dependent on other data keys. Each key represents N data points indexed by an arbitrary integer within a data scope.
+
+Scopes can be top level or have parent/child relationships to other scopes. A value not found at the child scope level will be taken from the parent and the parent's parent, as needed.  
+
+Automatically computed values can be used to connect to properties or as dependents of other computed data points. The wiring is done on `finalizeAllScopes()` method call on a top level scope. Only data points for which there is a consumer, or which are dependencies of other data points for which there is a consumer, will be created with all others are ignored. 
+
+All keys provide a default value so that if only a sub-set of dependent data points is available, defaults will be used for the missing values. 
+
+Once a call to `finalizeAllScopes()` is done, the data scope is no longer involved and all computations and data propagation is done through `SmartVersionedData` classes, which **do not** keep a reference to the data scope that created them, so the data scopes can be garbage collected while the smart data classes live on. 
 
 This is easiest to show with an example:
 

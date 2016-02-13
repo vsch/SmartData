@@ -229,8 +229,8 @@ class SmartVersionedDataTest {
     fun test_snapshot() {
         var v1 = SmartImmutableData("v1", 1)
         var v2 = SmartVolatileData("v2", 2)
-        var vs1 = SmartCacheData("vs1", v1)
-        var vs2 = SmartCacheData("vs2", v2)
+        var vs1 = SmartCachedData("vs1", v1)
+        var vs2 = SmartCachedData("vs2", v2)
 
         println("$v1, $v2, $vs1, $vs2")
 
