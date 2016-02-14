@@ -21,7 +21,7 @@
 
 package com.vladsch.smart
 
-open class SafeCharSequenceRangeImpl @JvmOverloads constructor(charSequence: CharSequence, startIndex: Int = 0, endIndex: Int = charSequence.length, safeError: SafeCharSequenceError = SafeCharSequenceErrorImpl()) : SafeCharSequenceRange, SafeCharSequenceError by safeError {
+open class SafeCharSequenceRange @JvmOverloads constructor(charSequence: CharSequence, startIndex: Int = 0, endIndex: Int = charSequence.length, safeError: SafeCharSequenceError = SafeCharSequenceErrorImpl()) : SafeCharSequenceRanger, SafeCharSequenceError by safeError {
 
     protected val myError = safeError
     protected val myChars: CharSequence = charSequence
@@ -98,27 +98,27 @@ open class SafeCharSequenceRangeImpl @JvmOverloads constructor(charSequence: Cha
         return myChars.subSequence(rawCharIndex(myStartIndex), rawCharIndex(myEndIndex))
     }
 
-    private fun unsafeSubSequence(startIndex: Int, endIndex: Int): SafeCharSequenceRange {
-        val result = SafeCharSequenceRangeImpl(myChars, rawCharIndex(startIndex), rawCharIndex(endIndex))
+    private fun unsafeSubSequence(startIndex: Int, endIndex: Int): SafeCharSequenceRanger {
+        val result = SafeCharSequenceRange(myChars, rawCharIndex(startIndex), rawCharIndex(endIndex))
         // transfer some relevant settings
         result.myBeforeStartNonChar = myBeforeStartNonChar
         result.myAfterEndNonChar = myAfterEndNonChar
         return result
     }
 
-    override fun rawSubSequence(startIndex: Int, endIndex: Int): SafeCharSequenceRange {
+    override fun rawSubSequence(startIndex: Int, endIndex: Int): SafeCharSequenceRanger {
         val safe = safeRawRange(startIndex, endIndex)
         return unsafeSubSequence(safe.start, safe.end)
     }
 
-    override fun subSequence(startIndex: Int, endIndex: Int): SafeCharSequenceRange {
+    override fun subSequence(startIndex: Int, endIndex: Int): SafeCharSequenceRanger {
         val safe = safeRange(startIndex, endIndex)
-        return SafeCharSequenceRangeImpl(myChars, rawCharIndex(myStartIndex + safe.start), rawCharIndex(myStartIndex + safe.end))
+        return SafeCharSequenceRange(myChars, rawCharIndex(myStartIndex + safe.start), rawCharIndex(myStartIndex + safe.end))
     }
 
-    override fun getSubSequence(): SafeCharSequenceRange = unsafeSubSequence(myStartIndex, myEndIndex)
-    override fun getBeforeStart(): SafeCharSequenceRange = unsafeSubSequence(0, myStartIndex)
-    override fun getAfterEnd(): SafeCharSequenceRange = unsafeSubSequence(myEndIndex, rawLength)
+    override fun getSubSequence(): SafeCharSequenceRanger = unsafeSubSequence(myStartIndex, myEndIndex)
+    override fun getBeforeStart(): SafeCharSequenceRanger = unsafeSubSequence(0, myStartIndex)
+    override fun getAfterEnd(): SafeCharSequenceRanger = unsafeSubSequence(myEndIndex, rawLength)
 
     protected fun rawCharIndex(index: Int): Int {
         return myStart + index

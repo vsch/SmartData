@@ -23,7 +23,7 @@ package com.vladsch.smart;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface SafeCharSequenceIndex extends SafeCharSequenceError {
+public interface SafeCharSequenceIndexer extends SafeCharSequenceError {
     int getIndex();
     void setIndex(int index);
 
@@ -43,9 +43,24 @@ public interface SafeCharSequenceIndex extends SafeCharSequenceError {
     int startOfNextSkipLines(int lines);
 
     @NotNull
-    SafeCharSequence getBeforeIndex();
+    SafeCharSequence getBeforeIndexChars();
     @NotNull
-    SafeCharSequence getAfterIndex();
+    SafeCharSequence getAfterIndexChars();
     @NotNull
-    SafeCharSequence getLine();
+    SafeCharSequence getLineChars();
+    @NotNull
+    SafeCharSequence getStartOfLineToIndexChars();
+    @NotNull
+    SafeCharSequence getIndexToEndOfLineChars();
+    @NotNull
+    SafeCharSequence getFirstNonBlankToIndexChars();
+    @NotNull
+    SafeCharSequence getAfterIndexToLastNonBlankChars();
+    int getAfterLastNonBlank();
+    @NotNull
+    SafeCharSequence getFirstToLastNonBlankLineChars();
+    @NotNull
+    SafeCharSequence getFirstNonBlankToEndOfLineChars();
+    @NotNull
+    SafeCharSequence getStartOfLineToLastNonBlankChars();
 }

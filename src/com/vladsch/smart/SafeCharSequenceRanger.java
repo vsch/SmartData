@@ -23,7 +23,7 @@ package com.vladsch.smart;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface SafeCharSequenceRange extends SafeCharSequence {
+public interface SafeCharSequenceRanger extends SafeCharSequence {
     @NotNull
     SafeCharSequenceError getCharSequenceError();
 
@@ -35,17 +35,17 @@ public interface SafeCharSequenceRange extends SafeCharSequence {
 
     @NotNull
     @Override
-    SafeCharSequenceRange subSequence(int start, int end);
+    SafeCharSequenceRanger subSequence(int start, int end);
 
     @NotNull
-    SafeCharSequenceRange rawSubSequence(int start, int end);
+    SafeCharSequenceRanger rawSubSequence(int start, int end);
 
     @NotNull
-    SafeCharSequenceRange getSubSequence();
+    SafeCharSequenceRanger getSubSequence();
     @NotNull
-    SafeCharSequenceRange getBeforeStart();
+    SafeCharSequenceRanger getBeforeStart();
     @NotNull
-    SafeCharSequenceRange getAfterEnd();
+    SafeCharSequenceRanger getAfterEnd();
 
     int safeRawIndex(int index);
     int safeRawInclusiveIndex(int index);

@@ -164,3 +164,7 @@ fun CharSequence.indexLeading(index: Int, scanner: (char: Char) -> Int?): Int {
     return length
 }
 
+fun CharSequence.asString():String{
+    return StringBuilder().append(this).toString()
+}
+

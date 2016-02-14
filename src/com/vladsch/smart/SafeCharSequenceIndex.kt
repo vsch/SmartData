@@ -21,8 +21,8 @@
 
 package com.vladsch.smart
 
-class SafeCharSequenceIndexImpl @JvmOverloads constructor(chars:SafeCharSequence, index: Int = 0) : SafeCharSequenceIndex, SafeCharSequenceError by chars {
-    @JvmOverloads constructor(chars: CharSequence, index: Int = 0):this(SafeCharSequenceRangeImpl(chars), index)
+class SafeCharSequenceIndex @JvmOverloads constructor(chars:SafeCharSequence, index: Int = 0) : SafeCharSequenceIndexer, SafeCharSequenceError by chars {
+    @JvmOverloads constructor(chars: CharSequence, index: Int = 0):this(SafeCharSequenceRange(chars), index)
 
     protected val myChars:SafeCharSequence = chars
     protected var myIndex:Int = myChars.safeIndex(index)
@@ -33,9 +33,17 @@ class SafeCharSequenceIndexImpl @JvmOverloads constructor(chars:SafeCharSequence
     }
 
     override fun getChar(): Char = myChars[myIndex]
-    override fun getBeforeIndex(): SafeCharSequence = myChars.subSequence(0, myIndex)
-    override fun getAfterIndex(): SafeCharSequence = myChars.subSequence(myIndex, myChars.length)
-    override fun getLine(): SafeCharSequence = myChars.subSequence(startOfLine, endOfLine)
+    override fun getBeforeIndexChars(): SafeCharSequence = myChars.subSequence(0, myIndex)
+    override fun getAfterIndexChars(): SafeCharSequence = myChars.subSequence(myIndex, myChars.length)
+
+    override fun getLineChars(): SafeCharSequence = myChars.subSequence(startOfLine, endOfLine)
+    override fun getFirstToLastNonBlankLineChars(): SafeCharSequence = myChars.subSequence(firstNonBlank, afterLastNonBlank)
+    override fun getFirstNonBlankToEndOfLineChars(): SafeCharSequence = myChars.subSequence(firstNonBlank, endOfLine)
+    override fun getStartOfLineToLastNonBlankChars(): SafeCharSequence = myChars.subSequence(startOfLine, afterLastNonBlank)
+    override fun getStartOfLineToIndexChars(): SafeCharSequence = myChars.subSequence(startOfLine, myIndex)
+    override fun getFirstNonBlankToIndexChars(): SafeCharSequence = myChars.subSequence(firstNonBlank, myIndex)
+    override fun getIndexToEndOfLineChars(): SafeCharSequence = myChars.subSequence(myIndex, endOfLine)
+    override fun getAfterIndexToLastNonBlankChars(): SafeCharSequence = myChars.subSequence(myIndex, afterLastNonBlank)
 
     override fun getStartOfLine(): Int {
         return myChars.safeIndex(myChars.indexTrailing(myIndex) {
@@ -64,6 +72,15 @@ class SafeCharSequenceIndexImpl @JvmOverloads constructor(chars:SafeCharSequence
         })
     }
 
+    override fun getAfterLastNonBlank(): Int {
+        return myChars.safeIndex(myChars.indexTrailing(endOfLine) {
+            when (it) {
+                ' ', '\t' -> null
+                else -> 1
+            }
+        })
+    }
+
     override fun getFirstNonBlank(): Int {
         return myChars.safeIndex(myChars.indexLeading(startOfLine) {
             when (it) {
@@ -82,18 +99,24 @@ class SafeCharSequenceIndexImpl @JvmOverloads constructor(chars:SafeCharSequence
     }
 
     override fun endOfPreviousSkipLines(lines: Int): Int {
-        var lastEndOfLine = endOfLine
+        val savedIndex = index
+        index = endOfLine
         var skipLines = lines
         clearHadSafeErrors()
-        while (!hadSafeErrors && skipLines-- > 0) lastEndOfLine = endOfPreviousLine
+        while (!hadSafeErrors && skipLines-- > 0) index = endOfPreviousLine
+        val lastEndOfLine = index
+        index = savedIndex
         return lastEndOfLine
     }
 
     override fun startOfNextSkipLines(lines: Int): Int {
-        var lastStartOfLine = startOfLine
+        val savedIndex = index
+        index = startOfLine
         var skipLines = lines
         clearHadSafeErrors()
-        while (!hadSafeErrors && skipLines-- > 0) lastStartOfLine = startOfNextLine
+        while (!hadSafeErrors && skipLines-- > 0) index = startOfNextLine
+        val lastStartOfLine = index
+        index = savedIndex
         return lastStartOfLine
     }
 

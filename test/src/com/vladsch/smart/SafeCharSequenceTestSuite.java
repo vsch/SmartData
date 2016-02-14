@@ -28,8 +28,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         CharSequenceErrorTest.class,
         CharSequenceRangeTest.class,
-        CharSequenceIndexTest.class,
-        CharSequenceInfoTest.class
+        CharSequenceIndexTest.class
 })
 
 public class SafeCharSequenceTestSuite {
