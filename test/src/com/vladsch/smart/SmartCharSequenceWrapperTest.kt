@@ -93,4 +93,21 @@ class SmartCharSequenceWrapperTest() {
         //        assertEquals(true, charSeq2.splicedWith(charSeq3) != null)
         //        assertEquals(charSeq.subSequence(0, 33).toString(), charSeq1.splicedWith(charSeq2.splicedWith(charSeq3)).toString())
     }
+
+    @Test
+    @Throws(Exception::class)
+    fun test_basic7() {
+        val charSeq = SmartCharSequenceWrapper(chars, 0, string.length);
+        val charSeq1 = charSeq.subSequence(0, 11)
+        val charSeq2 = charSeq.subSequence(11, 22)
+        val charSeq3 = charSeq.subSequence(22, 33)
+        assertEquals(string.substring(0, 11), String(charSeq1.chars))
+        assertEquals(string.substring(11, 22), String(charSeq2.chars))
+        assertEquals(string.substring(22, 33), String(charSeq3.chars))
+
+        // these are contiguous
+        //        assertEquals(true, charSeq1.splicedWith(charSeq2) != null)
+        //        assertEquals(true, charSeq2.splicedWith(charSeq3) != null)
+        //        assertEquals(charSeq.subSequence(0, 33).toString(), charSeq1.splicedWith(charSeq2.splicedWith(charSeq3)).toString())
+    }
 }

@@ -1,3 +1,8 @@
+### 0.0.3 - Bug Fixes
+
+- fix recursion in SmartCharSequenceWrapper on getCharsImpl(), add test for this
+- add SafeCharSequence class for working with char sequences without exceptions and with extra information
+
 ### 0.0.2 - SmartVersion/SmartVersionedData Optimizations
 
 - change smart versions never self update, all require nextVersion() call to update

@@ -42,7 +42,6 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
     }
 
     override fun charAtImpl(index: Int): Char = myChars[myStart + index]
-    override fun getCharsImpl(): CharArray = chars
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) {
         val iMax = length
         for (i in 0..iMax - 1) {
