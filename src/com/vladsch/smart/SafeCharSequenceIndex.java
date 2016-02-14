@@ -21,14 +21,31 @@
 
 package com.vladsch.smart;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.jetbrains.annotations.NotNull;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-        SmartCharSequenceTestSuite.class,
-        SafeCharSequenceTestSuite.class
-})
+public interface SafeCharSequenceIndex extends SafeCharSequenceError {
+    int getIndex();
+    void setIndex(int index);
 
-public class SmartTestSuite {
+    char getChar();
+    int getStartOfLine();
+    int getEndOfLine();
+    int getLastNonBlank();
+    int getFirstNonBlank();
+    boolean isBlankLine();
+    boolean isEmptyLine();
+    int getIndent();
+    int getColumn();
+    int columnOf(int index);
+    int getEndOfPreviousLine();
+    int getStartOfNextLine();
+    int endOfPreviousSkipLines(int lines);
+    int startOfNextSkipLines(int lines);
+
+    @NotNull
+    SafeCharSequence getBeforeIndex();
+    @NotNull
+    SafeCharSequence getAfterIndex();
+    @NotNull
+    SafeCharSequence getLine();
 }

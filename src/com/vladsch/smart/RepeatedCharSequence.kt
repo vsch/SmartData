@@ -43,6 +43,6 @@ class RepeatedCharSequence(chars: CharArray, startIndex: Int, endIndex: Int) : C
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
         if (startIndex >= 0 && startIndex <= endIndex && endIndex <= length) return if (startIndex == endIndex) EMPTY_SEQUENCE else RepeatedCharSequence(myChars, myStartIndex + startIndex, myStartIndex + endIndex)
-        throw UnsupportedOperationException()
+        throw IllegalArgumentException("subSequence($startIndex, $endIndex) in RepeatedCharSequence('', $myStartIndex, $myEndIndex)")
     }
 }

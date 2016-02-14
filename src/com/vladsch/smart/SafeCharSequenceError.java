@@ -21,14 +21,20 @@
 
 package com.vladsch.smart;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.jetbrains.annotations.NotNull;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-        SmartCharSequenceTestSuite.class,
-        SafeCharSequenceTestSuite.class
-})
+public interface SafeCharSequenceError {
+    int getSafeErrors();
+    void clearSafeErrors();
+    boolean getHadSafeErrors();
+    void clearHadSafeErrors();
+    boolean getHadSafeErrorsAndClear();
+    int getLastSafeErrors();
 
-public class SmartTestSuite {
+    // increment error and return value before incrementing
+    int addSafeError();
+
+    @NotNull
+    SafeCharSequenceError getSafeErrorSnapshot();
+    void setSafeErrorSnapshot(@NotNull SafeCharSequenceError snapshot);
 }

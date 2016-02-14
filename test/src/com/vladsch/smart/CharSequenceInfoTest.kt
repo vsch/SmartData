@@ -53,7 +53,7 @@ Line15"""
     fun test_startOfLine() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.startIndex(i), csInfo.startOfLine)
             }
         }
@@ -63,7 +63,7 @@ Line15"""
     fun test_startOfLineSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", 0, csInfo.startOfLine)
             }
         }
@@ -73,7 +73,7 @@ Line15"""
     fun test_endOfLine() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.endIndex(i), csInfo.endOfLine)
             }
         }
@@ -83,7 +83,7 @@ Line15"""
     fun test_endOfLineSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.endIndex(i) - charLines.startIndex(i), csInfo.endOfLine)
             }
         }
@@ -93,7 +93,7 @@ Line15"""
     fun test_firstNonBlank() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.startIndex(i) + charLines.segments[i].countLeading(' '), csInfo.firstNonBlank)
             }
         }
@@ -103,7 +103,7 @@ Line15"""
     fun test_firstNonBlankSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.segments[i].countLeading(' '), csInfo.firstNonBlank)
             }
         }
@@ -113,7 +113,7 @@ Line15"""
     fun test_indent() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.segments[i].countLeading(' '), csInfo.indent)
             }
         }
@@ -123,7 +123,7 @@ Line15"""
     fun test_indentSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.segments[i].countLeading(' '), csInfo.indent)
             }
         }
@@ -133,7 +133,7 @@ Line15"""
     fun test_lastNonBlank() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.lastIndex(i) - charLines.segments[i].countTrailing(' '), csInfo.lastNonBlank)
             }
         }
@@ -143,7 +143,7 @@ Line15"""
     fun test_lastNonBlankSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", charLines.lastIndex(i) - charLines.startIndex(i) - charLines.segments[i].countTrailing(' '), csInfo.lastNonBlank)
             }
         }
@@ -153,7 +153,7 @@ Line15"""
     fun test_isBlankLine() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", i in 11..14, csInfo.isBlankLine)
             }
         }
@@ -163,7 +163,7 @@ Line15"""
     fun test_isBlankLineSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", i in 11..14, csInfo.isBlankLine)
             }
         }
@@ -173,7 +173,7 @@ Line15"""
     fun test_isEmptyLine() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", i in 11..11, csInfo.isEmptyLine)
             }
         }
@@ -183,7 +183,7 @@ Line15"""
     fun test_isEmptyLineSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", i in 11..11, csInfo.isEmptyLine)
             }
         }
@@ -193,7 +193,7 @@ Line15"""
     fun test_columnOf() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines, charLines.startIndex(i) + j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines, charLines.startIndex(i) + j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", j, csInfo.column)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", j, csInfo.columnOf(charLines.startIndex(i) + j))
             }
@@ -204,7 +204,7 @@ Line15"""
     fun test_columnOfSingle() {
         for (i in 0..charLines.segments.lastIndex) {
             for (j in 0..(charLines.lastIndex(i)-charLines.startIndex(i))) {
-                val csInfo = CharSequenceInfo(charLines.getSequence(i), j)
+                val csInfo = SafeCharSequenceIndexImpl(charLines.getSequence(i), j)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", j, csInfo.column)
                 assertEquals("i:$i, j:$j index:${csInfo.index} start:${csInfo.startOfLine} end:${csInfo.endOfLine} first:${csInfo.firstNonBlank} last:${csInfo.lastNonBlank}", j, csInfo.columnOf(j))
             }
