@@ -22,21 +22,56 @@ public interface SafeCharSequence extends CharSequence, SafeCharSequenceError {
     @NotNull
     SafeCharSequence subSequence(int start, int end);
 
+    /**
+     * @return the underlying non-safe character sequence
+     */
     @NotNull
     CharSequence getCharSequence();
 
+    /**
+     * @return first/last characters of the sequence or the beforeStartNonChar/afterEndNonChar if the sequence is empty
+     */
+    char getFirstChar();
+    char getLastChar();
+
+    /**
+     * @return true if the corresponding sequence is empty/blank correspondingly.
+     */
+    boolean isEmpty();
+    boolean isBlank();
+
+    /**
+     * @return character values used when index is before the 0 index or >= length of the sequence.
+     *
+     * Default value for both of these properties is '\u0000' you can set them to any character value and
+     * any access to charAt(index) with index outside the valid range will return the corresponding character and increment
+     * the safeErrors property.
+     *
+     */
     char getBeforeStartNonChar();
     void setBeforeStartNonChar(char value);
     char getAfterEndNonChar();
     void setAfterEndNonChar(char value);
 
+    /**
+     * @param index
+     * @return a valid index 0..length range, if passed parameter is outside this range then safeErrors will be incremented
+     */
     int safeIndex(int index);
+
+    /**
+     * @param index
+     * @return a valid index 0..length-1 range, if passed parameter is outside this range then safeErrors will be incremented
+     */
     int safeInclusiveIndex(int index);
 
+    /**
+     * @param startIndex    start index of the range 0..length
+     * @param endIndex      end index of the range 0..length
+     * @return              a valid range (even if it has to be empty) whose properties maintain 0 <= start <= end <= length relationship
+     *                      if passed in parameters do meet these conditions safeErrors is incremented and a valid range is returned.
+     */
     @NotNull
     Range safeRange(int startIndex, int endIndex);
-    char getFirstChar();
-    char getLastChar();
-    boolean isEmpty();
-    boolean isBlank();
+
 }

@@ -21,11 +21,11 @@
 
 package com.vladsch.smart
 
-class SafeCharSequenceIndex @JvmOverloads constructor(chars:SafeCharSequence, index: Int = 0) : SafeCharSequenceIndexer, SafeCharSequenceError by chars {
-    @JvmOverloads constructor(chars: CharSequence, index: Int = 0):this(SafeCharSequenceRange(chars), index)
+class SafeCharSequenceIndex @JvmOverloads constructor(chars: SafeCharSequence, index: Int = 0) : SafeCharSequenceIndexer, SafeCharSequenceError by chars {
+    @JvmOverloads constructor(chars: CharSequence, index: Int = 0) : this(SafeCharSequenceRange(chars), index)
 
-    protected val myChars:SafeCharSequence = chars
-    protected var myIndex:Int = myChars.safeIndex(index)
+    protected val myChars: SafeCharSequence = chars
+    protected var myIndex: Int = myChars.safeIndex(index)
 
     override fun getIndex(): Int = myIndex
     override fun setIndex(index: Int) {
@@ -91,6 +91,7 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars:SafeCharSequence, in
     }
 
     override fun getEndOfPreviousLine(): Int {
+        if (myIndex == myChars.length && myIndex > 0) myIndex--
         return myChars.safeIndex(startOfLine - 1)
     }
 
@@ -99,23 +100,27 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars:SafeCharSequence, in
     }
 
     override fun endOfPreviousSkipLines(lines: Int): Int {
-        val savedIndex = index
-        index = endOfLine
         var skipLines = lines
+        val savedIndex = index
+        index = startOfLine
         clearHadSafeErrors()
-        while (!hadSafeErrors && skipLines-- > 0) index = endOfPreviousLine
-        val lastEndOfLine = index
+        while (!hadSafeErrors && skipLines-- > 0) {
+            index = endOfPreviousLine
+        }
+        val lastEndOfLine = if (hadSafeErrors) 0 else index
         index = savedIndex
         return lastEndOfLine
     }
 
     override fun startOfNextSkipLines(lines: Int): Int {
-        val savedIndex = index
-        index = startOfLine
         var skipLines = lines
+        val savedIndex = index
+        index = endOfLine
         clearHadSafeErrors()
-        while (!hadSafeErrors && skipLines-- > 0) index = startOfNextLine
-        val lastStartOfLine = index
+        while (!hadSafeErrors && skipLines-- > 0) {
+            index = startOfNextLine
+        }
+        val lastStartOfLine = if (hadSafeErrors) myChars.length else index
         index = savedIndex
         return lastStartOfLine
     }

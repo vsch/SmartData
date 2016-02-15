@@ -24,7 +24,11 @@ The library consists of several inter-operating smart data classes:
         
     - all variable content sequences work with SmartVersions and SmartVersionedData 
     
-4. SmartDataScopes: a set of classes that work like a switchboard for interconnecting data providers, data consumers with optional computations performed in between. These are used with versioned data and smart sequences to implement complex formatting without having to concern yourself with complexity of dynamically routing data, figuring out data dependencies or dynamic variable count. 
+4. SafeCharSequences: a set of two main classes that implement CharSequence wrappers that do not generate exceptions but increments error count when index goes out of range or subSequence() indices are reversed, so it can be tested later. SafeCharSequenceIndex allows working on text lines delimited by '\n' around an index. Finding the start, end of line and first and last non blank characters on that line or extracting sub-sequences based on these values. SafeCharSequenceRange is a char sequence which allows dynamic sub-sequencing by setting its startIndex and endIndex properties, making the sequence behave as if it only contained characters between start and end indices for limiting range of other operations on CharSequence value.
+
+    The error tracking is exposed by SafeCharSequenceError interface of these sequences, which allows taking a snapshot of error, or setting a marker at the current error level and testing if any errors were generated after the marker was set. 
+
+5. SmartDataScopes: a set of classes that work like a switchboard for interconnecting data providers, data consumers with optional computations performed in between. These are used with versioned data and smart sequences to implement complex formatting without having to concern yourself with complexity of dynamically routing data, figuring out data dependencies or dynamic variable count. 
 
     For example, the meat of a markdown table formatting sequence is implemented in less than 75 lines which includes parsing of the original text, determining the column alignments and dynamic formatting options that can be changed to change the sequence content, after it has been created. 
 
@@ -444,3 +448,12 @@ Formatted Table
 | Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data |      Row 2 Col 3 Data |
 
 ```
+
+### Safe CharSequences
+
+`SafeCharSequenceRange` takes a CharSequence as a construction parameter with optional start/end indices to expose only that range as its content.
+
+Additionally it has startIndex/endIndex properties that dynamically limit the range of the char sequence visible through its implementation of CharSequence interface. These properties can be changed at any time to change the exposed sequence. The maximum exposed sequence is limited by the original char sequence and start/end indices passed to the constructor. 
+
+
+`SafeCharSequenceIndex` takes a CharSequence as a construction parameter with initial index property value. Allows find start/end of line around the current index position, finding the first/last non-blank index on the current line and extracting sub-sequences based on these indices via getters. 

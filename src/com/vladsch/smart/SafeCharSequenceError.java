@@ -24,17 +24,49 @@ package com.vladsch.smart;
 import org.jetbrains.annotations.NotNull;
 
 public interface SafeCharSequenceError {
+    /**
+     * @return current error count
+     */
     int getSafeErrors();
+
+    /**
+     * reset error count to 0
+     */
     void clearSafeErrors();
+
+    /**
+     * return true if any errors occurred after the last call to clearHadSafeErrors()
+     */
     boolean getHadSafeErrors();
+
+    /**
+     * set a marker at the current error level
+     */
     void clearHadSafeErrors();
+
+    /**
+     * @return true if errors occurred since the last call to clearHadSafeErrors() or to getHadSafeErrorsAndClear()
+     */
     boolean getHadSafeErrorsAndClear();
+
+    /**
+     * @return the error count at last call to clearHadSafeErrors() or getHadSafeErrorsAndClear()
+     */
     int getLastSafeErrors();
 
-    // increment error and return value before incrementing
+    /**
+     * increment error and return value before it was incremented
+     */
     int addSafeError();
 
+    /**
+     * @return a copy of the error object
+     */
     @NotNull
     SafeCharSequenceError getSafeErrorSnapshot();
+
+    /**
+     * use a copy of the passed error object to copy its parameters to this error
+     */
     void setSafeErrorSnapshot(@NotNull SafeCharSequenceError snapshot);
 }
