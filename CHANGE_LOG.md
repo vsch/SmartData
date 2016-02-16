@@ -1,3 +1,8 @@
+### 0.0.4 - Bug Fixes
+
+- remove grouping of versions when computing new values. Prevents complex relationships from being properly recognized as stale
+- add smart paragraph sequence that will reflow text to margins: has first line indent, indent, width and respectHardBreaks to respect markdown two spaces followed by end of line as a hard break.
+
 ### 0.0.3 - Bug Fixes
 
 - fix recursion in SmartCharSequenceWrapper on getCharsImpl(), add test for this
