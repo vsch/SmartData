@@ -46,7 +46,7 @@ class SmartDataScopeManagerTest {
     @Test
     fun test_DataKey_resolveDependenciesBasic() {
         val INDENT = SmartParentComputedDataKey("INDENT", 0, { it + 4 })
-        val MAX_INDENT = SmartAggregatedDataKey("MAX_INDENT", 0, INDENT, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), { it.max() ?: 0 })
+        val MAX_INDENT = SmartAggregatedScopesDataKey("MAX_INDENT", 0, INDENT, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), { it.max() ?: 0 })
         val ADD_INDENT = SmartTransformedDataKey("ADD_INDENT", 0, MAX_INDENT, SmartScopes.SELF, { it + 4 })
 
         assertTrue(manager.dependentKeys.containsKey(INDENT))

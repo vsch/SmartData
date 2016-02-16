@@ -24,5 +24,6 @@ package com.vladsch.smart;
 public enum TextAlignment {
     LEFT,
     RIGHT,
-    CENTER;
+    CENTER,
+    JUSTIFIED;
 }

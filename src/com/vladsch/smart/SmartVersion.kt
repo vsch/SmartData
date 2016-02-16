@@ -135,20 +135,18 @@ object SmartVersionManager {
     }
 
     fun computeVersionSnapshot(dependencies: Iterable<SmartVersion>): VersionSnapshot {
-        return groupedCompute(DataComputable {
-            var dependenciesSerial = NULL_SERIAL
-            var latestVersion: SmartVersion = NULL_VERSION
+        var dependenciesSerial = NULL_SERIAL
+        var latestVersion: SmartVersion = NULL_VERSION
 
-            for (dependency in dependencies) {
-                if (dependency.isStale) dependency.nextVersion()
-                if (dependenciesSerial < dependency.versionSerial) {
-                    dependenciesSerial = dependency.versionSerial
-                    latestVersion = dependency
-                }
+        for (dependency in dependencies) {
+            if (dependency.isStale) dependency.nextVersion()
+            if (dependenciesSerial < dependency.versionSerial) {
+                dependenciesSerial = dependency.versionSerial
+                latestVersion = dependency
             }
+        }
 
-            VersionSnapshot(currentSerial, dependenciesSerial, latestVersion)
-        })
+        return VersionSnapshot(currentSerial, dependenciesSerial, latestVersion)
     }
 
     fun isMutable(dependencies: Iterable<SmartVersion>): Boolean {
@@ -328,10 +326,8 @@ open class SmartDependentRunnableVersion(dependencies: Iterable<SmartVersion>, r
     }
 
     override fun onNextVersion() {
-        SmartVersionManager.groupedUpdate(Runnable {
-            super.onNextVersion()
-            myRunnable.run()
-        })
+        super.onNextVersion()
+        myRunnable.run()
     }
 }
 
@@ -533,11 +529,9 @@ open class SmartComputedData<V>(name: String, computable: DataComputable<V>) : S
     protected var myValue = DataSnapshot(myVersion, onCompute())
 
     open protected fun onCompute(): V {
-        return SmartVersionManager.groupedCompute(DataComputable {
-            super.nextVersion()
-            SmartVersionManager.freshenSnapshot(this, DataSnapshot(myVersion, myComputable.compute()))
-            myValue.value
-        })
+        super.nextVersion()
+        SmartVersionManager.freshenSnapshot(this, DataSnapshot(myVersion, myComputable.compute()))
+        return myValue.value
     }
 
     override var dataSnapshot: DataSnapshot<V>
@@ -583,13 +577,11 @@ open class SmartUpdateDependentData<V>(name: String, dependencies: Iterable<Smar
     protected var myValue: DataSnapshot<V> = onCompute()
 
     override fun onNextVersion() {
-        SmartVersionManager.groupedUpdate(Runnable {
-            val computable = myComputable
-            if (computable != null) {
-                super.onNextVersion()
-                SmartVersionManager.freshenSnapshot(this, DataSnapshot(mySnapshot.dependenciesSerial, computable.compute()))
-            }
-        })
+        val computable = myComputable
+        if (computable != null) {
+            super.onNextVersion()
+            SmartVersionManager.freshenSnapshot(this, DataSnapshot(mySnapshot.dependenciesSerial, computable.compute()))
+        }
     }
 
     open val dataDependencies: Iterable<SmartVersionedDataHolder<*>> get() = dependencies as Iterable<SmartVersionedDataHolder<*>>
@@ -666,13 +658,11 @@ open class SmartUpdateIterableData<V>(name: String, dependencies: Iterable<Smart
     protected var myValue: DataSnapshot<V> = onCompute()
 
     override fun onNextVersion() {
-        SmartVersionManager.groupedUpdate(Runnable {
-            val computable = myComputable
-            if (computable != null) {
-                super.onNextVersion()
-                SmartVersionManager.freshenSnapshot(this, DataSnapshot(mySnapshot.dependenciesSerial, computable.compute(dataDependencies)))
-            }
-        })
+        val computable = myComputable
+        if (computable != null) {
+            super.onNextVersion()
+            SmartVersionManager.freshenSnapshot(this, DataSnapshot(mySnapshot.dependenciesSerial, computable.compute(dataDependencies)))
+        }
     }
 
     open val dataDependencies: Iterable<SmartVersionedDataHolder<*>> get() = dependencies as Iterable<SmartVersionedDataHolder<*>>
@@ -767,13 +757,11 @@ open class SmartUpdateVectorData<V>(name: String, dependencies: Iterable<SmartVe
     protected var myValue = onCompute()
 
     override fun onNextVersion() {
-        SmartVersionManager.groupedUpdate(Runnable {
-            val computable = myComputable
-            if (computable != null) {
-                super.onNextVersion()
-                SmartVersionManager.freshenSnapshot(this, DataSnapshot(mySnapshot.dependenciesSerial, computable.compute(valueDependencies)))
-            }
-        })
+        val computable = myComputable
+        if (computable != null) {
+            super.onNextVersion()
+            SmartVersionManager.freshenSnapshot(this, DataSnapshot(mySnapshot.dependenciesSerial, computable.compute(valueDependencies)))
+        }
     }
 
     val valueDependencies: Iterable<V>
@@ -858,17 +846,15 @@ open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<Smar
     protected var myValue = onCompute()
 
     override fun onNextVersion() {
-        SmartVersionManager.groupedUpdate(Runnable {
-            val computable = myComputable
-            @Suppress("SENSELESS_COMPARISON")
-            if (computable != null) {
-                super.onNextVersion()
-                val runnable = myRunnable
-                if (SmartVersionManager.freshenSnapshot(this, computable.compute()) && runnable != null) {
-                    runnable.run()
-                }
+        val computable = myComputable
+        @Suppress("SENSELESS_COMPARISON")
+        if (computable != null) {
+            super.onNextVersion()
+            val runnable = myRunnable
+            if (SmartVersionManager.freshenSnapshot(this, computable.compute()) && runnable != null) {
+                runnable.run()
             }
-        })
+        }
     }
 
     open protected fun onCompute(): DataSnapshot<V> {
@@ -1045,9 +1031,7 @@ open class SmartVersionedProperty<V>(name: String, initialValue: V, runnable: Va
     }
 
     open fun onNextVersion() {
-        SmartVersionManager.groupedUpdate {
-            if (myInitialized) myRunnable?.run(myValue.dataSnapshot.value)
-        }
+        if (myInitialized) myRunnable?.run(myValue.dataSnapshot.value)
     }
 
     override val isMutable: Boolean

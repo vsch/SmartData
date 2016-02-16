@@ -27,7 +27,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SmartDataScopeTest {
-    val manager = SmartDataScopeManager
+    val manager = SmartDataScopeManager.INSTANCE
 
     @Test
     fun test_childScopes() {
@@ -268,7 +268,7 @@ class SmartDataScopeTest {
     @Test
     fun test_AggregatedDataScopes() {
         val WIDTH = SmartVolatileDataKey("WIDTH", 0)
-        val MAX_WIDTH = SmartAggregatedDataKey("MAX_WIDTH", 0, WIDTH, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
+        val MAX_WIDTH = SmartAggregatedScopesDataKey("MAX_WIDTH", 0, WIDTH, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
 
         val topScope = SmartDataScopeManager.createDataScope("top")
         val child1 = topScope.createDataScope("child1")
@@ -304,6 +304,56 @@ class SmartDataScopeTest {
         assertEquals(15, maxWidth.value)
     }
 
+    @Test
+    fun test_SmartAggregatedDependencies() {
+        val LENGTH = SmartVolatileDataKey("LENGTH", 0)
+        val WIDTH = SmartVolatileDataKey("WIDTH", 0)
+        val PERIMETER = SmartAggregatedDependenciesDataKey("PERIMETER", 0, listOf(WIDTH, LENGTH), false, IterableDataComputable { it.sum()*2 })
+        val PERIMETER_TOTAL = SmartVectorDataKey("PERIMETER_TOTAL", 0, listOf(PERIMETER), setOf(SmartScopes.RESULT_TOP, SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.sum() })
+
+        val topScope = SmartDataScopeManager.createDataScope("top")
+        val child1 = topScope.createDataScope("child1")
+        val child2 = topScope.createDataScope("child2")
+        val grandChild11 = child1.createDataScope("grandChild11")
+        val grandChild21 = child2.createDataScope("grandChild21")
+
+        WIDTH[child1, 0] = 10
+        LENGTH[child1, 0] = 20
+        assertTrue(child1.getRawValue(WIDTH, 0) is SmartVolatileData)
+        assertTrue(child1.getRawValue(LENGTH, 0) is SmartVolatileData)
+
+        WIDTH[child2, 0] = 15
+        LENGTH[child2, 0] = 15
+        assertTrue(child2.getRawValue(WIDTH, 0) is SmartVolatileData)
+        assertTrue(child2.getRawValue(LENGTH, 0) is SmartVolatileData)
+
+        WIDTH[grandChild11, 0] = 8
+        LENGTH[grandChild11, 0] = 12
+        assertTrue(grandChild11.getRawValue(WIDTH, 0) is SmartVolatileData)
+        assertTrue(grandChild11.getRawValue(LENGTH, 0) is SmartVolatileData)
+
+        WIDTH[grandChild21, 0] = 20
+        LENGTH[grandChild21, 0] = 40
+        assertTrue(grandChild21.getRawValue(WIDTH, 0) is SmartVolatileData)
+        assertTrue(grandChild21.getRawValue(LENGTH, 0) is SmartVolatileData)
+
+        val perimeterTotal = topScope[PERIMETER_TOTAL, 0]
+        assertTrue(perimeterTotal is SmartVersionedDataAlias)
+        assertTrue(topScope.consumers.containsKey(PERIMETER_TOTAL))
+
+        manager.trace = true
+        topScope.finalizeAllScopes()
+
+        assertEquals(280, perimeterTotal.value)
+
+        WIDTH[grandChild11, 0] = 12
+        LENGTH[grandChild11, 0] = 28
+        assertEquals(320, perimeterTotal.value)
+
+        WIDTH[child2, 0] = 10
+        assertEquals(310, perimeterTotal.value)
+    }
+
     //    @Test
     //    fun test_DataKey_registerParentComputedBasic() {
     //        val INDENT2 = SmartParentComputedDataKey("INDENT2", 0, { it + 4 })
@@ -331,7 +381,7 @@ class SmartDataScopeTest {
     @Test
     fun formatTable() {
         val COLUMN_WIDTH = SmartVolatileDataKey("COLUMN_WIDTH", 0)
-        val MAX_COLUMN_WIDTH = SmartAggregatedDataKey("MAX_COLUMN_WIDTH", 0, COLUMN_WIDTH, setOf(SmartScopes.RESULT_TOP, SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
+        val MAX_COLUMN_WIDTH = SmartAggregatedScopesDataKey("MAX_COLUMN_WIDTH", 0, COLUMN_WIDTH, setOf(SmartScopes.RESULT_TOP, SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
         val ALIGNMENT = SmartVolatileDataKey("ALIGNMENT", TextAlignment.LEFT)
         val COLUMN_ALIGNMENT = SmartLatestDataKey("COLUMN_ALIGNMENT", TextAlignment.LEFT, ALIGNMENT, setOf(SmartScopes.RESULT_TOP, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS))
 
@@ -440,14 +490,14 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
     @Test
     fun formatTableSpanned() {
         val COLUMN_WIDTH = SmartVolatileDataKey("COLUMN_WIDTH", 0)
-        val MAX_COLUMN_WIDTH = SmartAggregatedDataKey("MAX_COLUMN_WIDTH", 0, COLUMN_WIDTH, setOf(SmartScopes.RESULT_TOP, SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
+        val MAX_COLUMN_WIDTH = SmartAggregatedScopesDataKey("MAX_COLUMN_WIDTH", 0, COLUMN_WIDTH, SmartScopes.TOP_DOWN, IterableDataComputable { it.max() })
 
         val ADD_WIDTH = SmartVolatileDataKey("ADD_WIDTH", 0)
-        val MAX_ADD_WIDTH = SmartAggregatedDataKey("MAX_ADD_WIDTH", 0, ADD_WIDTH, setOf(SmartScopes.RESULT_TOP, SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
+        val MAX_ADD_WIDTH = SmartAggregatedScopesDataKey("MAX_ADD_WIDTH", 0, ADD_WIDTH, SmartScopes.TOP_DOWN, IterableDataComputable { it.max() })
         val FINAL_COLUMN_WIDTH = SmartDependentDataKey("FINAL_COLUMN_WIDTH", 0, listOf(MAX_ADD_WIDTH, MAX_COLUMN_WIDTH), SmartScopes.SELF, DataValueComputable { MAX_ADD_WIDTH.value(it) + MAX_COLUMN_WIDTH.value(it) })
 
         val ALIGNMENT = SmartVolatileDataKey("ALIGNMENT", TextAlignment.LEFT)
-        val COLUMN_ALIGNMENT = SmartLatestDataKey("COLUMN_ALIGNMENT", TextAlignment.LEFT, ALIGNMENT, setOf(SmartScopes.RESULT_TOP, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS))
+        val COLUMN_ALIGNMENT = SmartLatestDataKey("COLUMN_ALIGNMENT", TextAlignment.LEFT, ALIGNMENT, SmartScopes.TOP_DOWN)
 
         val tableDataScope = manager.createDataScope("tableDataScope")
         var formattedTable = EditableCharSequence()

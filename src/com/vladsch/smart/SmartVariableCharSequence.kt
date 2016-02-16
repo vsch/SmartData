@@ -118,6 +118,7 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
                     rightPadding = paddingSize - even
                 }
                 TextAlignment.LEFT -> rightPadding = paddingSize
+                TextAlignment.JUSTIFIED -> rightPadding = paddingSize
                 else -> throw IllegalArgumentException("Unrecognized TextAlignment value")
             }
         }

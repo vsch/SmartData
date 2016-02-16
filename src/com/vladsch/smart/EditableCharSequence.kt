@@ -75,7 +75,7 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
     fun flatten(): EditableCharSequence {
         val smartCharSequences = ArrayList<SmartCharSequence>()
         myChars.flattened(smartCharSequences)
-        myChars = if (smartCharSequences.size == 1) smartCharSequences[0] else SmartSegmentedCharSequence(smartCharSequences)
+        myChars = if (smartCharSequences.size == 1) smartCharSequences[0] else SmartSegmentedCharSequence(SmartCharSequenceBase.spliceSequences(smartCharSequences))
         return this
     }
 

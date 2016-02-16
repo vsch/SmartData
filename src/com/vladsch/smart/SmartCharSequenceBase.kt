@@ -418,7 +418,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return smartCharSequences
         }
 
-        @JvmStatic fun spliceSequences(charSequences: Collection<SmartCharSequence>): ArrayList<SmartCharSequence> {
+        @JvmStatic fun spliceSequences(charSequences: Collection<CharSequence>): ArrayList<SmartCharSequence> {
             if (charSequences.size == 0) {
                 return ArrayList()
             }
@@ -428,12 +428,12 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             var charSequence: SmartCharSequence? = null
             for (other in charSequences) {
                 if (charSequence == null) {
-                    charSequence = other.contents
+                    charSequence = smartContents(other)
                 } else {
-                    val merged = charSequence.splicedWith(other.contents)
+                    val merged = charSequence.splicedWith(smartContents(other))
                     if (merged == null) {
                         smartCharSequences.add(charSequence)
-                        charSequence = other.contents
+                        charSequence = smartContents(other)
                     } else {
                         charSequence = merged
                     }
@@ -442,6 +442,11 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
 
             if (charSequence != null) smartCharSequences.add(charSequence)
             return smartCharSequences
+        }
+
+        @JvmStatic fun smartContents(charSequence: CharSequence):SmartCharSequence {
+            if (charSequence !is SmartCharSequence) return SmartCharSequenceWrapper(charSequence)
+            return charSequence.contents
         }
 
         @JvmStatic fun editableCharSequence(charSequence: CharSequence): EditableCharSequence {

@@ -34,6 +34,8 @@ import org.junit.runners.Suite;
         SmartSegmentedCharSequenceTest.class,
         SmartVariableCharSequenceTest.class,
         SmartDataTestSuite.class,
+        SmartRepeatedCharSequenceTest.class,
+        SmartParagraphCharSequenceTest.class,
         TextBlockTest.class
 })
 

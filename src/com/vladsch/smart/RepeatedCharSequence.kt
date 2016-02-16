@@ -45,4 +45,8 @@ class RepeatedCharSequence(chars: CharArray, startIndex: Int, endIndex: Int) : C
         if (startIndex >= 0 && startIndex <= endIndex && endIndex <= length) return if (startIndex == endIndex) EMPTY_SEQUENCE else RepeatedCharSequence(myChars, myStartIndex + startIndex, myStartIndex + endIndex)
         throw IllegalArgumentException("subSequence($startIndex, $endIndex) in RepeatedCharSequence('', $myStartIndex, $myEndIndex)")
     }
+
+    fun repeat(count:Int) : CharSequence {
+        return RepeatedCharSequence(myChars, myStartIndex, (myEndIndex - myStartIndex)*count)
+    }
 }

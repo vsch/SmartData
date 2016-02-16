@@ -100,7 +100,7 @@ fun String?.prefixWith(prefix: String, ignoreCase: Boolean): String {
     return orEmpty()
 }
 
-fun String?.isIn(vararg list:String): Boolean {
+fun String?.isIn(vararg list: String): Boolean {
     return this != null && this in list;
 }
 
@@ -343,7 +343,7 @@ fun repeatChar(char: Char, count: Int): String {
 }
 
 
-fun Int.max(vararg others:Int):Int {
+fun Int.max(vararg others: Int): Int {
     var max = this;
     for (other in others) {
         if (max < other) max = other
@@ -351,10 +351,20 @@ fun Int.max(vararg others:Int):Int {
     return max;
 }
 
-fun Int.min(vararg others:Int):Int {
+fun Int.min(vararg others: Int): Int {
     var min = this;
     for (other in others) {
         if (min > other) min = other
     }
     return min;
+}
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun Int.minBound(vararg others: Int): Int {
+    return this.max(*others)
+}
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun Int.maxBound(vararg others: Int): Int {
+    return this.min(*others)
 }

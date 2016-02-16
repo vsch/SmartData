@@ -33,6 +33,8 @@ enum class SmartScopes(val flags: Int) {
     INDICES(64);                // across indices within a scope, maybe?
 
     companion object : BitSetEnum<SmartScopes>(SmartScopes::class.java, { it.flags }) {
+        @JvmStatic val SELF_DOWN = setOf(SELF, CHILDREN, DESCENDANTS)
+        @JvmStatic val TOP_DOWN = setOf(RESULT_TOP, SELF, CHILDREN, DESCENDANTS)
 
         fun isValidSet(scope: SmartScopes): Boolean = isValidSet(scope.flags)
         fun isValidSet(scopes: Set<SmartScopes>): Boolean = isValidSet(asFlags(scopes))
@@ -178,8 +180,8 @@ open class SmartVolatileDataKey<V : Any>(id: String, nullValue: V) : SmartDataKe
         // only first set will be used since there can only be one self
         for (source in sources) {
             for (index in indices) {
-                val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
-                val resultItem = result.getValue(this, index)
+                //                val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
+                //                val resultItem = result.getValue(this, index)
                 result.setValue(this, index, myNullData)
             }
 
@@ -295,16 +297,24 @@ open class SmartDependentDataKey<V : Any>(id: String, nullValue: V, override val
     }
 }
 
-class SmartTransformedDataKey<V : Any, R : Any>(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: DataValueComputable<R, V>) : SmartDependentDataKey<V>(id, nullValue, listOf(dependency), scope, DataValueComputable { computable.compute(dependency.value(it[dependency]!!)) }) {
+open class SmartTransformedDataKey<V : Any, R : Any>(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: DataValueComputable<R, V>) : SmartDependentDataKey<V>(id, nullValue, listOf(dependency), scope, DataValueComputable { computable.compute(dependency.value(it[dependency]!!)) }) {
 
     constructor(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: (R) -> V) : this(id, nullValue, dependency, scope, DataValueComputable { computable(it) })
 }
 
-class SmartAggregatedDataKey<V : Any>(id: String, nullValue: V, val dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>, val computable: IterableDataComputable<V>) : SmartDataKey<V>(id, nullValue, scopes) {
-    constructor(id: String, nullValue: V, dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>, computable: (Iterable<V>) -> V) : this(id, nullValue, dataKey, scopes, IterableDataComputable { computable(it) })
+open class SmartVectorDataKey<V : Any>(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, scopes: Set<SmartScopes>, val computable: IterableDataComputable<V>) : SmartDataKey<V>(id, nullValue, scopes) {
 
-    override val dependencies: List<SmartDataKey<*>>
-        get() = listOf(dataKey)
+    constructor(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, scope: SmartScopes, computable: IterableDataComputable<V>) : this(id, nullValue, dependencies, setOf(scope, SmartScopes.SELF), computable)
+
+    constructor(id: String, nullValue: V, dependency: SmartDataKey<V>, scopes: Set<SmartScopes>, computable: IterableDataComputable<V>) : this(id, nullValue, listOf(dependency), scopes, computable)
+
+    constructor(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, scopes: Set<SmartScopes>, computable: (Iterable<V>) -> V) : this(id, nullValue, dependencies, scopes, IterableDataComputable { computable(it) })
+
+    constructor(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, scope: SmartScopes, computable: (Iterable<V>) -> V) : this(id, nullValue, dependencies, setOf(scope, SmartScopes.SELF), computable)
+
+    constructor(id: String, nullValue: V, dependency: SmartDataKey<V>, scopes: Set<SmartScopes>, computable: (Iterable<V>) -> V) : this(id, nullValue, listOf(dependency), scopes, computable)
+
+    override val dependencies: List<SmartDataKey<V>> = dependencies
 
     val myComputable = computable
 
@@ -318,15 +328,27 @@ class SmartAggregatedDataKey<V : Any>(id: String, nullValue: V, val dataKey: Sma
             var dependents = ArrayList<SmartVersionedDataHolder<V>>()
 
             for (source in sources) {
-                val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
-                //                println("adding dependent: $dependent")
-                dependents.add(dependent)
+                for (dataKey in dependencies) {
+                    val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
+                    //                println("adding dependent: $dependent")
+                    dependents.add(dependent)
+                }
             }
 
             result.setValue(this, index, SmartVectorData(dependents, myComputable))
             //            println("created connections for $myId[$index] on scope: ${result.name}")
         }
     }
+}
+
+open class SmartAggregatedScopesDataKey<V : Any>(id: String, nullValue: V, dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>, computable: IterableDataComputable<V>) :
+        SmartVectorDataKey<V>(id, nullValue, listOf(dataKey), scopes, computable) {
+    constructor(id: String, nullValue: V, dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>, computable: (Iterable<V>) -> V) : this(id, nullValue, dataKey, scopes, IterableDataComputable { computable(it) })
+}
+
+open class SmartAggregatedDependenciesDataKey<V : Any>(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, isTopScope: Boolean, computable: IterableDataComputable<V>) :
+        SmartVectorDataKey<V>(id, nullValue, dependencies, if (isTopScope) setOf(SmartScopes.RESULT_TOP, SmartScopes.SELF) else setOf(SmartScopes.SELF), computable) {
+    constructor(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, isTopScope: Boolean, computable: (Iterable<V>) -> V) : this(id, nullValue, dependencies, isTopScope, IterableDataComputable { computable(it) })
 }
 
 class SmartLatestDataKey<V : Any>(id: String, nullValue: V, val dataKey: SmartDataKey<V>, scopes: Set<SmartScopes>) : SmartDataKey<V>(id, nullValue, scopes) {
@@ -376,6 +398,13 @@ class SmartDataScopeManager {
     private var myDependenciesResolved = true
     //    private var myKeyDependencyMap = HashMap<SmartDataKey<*>, HashSet<SmartDataKey<*>>>()
     private var myComputeLevel = HashMap<SmartDataKey<*>, Int>()
+    private var myTrace = false
+
+    var trace: Boolean
+        get() = myTrace
+        set(value) {
+            myTrace = value
+        }
 
     val dependentKeys: Map<SmartDataKey<*>, Set<SmartDataKey<*>>> get() {
         return myDependentKeys
@@ -706,7 +735,12 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         val keyScopes = myChildren.union(myDescendants).union(setOf(this))
         val indicesSet = HashSet<Int>()
 
+        val dependents = SmartDataScopeManager.dependentKeys[dataKey] ?: setOf()
         addConsumedKeyIndices(dataKey, keyScopes, indicesSet)
+
+        for (dependentKey in dependents) {
+            addConsumedKeyIndices(dependentKey, keyScopes, indicesSet)
+        }
 
         if (!indicesSet.isEmpty()) {
             // we add a value at the top level for all dependencies of this key if one does not exist, this will provide the missing default for all descendants
@@ -744,7 +778,7 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
             }
 
             if (!indicesSet.isEmpty()) {
-                //                println("finalizing $name[$dataKey] indices $indicesSet on ${scopesSet.fold("") { a, b -> a +" "+ b.name }}")
+                if (SmartDataScopeManager.INSTANCE.trace) println("finalizing $name[$dataKey] indices $indicesSet on ${scopesSet.fold("") { a, b -> a + " " + b.name }}")
                 dataKey.createData(this, scopesSet, indicesSet)
             }
         }
