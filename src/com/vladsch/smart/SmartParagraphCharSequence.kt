@@ -38,9 +38,10 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     protected var myIndent = SmartVersionedProperty("paraCharSeq:Indent", 0)
     protected var myWidth = SmartVersionedProperty("varCharSeq:Width", 0)
     protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment", TextAlignment.LEFT)
-    protected var myRespectHardBreaks = SmartVersionedProperty("varCharSeq:RespectHardBreaks", true)
+    protected var myKeepMarkdownHardBreaks = SmartVersionedProperty("varCharSeq:keepMarkdownHardBreaks", true)
+    protected var myKeepLineBreaks = SmartVersionedProperty("varCharSeq:keepLineBreaks", false)
 
-    protected var myResultSequence = SmartDependentData(listOf(myFirstIndent, myIndent, myAlignment, myWidth, myRespectHardBreaks), DataComputable { computeResultSequence() })
+    protected var myResultSequence = SmartDependentData(listOf(myFirstIndent, myIndent, myAlignment, myWidth, myKeepMarkdownHardBreaks), DataComputable { computeResultSequence() })
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
 
     var alignment: TextAlignment get() = myAlignment.value
@@ -63,9 +64,14 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             myFirstIndent.value = value.minBound(0)
         }
 
-    var respectHardBreaks: Boolean get() = myRespectHardBreaks.value
+    var keepMarkdownHardBreaks: Boolean get() = myKeepMarkdownHardBreaks.value
         set(value) {
-            myRespectHardBreaks.value = value
+            myKeepMarkdownHardBreaks.value = value
+        }
+
+    var keepLineBreaks: Boolean get() = myKeepLineBreaks.value
+        set(value) {
+            myKeepLineBreaks.value = value
         }
 
     override fun getVersion(): SmartVersion {
@@ -96,7 +102,8 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     protected enum class TextType {
         WORD,
         SPACE,
-        BREAK;
+        BREAK,
+        MARKDOWN_BREAK;
     }
 
     protected fun tokenizeSequence(chars: CharSequence): List<Token<TextType>> {
@@ -130,8 +137,12 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                     inWord = true
                     lastConsecutiveSpaces = 0
                 } else {
-                    if (c == '\n' && lastConsecutiveSpaces >= 2) {
-                        tokenList.add(Token(TextType.BREAK, Range(lastPos, pos + 1)))
+                    if (c == '\n') {
+                        if (lastConsecutiveSpaces >= 2) {
+                            tokenList.add(Token(TextType.MARKDOWN_BREAK, Range(pos - lastConsecutiveSpaces, pos + 1)))
+                        } else {
+                            tokenList.add(Token(TextType.BREAK, Range(pos, pos + 1)))
+                        }
                         lastPos = pos + 1
                     }
 
@@ -156,7 +167,6 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         val tokens = tokenizeSequence(chars)
         var iMax = tokens.size
         val width = myWidth.value.minBound(1)
-        val space = RepeatedCharSequence(' ')
         val lineBreak = RepeatedCharSequence('\n')
         val hardBreak = RepeatedCharSequence("  \n")
         var pos = 0
@@ -166,9 +176,18 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         var result = ArrayList<CharSequence>()
         var lineIndent = firstIndent
 
+        fun lineBreak(lineBreak: CharSequence, lastLine: Boolean) {
+            addLine(result, lineWords, lineCount, width - pos - lineIndent, lastLine)
+            lineWords.clear()
+            result.add(lineBreak)
+            pos = 0
+            lineCount++
+            lineIndent = indent
+        }
+
         while (i < iMax) {
             val token = tokens[i]
-//                        println("token[$i] = $token (${chars.subSequence(token.range.start, token.range.end)})")
+            //                        println("token[$i] = $token (${chars.subSequence(token.range.start, token.range.end)})")
 
             when (token.type) {
                 TextType.SPACE -> {
@@ -183,22 +202,22 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                         i++
                     } else {
                         // need to insert a line break and repeat
-                        addLine(result, lineWords, lineCount, width - pos - lineIndent, false)
-                        lineWords.clear()
-                        result.add(lineBreak)
-                        pos = 0
-                        lineCount++
-                        lineIndent = indent
+                        lineBreak(lineBreak, false)
                     }
                 }
+                TextType.MARKDOWN_BREAK -> {
+                    if (pos > 0) {
+                        if (myKeepMarkdownHardBreaks.value) {
+                            lineBreak(hardBreak, true)
+                        } else if (myKeepLineBreaks.value) {
+                            lineBreak(lineBreak, true)
+                        }
+                    }
+                    i++
+                }
                 TextType.BREAK -> {
-                    if (pos > 0 && myRespectHardBreaks.value) {
-                        addLine(result, lineWords, lineCount, width - pos - lineIndent, true)
-                        lineWords.clear()
-                        result.add(hardBreak)
-                        pos = 0
-                        lineCount++
-                        lineIndent = indent
+                    if (pos > 0 && myKeepLineBreaks.value) {
+                        lineBreak(lineBreak, true)
                     }
                     i++
                 }
@@ -253,23 +272,6 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
         if (remSpaces > 0) {
             val tmp = 0
-        }
-    }
-
-    private fun distributeSpaces(expandableSpaces: ArrayList<SmartRepeatedCharSequence>, distribute: Int) {
-        if (expandableSpaces.size > 0 && distribute > 0) {
-            var whole = distribute / expandableSpaces.size
-            var remainder = distribute - whole * expandableSpaces.size
-
-            if (whole * expandableSpaces.size + remainder != distribute) {
-                val tmp = 0
-            }
-
-            for (expandableSpace in expandableSpaces) {
-                expandableSpace.length = expandableSpace.length + whole + if (remainder > 0) 1 else 0
-                if (remainder > 0) remainder--
-                if (remainder == 0 && whole == 0) break
-            }
         }
     }
 

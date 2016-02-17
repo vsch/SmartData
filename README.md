@@ -294,6 +294,62 @@ cachedProxyRight15 isStale(false): |        Column1|        Column2|        Colu
 
 ```
 
+`SmartParagraphCharSequence` can be used to reflow a block of text to margins. It has the following properties that can also be set via data points:
+
+- alignment:TextAlignment = TextAlignment.LEFT  Selects the alignment for the text TextAlignment.LEFT, TextAlignment.CENTER, TextAlignment.RIGHT and TextAlignment.JUSTIFIED.
+
+- indent:Int = 0, indentation to use for every line, ie. left margin column
+
+- firstIndent:Int = 0, indentation to use for the first line of the paragraph 
+
+- width:Int = 0, the total width of the lines, including indentation. At least one word will always be put on a line so the line width may be greater than selected if no breaking spaces are found before the specified width is reached. 
+
+- keepMarkdownHardBreaks:Boolean = true, treat two spaces followed by `\n` as a hard break and force line break in reflowed text, but only if it would not create a blank line
+
+- keepLineBreaks:Boolean = false, keep existing `\n` line breaks, but only if they would not result in blank lines.
+
+Examples of reformatted text:
+
+- reformat to width: 50, align: LEFT first: 8 ind: 4
+    ```text
+        Lorem ipsum dolor sit amet, consectetaur
+    adipisicing elit, sed do eiusmod tempor
+    incididunt ut labore et dolore magna aliqua.
+    Ut enim ad minim veniam, quis nostrud
+    exercitation ullamco laboris nisi ut aliquip
+    ex ea commodo consequat.
+    ```
+    
+- reformat to width: 50, align: RIGHT first: 8 ind: 4
+    ```text
+          Lorem ipsum dolor sit amet, consectetaur
+           adipisicing elit, sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua.
+             Ut enim ad minim veniam, quis nostrud
+      exercitation ullamco laboris nisi ut aliquip
+                          ex ea commodo consequat.
+    ```
+    
+- reformat to width: 50, align: CENTER first: 8 ind: 4
+    ```text
+         Lorem ipsum dolor sit amet, consectetaur
+       adipisicing elit, sed do eiusmod tempor
+     incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud
+     exercitation ullamco laboris nisi ut aliquip
+               ex ea commodo consequat.
+    ```
+     
+- reformat to width:50, align: JUSTIFIED first: 8 ind: 4
+    ```text
+        Lorem  ipsum  dolor sit amet, consectetaur
+    adipisicing   elit,   sed  do  eiusmod  tempor
+    incididunt  ut  labore et dolore magna aliqua.
+    Ut   enim   ad   minim  veniam,  quis  nostrud
+    exercitation  ullamco  laboris nisi ut aliquip
+    ex ea commodo consequat.
+```
+
 ### Smart Data Scopes
 
 A data scope is a SmartVersionedData container where each value is identified by a key: `SmartDataKey<V:Any>` which defines the data type, default value and optionally how the value is computed and over what related scopes: ANCESTORS, PARENT, SELF, CHILDREN, DESCENDANTS and dependent on other data keys. Each key represents N data points indexed by an arbitrary integer within a data scope.

@@ -27,16 +27,23 @@ class SmartRepeatedCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
 
     constructor(replacedChars: SmartCharSequence, startIndex: Int, endIndex: Int) : this(replacedChars, replacedChars, startIndex, endIndex)
 
-    constructor(replacedChars: SmartCharSequence, chars: CharSequence, repeatCount: Int) : this(replacedChars, chars, 0, chars.length * repeatCount)
+    @JvmOverloads constructor(replacedChars: SmartCharSequence, chars: CharSequence, repeatCount: Int = 1) : this(replacedChars, chars, 0, chars.length * repeatCount)
 
-    constructor(replacedChars: SmartCharSequence) : this(replacedChars, replacedChars, 1)
+    // CharSequence based
+    constructor(chars: CharSequence, startIndex: Int, endIndex: Int) : this(EMPTY_SEQUENCE, chars, startIndex, endIndex)
 
-    constructor(chars: CharArray, startIndex: Int, endIndex: Int) : this(EMPTY_SEQUENCE, RepeatedCharSequence(chars, startIndex, endIndex), 0, endIndex-startIndex)
+    @JvmOverloads constructor(chars: CharSequence, repeatCount: Int = 1) : this(EMPTY_SEQUENCE, chars, 0, chars.length * repeatCount)
+
+    // char[] based
+    constructor(chars: CharArray, startIndex: Int, endIndex: Int) : this(EMPTY_SEQUENCE, RepeatedCharSequence(chars, startIndex, endIndex), 0, endIndex - startIndex)
+
     @JvmOverloads constructor(chars: CharArray, repeatCount: Int = 1) : this(chars, 0, chars.size * repeatCount)
 
     @JvmOverloads constructor(char: Char, repeatCount: Int = 1) : this(charArrayOf(char), repeatCount)
 
+    // String based
     constructor(chars: String, startIndex: Int, endIndex: Int) : this(chars.toCharArray(), startIndex, endIndex)
+
     @JvmOverloads constructor(chars: String, repeatCount: Int = 1) : this(chars, 0, chars.length * repeatCount)
 
     protected val myReplacedChars = replacedChars

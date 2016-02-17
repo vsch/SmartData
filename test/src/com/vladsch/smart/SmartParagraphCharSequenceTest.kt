@@ -42,6 +42,19 @@ consectetur adipiscing elit, sed ut labore et dolore magna aliquam makes one won
 Bis nostrud exercitation ullam mmodo consequet.
 Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
 
+    val indentedMultiLinePar = """    Lorem ipsum dolor sit amet, consectetaur adipisicing elit,
+    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+    nisi ut aliquip ex ea commodo consequat.
+
+    Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum Et harumd und lookum like Greek to me, dereud facilis est er expedit distinct.
+    Nam liber te conscient to factor tum poen legum odioque civiuda.
+    Et tam neque pecun modut est neque nonor et imper ned libidig met,
+    consectetur adipiscing elit, sed ut labore et dolore magna aliquam makes one wonder who would ever read this stuff?
+    Bis nostrud exercitation ullam mmodo consequet.
+    Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
+
     val hard = "  "
     val multiLineHardBreaksPar = """Lorem ipsum dolor sit amet, consectetaur adipisicing elit,
 sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.$hard
@@ -102,20 +115,20 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
             val actualRightPad = width - leftPad - indentSize - trimmed.length
 
             when (testAlignment) {
+                TextAlignment.LEFT,
+                TextAlignment.CENTER -> {
+                    if (trimmed.contains(' ')) {
+                        assertEquals(rightPad, actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
+                        assertTrue(trimmed.length <= width - indentSize, "Testing fit on line $lineCount, '$trimmed'.length ${line.length} < $width")
+                    } else if (trimmed.length < width - indentSize) {
+                        assertEquals(true, rightPad <= actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
+                    }
+                }
                 TextAlignment.RIGHT -> {
                     if (trimmed.contains(' ')) {
                         assertEquals(rightPad, actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
                         assertTrue(trimmed.length <= width - indentSize, "Testing fit on line $lineCount, '$trimmed'.length ${line.length} < $width")
                     } else if (trimmed.length <= width - indentSize) {
-                        assertEquals(true, rightPad <= actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
-                    }
-                }
-                TextAlignment.CENTER,
-                TextAlignment.LEFT -> {
-                    if (trimmed.contains(' ')) {
-                        assertEquals(rightPad, actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
-                        assertTrue(trimmed.length <= width - indentSize, "Testing fit on line $lineCount, '$trimmed'.length ${line.length} < $width")
-                    } else if (trimmed.length < width - indentSize) {
                         assertEquals(true, rightPad <= actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
                     }
                 }
@@ -133,7 +146,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
         }
     }
 
-    //    @Test
+        @Test
     fun test_align() {
         val par = SmartParagraphCharSequence(simplePar)
         assertEquals(simplePar, par.asString())
@@ -147,18 +160,18 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
                     for (i in 0..50 step 10) {
                         par.width = i
                         if (logOutput || par.indent == 4 && par.firstIndent == 8 && par.width == 50) {
-                            println("reformat to $i, first: ${par.firstIndent} ind: ${par.indent}")
+                            println("reformat simplePar to $i, align: ${par.alignment} first: ${par.firstIndent} ind: ${par.indent}")
                             println(par)
                             println()
                         }
-                        if (i > 0) ensureAligned(par.alignment, par, par.firstIndent, par.indent, i, par.respectHardBreaks)
+                        if (i > 0) ensureAligned(par.alignment, par, par.firstIndent, par.indent, i, par.keepMarkdownHardBreaks)
                     }
                 }
             }
         }
     }
 
-    //    @Test
+        @Test
     fun test_alignMultiLine() {
         val par = SmartParagraphCharSequence(multiLinePar)
         assertEquals(multiLinePar, par.asString())
@@ -172,18 +185,43 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
                     for (i in 0..50 step 10) {
                         par.width = i
                         if (logOutput || par.indent == 4 && par.firstIndent == 8 && par.width == 50) {
-                            println("reformat to $i, first: ${par.firstIndent} ind: ${par.indent}")
+                            println("reformat multiLinePar to $i, align: ${par.alignment} first: ${par.firstIndent} ind: ${par.indent}")
                             println(par)
                             println()
                         }
-                        if (i > 0) ensureAligned(par.alignment, par, par.firstIndent, par.indent, i, par.respectHardBreaks)
+                        if (i > 0) ensureAligned(par.alignment, par, par.firstIndent, par.indent, i, par.keepMarkdownHardBreaks)
                     }
                 }
             }
         }
     }
 
-    @Test
+        @Test
+    fun test_alignIndentedMultiLine() {
+        val par = SmartParagraphCharSequence(indentedMultiLinePar)
+        assertEquals(indentedMultiLinePar, par.asString())
+
+        for (alignment in TextAlignment.values()) {
+            par.alignment = alignment
+            for (ind in 0..4 step 4) {
+                par.indent = ind
+                for (fInd in 0..8 step 4) {
+                    par.firstIndent = fInd
+                    for (i in 0..50 step 10) {
+                        par.width = i
+                        if (logOutput || par.indent == 4 && par.firstIndent == 8 && par.width == 50) {
+                            println("reformat indentedMultiLinePar to $i, align: ${par.alignment} first: ${par.firstIndent} ind: ${par.indent}")
+                            println(par)
+                            println()
+                        }
+                        if (i > 0) ensureAligned(par.alignment, par, par.firstIndent, par.indent, i, par.keepMarkdownHardBreaks)
+                    }
+                }
+            }
+        }
+    }
+
+//    @Test
     fun test_SingleDebug() {
         val par = SmartParagraphCharSequence(multiLineHardBreaksPar)
         assertEquals(multiLineHardBreaksPar, par.asString())
@@ -192,11 +230,11 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
         par.indent = 4
         par.firstIndent = 8
         par.width = 40
-        par.respectHardBreaks = true
-        println("reformat to ${par.width}, first: ${par.firstIndent} ind: ${par.indent}")
+        par.keepMarkdownHardBreaks = true
+        println("reformat to ${par.width}, to ${par.width} align: ${par.alignment} first: ${par.firstIndent} ind: ${par.indent}")
         println(par)
         println()
-        if (par.width > 0) ensureAligned(par.alignment, par, par.firstIndent, par.indent, par.width, par.respectHardBreaks)
+        if (par.width > 0) ensureAligned(par.alignment, par, par.firstIndent, par.indent, par.width, par.keepMarkdownHardBreaks)
     }
 }
 
