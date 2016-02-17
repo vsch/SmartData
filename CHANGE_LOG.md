@@ -2,6 +2,7 @@
 
 - change respectHardBreaks to keepMarkdownHardBreaks.
 - add keepLineBreaks property to keep line breaks of original text.
+- add nextVersion() call to connect() and disconnect() of SmartVersionedPropertyArray, otherwise no distribution will be performed since version after connection is not updated until value is accessed and accessing distributed values relies on the main value version.
 
 ### 0.0.4 - Bug Fixes
 
