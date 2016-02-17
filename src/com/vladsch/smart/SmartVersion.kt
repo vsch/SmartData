@@ -21,7 +21,6 @@
 
 package com.vladsch.smart
 
-import org.junit.Assert
 import java.util.*
 
 object SmartVersionManager {
@@ -234,8 +233,11 @@ fun SmartVersionedDataIterableAdapter(iterable: Iterable<SmartVersionedData>): I
 
 fun <V> IterableValueDependenciesAdapter(iterable: Iterable<SmartVersionedDataHolder<V>>): Iterable<V> = IterableAdapter(iterable, DataValueComputable<SmartVersionedDataHolder<V>, V> { it.value })
 
-open class SmartVolatileVersion() : SmartVersion {
-    protected var myVersion = SmartVersionManager.nextSerial
+open class SmartVolatileVersion(versionSerial: Int) : SmartVersion {
+    constructor() : this(SmartVersionManager.nextSerial)
+    constructor(version:SmartVersion) : this(version.versionSerial)
+
+    protected var myVersion = versionSerial
         private set
 
     override val versionSerial: Int

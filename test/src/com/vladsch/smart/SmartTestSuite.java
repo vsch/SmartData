@@ -27,7 +27,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
         SmartCharSequenceTestSuite.class,
-        SafeCharSequenceTestSuite.class
+        SafeCharSequenceTestSuite.class,
+        SmartDataTestSuite.class
 })
 
 public class SmartTestSuite {

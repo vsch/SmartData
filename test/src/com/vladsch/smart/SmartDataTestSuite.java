@@ -28,6 +28,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         SmartScopesTest.class,
         BitSetEnumTest.class,
+        SmartVersionTestSuite.class,
         SmartDataScopeManagerTest.class,
         SmartDataScopeTest.class
 })

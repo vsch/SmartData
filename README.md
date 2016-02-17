@@ -505,6 +505,130 @@ Formatted Table
 
 ```
 
+Even better when all the logic is wrapped into a class, like `SmartTableColumnBalancer` that handles spanning columns, then the code simplifies to:
+
+```kotlin
+    fun spannedTableColumnBalancer() {
+        val tableBalancer = SmartTableColumnBalancer()
+        var formattedTable = EditableCharSequence()
+
+        val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
+ --------|:-------- |:--------:|-------:
+|Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data|
+|Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data|
+|Row 3 Col 0-1 Default Alignment||Row 3 Col 2 a lot more Data|Row 3 Col 3 Data|
+|Row 4 Col 0 Default Alignment|Row 4 Col 1-2 More Data||Row 4 Col 3 Data|
+|Row 5 Col 0 Default Alignment|Row 5 Col 1 More Data|Row 5 Col 2-3 a lot more Data||
+|Row 6 Col 0-2 Default Alignment Row 6 Col 1 More Data Row 6 Col 2 a lot more Data|||Row 6 Col 3 Data|
+|Row 7 Col 0 Default Alignment|Row 7 Col 1-3 More Data Row 7 Col 2 a lot more Data Row 7 Col 3 Data|||
+|Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data||||
+""".toCharArray())
+
+        val pipeSequence = RepeatedCharSequence('|')
+        val endOfLine = RepeatedCharSequence('\n')
+        val pipePadding = RepeatedCharSequence(' ') // or empty if dont' want padding
+        val alignMarker = RepeatedCharSequence(':')
+        val discretionaryAlignMarker = 1 // 1 always add discretionary alignMarker, 0 - leaave as is, anything else - always remove
+
+        val tableRows = table.splitPartsSegmented('\n', false)
+        var row = 0
+        for (line in tableRows.segments) {
+            var formattedRow = EditableCharSequence()
+            var rowText = line
+
+            // remove leading pipes, and trailing pipes that are singles
+            if (rowText.length > 0 && rowText[0] == '|') rowText = rowText.subSequence(1, rowText.length)
+            if (rowText.length > 2 && rowText[rowText.length - 2] != '|' && rowText[rowText.length - 1] == '|') rowText = rowText.subSequence(0, rowText.length - 1)
+
+            val segments = rowText.splitPartsSegmented('|', false).segments
+            var col = 0
+            var lastSpan = 1
+            while (col < segments.size) {
+                val column = segments[col]
+
+                val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
+                val formattedCol = SmartVariableCharSequence(column, if (headerParts != null) EMPTY_SEQUENCE else column)
+
+                if (headerParts != null) {
+                    val haveLeft = headerParts.segments[2] != NULL_SEQUENCE
+                    val haveRight = headerParts.segments[4] != NULL_SEQUENCE
+
+                    formattedCol.leftPadChar = '-'
+                    formattedCol.rightPadChar = '-'
+                    when {
+                        haveLeft && haveRight -> {
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.CENTER))
+                            formattedCol.prefix = alignMarker
+                            formattedCol.suffix = alignMarker
+                        }
+                        haveRight -> {
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.RIGHT))
+                            formattedCol.suffix = alignMarker
+                        }
+                        else -> {
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.LEFT))
+                            if (discretionaryAlignMarker == 1 || discretionaryAlignMarker == 0 && haveLeft) formattedCol.prefix = alignMarker
+                        }
+                    }
+                } else {
+                    formattedCol.prefix = pipePadding
+                    formattedCol.suffix = pipePadding
+                }
+
+                // see if we have spanned columns
+                var span = 1
+                while (col + span <= segments.lastIndex && segments[col + span].isEmpty()) span++
+
+                if (col > 0) formattedRow.appendOptimized(pipeSequence.repeat(lastSpan))
+                formattedRow.append(formattedCol)
+                formattedCol.widthDataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint, span)
+                formattedCol.alignmentDataPoint = tableBalancer.alignmentDataPoint(col)
+
+                lastSpan = span
+                col += span
+            }
+
+            // here if we add pipes then add lastSpan, else lastSpan-1
+            formattedTable.appendOptimized(pipeSequence, formattedRow, pipeSequence.repeat(lastSpan), endOfLine)
+            row++
+        }
+
+        tableBalancer.finalizeTable()
+
+        println("Unformatted Table\n$table\n")
+        println("Formatted Table\n$formattedTable\n")
+    }
+```
+
+Which outputs the table, formatted with column spans recognized and formatted.
+
+```text
+Unformatted Table
+Header 0|Header 1|Header 2|Header 3
+ --------|:-------- |:--------:|-------:
+|Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data|
+|Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data|
+|Row 3 Col 0-1 Default Alignment||Row 3 Col 2 a lot more Data|Row 3 Col 3 Data|
+|Row 4 Col 0 Default Alignment|Row 4 Col 1-2 More Data||Row 4 Col 3 Data|
+|Row 5 Col 0 Default Alignment|Row 5 Col 1 More Data|Row 5 Col 2-3 a lot more Data||
+|Row 6 Col 0-2 Default Alignment Row 6 Col 1 More Data Row 6 Col 2 a lot more Data|||Row 6 Col 3 Data|
+|Row 7 Col 0 Default Alignment|Row 7 Col 1-3 More Data Row 7 Col 2 a lot more Data Row 7 Col 3 Data|||
+|Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data||||
+
+
+Formatted Table
+| Header 0                      | Header 1              |          Header 2           |              Header 3 |
+|:------------------------------|:----------------------|:---------------------------:|----------------------:|
+| Row 1 Col 0 Data              | Row 1 Col 1 Data      |    Row 1 Col 2 More Data    | Row 1 Col 3 Much Data |
+| Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data |      Row 2 Col 3 Data |
+| Row 3 Col 0-1 Default Alignment                      || Row 3 Col 2 a lot more Data |      Row 3 Col 3 Data |
+| Row 4 Col 0 Default Alignment | Row 4 Col 1-2 More Data                            ||      Row 4 Col 3 Data |
+| Row 5 Col 0 Default Alignment | Row 5 Col 1 More Data |           Row 5 Col 2-3 a lot more Data            ||
+| Row 6 Col 0-2 Default Alignment Row 6 Col 1 More Data Row 6 Col 2 a lot more Data |||      Row 6 Col 3 Data |
+| Row 7 Col 0 Default Alignment | Row 7 Col 1-3 More Data Row 7 Col 2 a lot more Data Row 7 Col 3 Data      |||
+| Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data       ||||
+```
+
 ### Safe CharSequences
 
 `SafeCharSequenceRange` takes a CharSequence as a construction parameter with optional start/end indices to expose only that range as its content.

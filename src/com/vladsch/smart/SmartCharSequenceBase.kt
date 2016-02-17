@@ -239,6 +239,20 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             segments.add(smart(charSequence))
         }
 
+        return SmartSegmentedCharSequence(segments)
+    }
+
+    override fun appendOptimized(vararg others: CharSequence): SmartCharSequence {
+        val segments = ArrayList<SmartCharSequence>(others.size + 1)
+
+        flattened(segments)
+
+        for (charSequence in others) {
+            if (!charSequence.isEmpty() || charSequence is SmartCharSequence && charSequence.version.isMutable) {
+                segments.add(smart(charSequence))
+            }
+        }
+
         return SmartSegmentedCharSequence(spliceSequences(segments))
     }
 
@@ -307,7 +321,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         sequences.add(original.contents)
     }
 
-    override fun equals(other: Any?): Boolean{
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is CharSequence) return false
 
@@ -319,7 +333,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         return true
     }
 
-    override fun hashCode(): Int{
+    override fun hashCode(): Int {
         return myCachedProxy?.hashCode() ?: 0
     }
 
@@ -427,6 +441,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
 
             var charSequence: SmartCharSequence? = null
             for (other in charSequences) {
+                if (other.isEmpty() && !(other is SmartCharSequence && other.version.isMutable)) continue
+
                 if (charSequence == null) {
                     charSequence = smartContents(other)
                 } else {
@@ -444,7 +460,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return smartCharSequences
         }
 
-        @JvmStatic fun smartContents(charSequence: CharSequence):SmartCharSequence {
+        @JvmStatic fun smartContents(charSequence: CharSequence): SmartCharSequence {
             if (charSequence !is SmartCharSequence) return SmartCharSequenceWrapper(charSequence)
             return charSequence.contents
         }

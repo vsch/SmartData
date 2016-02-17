@@ -26,7 +26,9 @@ import java.util.*
 class SmartCharSequenceMarker(val id: String, val selectedSequence: SmartCharSequence) : SmartTransformedSequence<SmartCharSequenceMarker>(selectedSequence) {
     constructor(id: String) : this(id, EMPTY_SEQUENCE)
 
-    protected val myVersion: SmartVersion = selectedSequence.version
+    // this is used to make our sequence return true for isMutable so even when empty it will not be optimized out
+    protected val myDummyVersion:SmartVersion = SmartVolatileVersion(selectedSequence.version)
+    protected val myVersion: SmartVersion = SmartDependentVersion(listOf(myDummyVersion, selectedSequence.version))
 
     override fun getVersion(): SmartVersion = myVersion
 

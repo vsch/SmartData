@@ -28,7 +28,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         SmartVersionManagerTest.class,
         SmartVersionTest.class,
-        SmartVersionedDataTest.class
+        SmartVersionedDataTest.class,
+        SmartTableColumnBalancerTest.class
 })
 
 public class SmartVersionTestSuite {

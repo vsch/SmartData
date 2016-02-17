@@ -21,7 +21,6 @@
 
 package com.vladsch.smart
 
-import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -342,7 +341,7 @@ class SmartDataScopeTest {
         assertTrue(perimeterTotal is SmartVersionedDataAlias)
         assertTrue(topScope.consumers.containsKey(PERIMETER_TOTAL))
 
-        manager.trace = true
+        //        manager.trace = true
         topScope.finalizeAllScopes()
 
         assertEquals(280, perimeterTotal.value)
@@ -456,27 +455,32 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
         }
         //        })
 
-        println("currentSerial: ${SmartVersionManager.currentSerial}")
-        val column = lastColumn
-        if (column != null) println(column.widthDataPoint)
+        if (manager.trace) {
+            println("currentSerial: ${SmartVersionManager.currentSerial}")
+            val column = lastColumn
+            if (column != null) println(column.widthDataPoint)
+
+        }
 
         tableDataScope.finalizeAllScopes()
 
-        println("currentSerial: ${SmartVersionManager.currentSerial}")
-        if (column != null) {
-            println(column.widthDataPoint)
-            println("lastColumnWidth.widthDataPoint.value = ${column.widthDataPoint.value}")
-            println("lastColumnWidth.value = ${column.width}")
+        if (manager.trace) {
+            println("currentSerial: ${SmartVersionManager.currentSerial}")
+            val column = lastColumn
+            if (column != null) {
+                println(column.widthDataPoint)
+                println("lastColumnWidth.widthDataPoint.value = ${column.widthDataPoint.value}")
+                println("lastColumnWidth.value = ${column.width}")
+            }
+            println("maxColumnWidth0: $maxColumnWidth0")
+            println("maxColumnWidth1: $maxColumnWidth1")
+            println("maxColumnWidth2: $maxColumnWidth2")
+            println("maxColumnWidth3: $maxColumnWidth3")
+            println("columnAlignment0: $columnAlignment0")
+            println("columnAlignment1: $columnAlignment1")
+            println("columnAlignment2: $columnAlignment2")
+            println("columnAlignment3: $columnAlignment3")
         }
-
-        println("maxColumnWidth0: $maxColumnWidth0")
-        println("maxColumnWidth1: $maxColumnWidth1")
-        println("maxColumnWidth2: $maxColumnWidth2")
-        println("maxColumnWidth3: $maxColumnWidth3")
-        println("columnAlignment0: $columnAlignment0")
-        println("columnAlignment1: $columnAlignment1")
-        println("columnAlignment2: $columnAlignment2")
-        println("columnAlignment3: $columnAlignment3")
 
         println("Unformatted Table\n$table\n")
         println("Formatted Table\n$formattedTable\n")
@@ -489,61 +493,25 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
     }
 
     @Test
-    fun formatTableSpanned() {
-        val COLUMN_WIDTH = SmartVolatileDataKey("COLUMN_WIDTH", 0)
-        val MAX_COLUMN_WIDTH = SmartAggregatedScopesDataKey("MAX_COLUMN_WIDTH", 0, COLUMN_WIDTH, SmartScopes.TOP_DOWN, IterableDataComputable { it.max() })
-
-        val ADD_WIDTH = SmartVolatileDataKey("ADD_WIDTH", 0)
-        val MAX_ADD_WIDTH = SmartAggregatedScopesDataKey("MAX_ADD_WIDTH", 0, ADD_WIDTH, SmartScopes.TOP_DOWN, IterableDataComputable { it.max() })
-        val FINAL_COLUMN_WIDTH = SmartDependentDataKey("FINAL_COLUMN_WIDTH", 0, listOf(MAX_ADD_WIDTH, MAX_COLUMN_WIDTH), SmartScopes.SELF, DataValueComputable { MAX_ADD_WIDTH.value(it) + MAX_COLUMN_WIDTH.value(it) })
-
-        val ALIGNMENT = SmartVolatileDataKey("ALIGNMENT", TextAlignment.LEFT)
-        val COLUMN_ALIGNMENT = SmartLatestDataKey("COLUMN_ALIGNMENT", TextAlignment.LEFT, ALIGNMENT, SmartScopes.TOP_DOWN)
-
-        //        manager.trace = true
-        val tableDataScope = manager.createDataScope("tableDataScope")
+    fun formatTableColumnBalancer() {
+        val tableBalancer = SmartTableColumnBalancer()
         var formattedTable = EditableCharSequence()
-
-        //        var maxColumnWidth0 = tableDataScope.dataPoint(MAX_COLUMN_WIDTH, 0)
-        //        var maxColumnWidth1 = tableDataScope.dataPoint(MAX_COLUMN_WIDTH, 1)
-        //        var maxColumnWidth2 = tableDataScope.dataPoint(MAX_COLUMN_WIDTH, 2)
-        //        var maxColumnWidth3 = tableDataScope.dataPoint(MAX_COLUMN_WIDTH, 3)
-        //
-        //        var columnAlignment0 = tableDataScope.dataPoint(COLUMN_ALIGNMENT, 0)
-        //        var columnAlignment1 = tableDataScope.dataPoint(COLUMN_ALIGNMENT, 1)
-        //        var columnAlignment2 = tableDataScope.dataPoint(COLUMN_ALIGNMENT, 2)
-        //        var columnAlignment3 = tableDataScope.dataPoint(COLUMN_ALIGNMENT, 3)
 
         val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
  --------|:-------- |:--------:|-------:
 Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
 Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
-Row 3 Col 0-1 Default Alignment||Row 3 Col 2 a lot more Data|Row 3 Col 3 Data
-Row 4 Col 0 Default Alignment|Row 4 Col 1-2 More Data||Row 4 Col 3 Data
-Row 5 Col 0 Default Alignment|Row 5 Col 1 More Data|Row 5 Col 2-3 a lot more Data||
-Row 6 Col 0-2 Default Alignment Row 6 Col 1 More Data Row 6 Col 2 a lot more Data|||Row 6 Col 3 Data
-Row 7 Col 0 Default Alignment|Row 7 Col 1-3 More Data Row 7 Col 2 a lot more Data Row 7 Col 3 Data|||
-Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data||||
 """.toCharArray())
-        var lastColumn: SmartVariableCharSequence? = null
 
         val tableRows = table.splitPartsSegmented('\n', false)
-        var dataPoint: SmartVersionedDataHolder<Int>
 
         var row = 0
         for (line in tableRows.segments) {
             var formattedRow = EditableCharSequence()
-            val rowDataScope = tableDataScope.createDataScope("row:$row")
-
-            val segments = line.splitPartsSegmented('|', false).segments
             var col = 0
-            var lastSpan = 1
-            while (col < segments.size) {
-                val column = segments[col]
-
+            for (column in line.splitPartsSegmented('|', false).segments) {
                 val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
                 val formattedCol = SmartVariableCharSequence(column, if (headerParts != null) EMPTY_SEQUENCE else column)
-                lastColumn = formattedCol
                 val discretionary = 1
 
                 if (headerParts != null) {
@@ -554,159 +522,145 @@ Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Dat
                     formattedCol.rightPadChar = '-'
                     when {
                         haveLeft && haveRight -> {
-                            ALIGNMENT[rowDataScope, col] = TextAlignment.CENTER
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.CENTER))
                             formattedCol.prefix = ":"
                             formattedCol.suffix = ":"
                         }
                         haveRight -> {
-                            ALIGNMENT[rowDataScope, col] = TextAlignment.RIGHT
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.RIGHT))
                             formattedCol.suffix = ":"
                         }
                         else -> {
-                            ALIGNMENT[rowDataScope, col] = TextAlignment.LEFT
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.LEFT))
                             if (discretionary == 1 || discretionary == 0 && haveLeft) formattedCol.prefix = ":"
                         }
                     }
+                }
+
+                if (col > 0) formattedRow.append("|")
+                formattedRow.append(formattedCol)
+                formattedCol.widthDataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint)
+                formattedCol.alignmentDataPoint = tableBalancer.alignmentDataPoint(col)
+                col++
+            }
+
+            formattedTable.append("|", formattedRow, "|\n")
+            row++
+        }
+
+        tableBalancer.finalizeTable()
+
+        println("Unformatted Table\n$table\n")
+        println("Formatted Table\n$formattedTable\n")
+
+        assertEquals("""|Header 0                     |Header 1             |         Header 2          |             Header 3|
+|:----------------------------|:--------------------|:-------------------------:|--------------------:|
+|Row 1 Col 0 Data             |Row 1 Col 1 Data     |   Row 1 Col 2 More Data   |Row 1 Col 3 Much Data|
+|Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|     Row 2 Col 3 Data|
+""", formattedTable.toString())
+    }
+
+    @Test
+    fun spannedTableColumnBalancer() {
+        val tableBalancer = SmartTableColumnBalancer()
+        var formattedTable = EditableCharSequence()
+
+        val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
+ --------|:-------- |:--------:|-------:
+|Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data|
+|Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data|
+|Row 3 Col 0-1 Default Alignment||Row 3 Col 2 a lot more Data|Row 3 Col 3 Data|
+|Row 4 Col 0 Default Alignment|Row 4 Col 1-2 More Data||Row 4 Col 3 Data|
+|Row 5 Col 0 Default Alignment|Row 5 Col 1 More Data|Row 5 Col 2-3 a lot more Data||
+|Row 6 Col 0-2 Default Alignment Row 6 Col 1 More Data Row 6 Col 2 a lot more Data|||Row 6 Col 3 Data|
+|Row 7 Col 0 Default Alignment|Row 7 Col 1-3 More Data Row 7 Col 2 a lot more Data Row 7 Col 3 Data|||
+|Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data||||
+""".toCharArray())
+
+        val pipeSequence = RepeatedCharSequence('|')
+        val endOfLine = RepeatedCharSequence('\n')
+        val pipePadding = RepeatedCharSequence(' ') // or empty if dont' want padding
+        val alignMarker = RepeatedCharSequence(':')
+        val discretionaryAlignMarker = 1 // 1 always add discretionary alignMarker, 0 - leaave as is, anything else - always remove
+
+        val tableRows = table.splitPartsSegmented('\n', false)
+        var row = 0
+        for (line in tableRows.segments) {
+            var formattedRow = EditableCharSequence()
+            var rowText = line
+
+            // remove leading pipes, and trailing pipes that are singles
+            if (rowText.length > 0 && rowText[0] == '|') rowText = rowText.subSequence(1, rowText.length)
+            if (rowText.length > 2 && rowText[rowText.length - 2] != '|' && rowText[rowText.length - 1] == '|') rowText = rowText.subSequence(0, rowText.length - 1)
+
+            val segments = rowText.splitPartsSegmented('|', false).segments
+            var col = 0
+            var lastSpan = 1
+            while (col < segments.size) {
+                val column = segments[col]
+
+                val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
+                val formattedCol = SmartVariableCharSequence(column, if (headerParts != null) EMPTY_SEQUENCE else column)
+
+                if (headerParts != null) {
+                    val haveLeft = headerParts.segments[2] != NULL_SEQUENCE
+                    val haveRight = headerParts.segments[4] != NULL_SEQUENCE
+
+                    formattedCol.leftPadChar = '-'
+                    formattedCol.rightPadChar = '-'
+                    when {
+                        haveLeft && haveRight -> {
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.CENTER))
+                            formattedCol.prefix = alignMarker
+                            formattedCol.suffix = alignMarker
+                        }
+                        haveRight -> {
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.RIGHT))
+                            formattedCol.suffix = alignMarker
+                        }
+                        else -> {
+                            tableBalancer.alignment(col, SmartImmutableData(TextAlignment.LEFT))
+                            if (discretionaryAlignMarker == 1 || discretionaryAlignMarker == 0 && haveLeft) formattedCol.prefix = alignMarker
+                        }
+                    }
+                } else {
+                    formattedCol.prefix = pipePadding
+                    formattedCol.suffix = pipePadding
                 }
 
                 // see if we have spanned columns
                 var span = 1
                 while (col + span <= segments.lastIndex && segments[col + span].isEmpty()) span++
 
-                if (col > 0) formattedRow.append("|".repeat(lastSpan))
-                if (span > 1) {
-                    // here we do aggregation and distribution of column width
-                    // MAX_COLUMN_WIDTH\                                                                / ADD_WIDTH
-                    // MAX_COLUMN_WIDTH---> AGGR_MAX_WIDTH, (COLUMN_WIDTH - AGG_MAX_WIDTH) distribute >-- ADD_WIDTH
-                    // MAX_COLUMN_WIDTH/                                                                \ ADD_WIDTH
-
-                    val aggregator = SmartVersionedIntAggregatorDistributor("${rowDataScope.name}:col$col:aggregator:MAX_COLUMN_WIDTH", span, 0)
-                    if (manager.trace) aggregator.trace = true
-
-                    for (spanCol in 0..span - 1) {
-                        dataPoint = MAX_COLUMN_WIDTH.dataPoint(tableDataScope, col + spanCol)
-                        if (manager.trace) println("MAX_COLUMN_WIDTH dataPoint[${col + spanCol}] $dataPoint")
-
-                        aggregator.get(spanCol).connect(dataPoint)
-                    }
-
-                    val columnLength = formattedCol.lengthDataPoint
-                    val difference = SmartDependentData("${rowDataScope.name}:col${col}:difference", listOf(aggregator, columnLength), DataComputable {
-                        val diff = (columnLength.value - aggregator.value).minBound(0)
-                        if (manager.trace) println("${rowDataScope.name} col: $col span: $span diff: $diff")
-                        diff
-                    })
-
-                    val distributor = SmartVersionedIntAggregatorDistributor("${rowDataScope.name}:col$col:distributor:ADD_WIDTH", span, 0)
-
-                    if (manager.trace) {
-                        distributor.trace = true
-                        dataPoint = difference
-                        println("difference dataPoint[${rowDataScope.name}:col${col}] $dataPoint")
-                    }
-
-                    //                    difference.value
-                    distributor.connect(difference)
-                    //                    dataPoint = distributor
-                    //                    println("distributor dataPoint[${rowDataScope.name}:col${col}] $dataPoint")
-                    //                    assertEquals(difference.value, distributor.value)
-                    //                    distributor.value
-
-                    //                    var aggr = 0
-                    //                    for (spanCol in 0..span - 1) {
-                    //                        aggr += distributor.get(spanCol).value
-                    //                    }
-                    //                    assertEquals(difference.value, aggr, "Distributed value ${difference.value} not equal to aggregated distributed values")
-
-                    for (spanCol in 0..span - 1) {
-                        dataPoint = distributor.get(spanCol)
-                        if (manager.trace) println("DIST ADD_WIDTH dataPoint[${col + spanCol}] $dataPoint")
-                        rowDataScope[ADD_WIDTH, col + spanCol] = dataPoint
-
-                        if (manager.trace) {
-                            println("DIST ADD_WIDTH value: ${dataPoint.value} dataPoint[${col + spanCol}] $dataPoint")
-
-                            // lets consume MAX_ADD_WIDTH so it is computed
-                            dataPoint = MAX_ADD_WIDTH.dataPoint(tableDataScope, col + spanCol)
-                            println("MAX_ADD_WIDTH dataPoint[${col + spanCol}] $dataPoint")
-                        }
-                    }
-
-                    // here we have to aggregate FINAL_COLUMN_WIDTH and feed it to the column data point
-                    val finalAggregator = SmartVersionedIntAggregatorDistributor("${rowDataScope.name}:col$col:finalAggregator:FINAL_COLUMN_WIDTH", span, 0)
-                    if (manager.trace) finalAggregator.trace = true
-
-                    for (spanCol in 0..span - 1) {
-                        finalAggregator.get(spanCol).connect(FINAL_COLUMN_WIDTH.dataPoint(tableDataScope, col + spanCol))
-                    }
-
-                    formattedCol.widthDataPoint = SmartDependentData(listOf(finalAggregator), DataComputable { finalAggregator.value })
-                } else {
-                    rowDataScope[COLUMN_WIDTH, col] = formattedCol.lengthDataPoint
-                    formattedCol.widthDataPoint = FINAL_COLUMN_WIDTH.dataPoint(tableDataScope, col)
-                }
+                if (col > 0) formattedRow.appendOptimized(pipeSequence.repeat(lastSpan))
+                formattedRow.append(formattedCol)
+                formattedCol.widthDataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint, span)
+                formattedCol.alignmentDataPoint = tableBalancer.alignmentDataPoint(col)
 
                 lastSpan = span
-                formattedCol.alignmentDataPoint = COLUMN_ALIGNMENT.dataPoint(tableDataScope, col)
-
-                formattedRow.append(formattedCol)
                 col += span
             }
 
             // here if we add pipes then add lastSpan, else lastSpan-1
-            formattedTable.append("|", formattedRow, "|".repeat(lastSpan), "\n")
+            formattedTable.appendOptimized(pipeSequence, formattedRow, pipeSequence.repeat(lastSpan), endOfLine)
             row++
         }
 
-        val column = lastColumn
-        if (manager.trace) {
-            println("currentSerial: ${SmartVersionManager.currentSerial}")
-            if (column != null) println(column.widthDataPoint)
-        }
-
-        tableDataScope.finalizeAllScopes()
-
-        if (manager.trace) {
-            for (col in 0..3) {
-                var dataPoint = MAX_COLUMN_WIDTH.dataPoint(tableDataScope, col)
-                println("MAX_COLUMN_WIDTH dataPoint[${col}] $dataPoint")
-
-                dataPoint = MAX_ADD_WIDTH.dataPoint(tableDataScope, col)
-                println("MAX_ADD_WIDTH dataPoint[${col}] $dataPoint")
-            }
-
-            println("currentSerial: ${SmartVersionManager.currentSerial}")
-            if (column != null) {
-                println(column.widthDataPoint)
-                println("lastColumnWidth.widthDataPoint.value = ${column.widthDataPoint.value}")
-                println("lastColumnWidth.value = ${column.width}")
-            }
-        }
-
-
-        //        println("maxColumnWidth0: $maxColumnWidth0")
-        //        println("maxColumnWidth1: $maxColumnWidth1")
-        //        println("maxColumnWidth2: $maxColumnWidth2")
-        //        println("maxColumnWidth3: $maxColumnWidth3")
-        //        println("columnAlignment0: $columnAlignment0")
-        //        println("columnAlignment1: $columnAlignment1")
-        //        println("columnAlignment2: $columnAlignment2")
-        //        println("columnAlignment3: $columnAlignment3")
+        tableBalancer.finalizeTable()
 
         println("Unformatted Table\n$table\n")
         println("Formatted Table\n$formattedTable\n")
 
-        assertEquals("""|Header 0                       |Header 1              |          Header 2          |             Header 3|
-|:------------------------------|:---------------------|:--------------------------:|--------------------:|
-|Row 1 Col 0 Data               |Row 1 Col 1 Data      |   Row 1 Col 2 More Data    |Row 1 Col 3 Much Data|
-|Row 2 Col 0 Default Alignment  |Row 2 Col 1 More Data |Row 2 Col 2 a lot more Data |     Row 2 Col 3 Data|
-|Row 3 Col 0-1 Default Alignment                      ||Row 3 Col 2 a lot more Data |     Row 3 Col 3 Data|
-|Row 4 Col 0 Default Alignment  |Row 4 Col 1-2 More Data                           ||     Row 4 Col 3 Data|
-|Row 5 Col 0 Default Alignment  |Row 5 Col 1 More Data |          Row 5 Col 2-3 a lot more Data          ||
-|Row 6 Col 0-2 Default Alignment Row 6 Col 1 More Data Row 6 Col 2 a lot more Data|||     Row 6 Col 3 Data|
-|Row 7 Col 0 Default Alignment  |Row 7 Col 1-3 More Data Row 7 Col 2 a lot more Data Row 7 Col 3 Data   |||
-|Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data    ||||
+        assertEquals("""| Header 0                      | Header 1              |          Header 2           |              Header 3 |
+|:------------------------------|:----------------------|:---------------------------:|----------------------:|
+| Row 1 Col 0 Data              | Row 1 Col 1 Data      |    Row 1 Col 2 More Data    | Row 1 Col 3 Much Data |
+| Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data |      Row 2 Col 3 Data |
+| Row 3 Col 0-1 Default Alignment                      || Row 3 Col 2 a lot more Data |      Row 3 Col 3 Data |
+| Row 4 Col 0 Default Alignment | Row 4 Col 1-2 More Data                            ||      Row 4 Col 3 Data |
+| Row 5 Col 0 Default Alignment | Row 5 Col 1 More Data |           Row 5 Col 2-3 a lot more Data            ||
+| Row 6 Col 0-2 Default Alignment Row 6 Col 1 More Data Row 6 Col 2 a lot more Data |||      Row 6 Col 3 Data |
+| Row 7 Col 0 Default Alignment | Row 7 Col 1-3 More Data Row 7 Col 2 a lot more Data Row 7 Col 3 Data      |||
+| Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data       ||||
 """, formattedTable.toString())
     }
-
 }

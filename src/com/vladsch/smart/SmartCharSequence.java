@@ -124,6 +124,8 @@ public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMar
     @NotNull
     SmartCharSequence append(@NotNull CharSequence... others);
     @NotNull
+    SmartCharSequence appendOptimized(@NotNull CharSequence... others);
+    @NotNull
     List<SmartCharSequence> splitParts(char delimiter, boolean includeDelimiter);
     @NotNull
     SmartSegmentedCharSequence splitPartsSegmented(char delimiter, boolean includeDelimiter);

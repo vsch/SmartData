@@ -150,6 +150,11 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
         return this
     }
 
+    override fun appendOptimized(vararg others: CharSequence?): EditableCharSequence {
+        myChars = myChars.appendOptimized(*others)
+        return this
+    }
+
     override fun segmented(): SmartSegmentedCharSequence {
         return myChars.segmented()
     }
