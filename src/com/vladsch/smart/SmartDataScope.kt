@@ -324,19 +324,19 @@ open class SmartVectorDataKey<V : Any>(id: String, nullValue: V, dependencies: L
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
-            //            println("creating connections for $myId[$index] on scope: ${result.name}")
+            if (SmartDataScopeManager.INSTANCE.trace) println("creating connections for $myId[$index] on scope: ${result.name}")
             var dependents = ArrayList<SmartVersionedDataHolder<V>>()
 
             for (source in sources) {
                 for (dataKey in dependencies) {
                     val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
-                    //                println("adding dependent: $dependent")
+                    if (SmartDataScopeManager.INSTANCE.trace) println("adding dependent: $dependent")
                     dependents.add(dependent)
                 }
             }
 
             result.setValue(this, index, SmartVectorData(dependents, myComputable))
-            //            println("created connections for $myId[$index] on scope: ${result.name}")
+            if (SmartDataScopeManager.INSTANCE.trace) println("created connections for $myId[$index] on scope: ${result.name}")
         }
     }
 }
@@ -698,12 +698,14 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
     }
 
     private fun traceAndClear() {
-        for ((dataKey, indices) in consumers) {
-            print("$name: consumer of ${dataKey.myId} ")
-            for (index in indices) {
-                print("[$index: ${dataKey.value(this, index)?.value}] ")
+        if (SmartDataScopeManager.INSTANCE.trace) {
+            for ((dataKey, indices) in consumers) {
+                print("$name: consumer of ${dataKey.myId} ")
+                for (index in indices) {
+                    print("[$index: ${dataKey.value(this, index)?.value}] ")
+                }
+                println()
             }
-            println()
         }
 
         myConsumers.clear()

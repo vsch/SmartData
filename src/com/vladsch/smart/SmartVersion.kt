@@ -21,6 +21,7 @@
 
 package com.vladsch.smart
 
+import org.junit.Assert
 import java.util.*
 
 object SmartVersionManager {
@@ -1083,22 +1084,44 @@ class MutableIteratorAdapter<V>(val iterator: Iterator<V>) : MutableIterator<V> 
 
 open class SmartVersionedPropertyArray<V>(name: String, size: Int, initialValue: V, aggregate: DataValueComputable<Iterable<V>, V>, distribute: DataValueComputable<V, Iterator<V>>) : SmartDependentVersionBase(), SmartVersionedPropertyArrayHolder<V> {
 
+    constructor(size: Int, initialValue: V, aggregate: DataValueComputable<Iterable<V>, V>, distribute: DataValueComputable<V, Iterator<V>>) : this("<unnamed>", size, initialValue, aggregate, distribute)
+
     protected val myName = name
     protected val myAggregateComputable = aggregate
     protected val myDistributeComputable = distribute
     protected val myProperty: SmartVersionedProperty<V>
     protected val myProperties: List<SmartVersionedProperty<V>>
     protected var myRecursion = RecursionGuard()
+    protected var myTrace = false
+
+    open var trace: Boolean
+        get() = myTrace
+        set(value) {
+            myTrace = value
+        }
 
     // distribute the given value, versionSerial of distributed properties will be the same as the versionSerial of the current snapshot
     // that way the distributed version is the same as the version being distributed
     // recursion guard is used here just in case, unlike onAggregate that needs it
     protected fun onDistribute(value: V) {
         myRecursion.guarded() {
-            val iterator = myDistributeComputable.compute(value)
-            for (i in 1..myProperties.lastIndex) {
-                if (!iterator.hasNext()) break
-                myProperties[i].setVersionedValue(iterator.next(), myProperty.versionSerial)
+            if (myTrace) {
+                val out = StringBuilder()
+                out.append(myName).append(": distributing $value ")
+                val iterator = myDistributeComputable.compute(value)
+                for (i in 1..myProperties.lastIndex) {
+                    if (!iterator.hasNext()) break
+                    val itemValue = iterator.next()
+                    myProperties[i].setVersionedValue(itemValue, myProperty.versionSerial)
+                    out.append("$itemValue -> $i ")
+                }
+                println(out.toString())
+            } else {
+                val iterator = myDistributeComputable.compute(value)
+                for (i in 1..myProperties.lastIndex) {
+                    if (!iterator.hasNext()) break
+                    myProperties[i].setVersionedValue(iterator.next(), myProperty.versionSerial)
+                }
             }
         }
     }
@@ -1108,9 +1131,21 @@ open class SmartVersionedPropertyArray<V>(name: String, size: Int, initialValue:
     // recursion guard is needed because reading values from properties may trigger another onAggregate call
     protected fun onAggregate() {
         myRecursion.guarded() {
-            val iterable = IterableValueDependenciesAdapter(myProperties.subList(1, myProperties.size))
-            val aggregated = myAggregateComputable.compute(iterable)
-            myProperty.setVersionedValue(aggregated, mySnapshot.dependenciesSerial)
+            if (myTrace) {
+                val out = StringBuilder()
+                val iterable = IterableValueDependenciesAdapter(myProperties.subList(1, myProperties.size))
+                val aggregated = myAggregateComputable.compute(iterable)
+                out.append(myName).append(": aggregated $aggregated <- ")
+                for (itemValue in iterable) {
+                    out.append("$itemValue ")
+                }
+                println(out.toString())
+                myProperty.setVersionedValue(aggregated, mySnapshot.dependenciesSerial)
+            } else {
+                val iterable = IterableValueDependenciesAdapter(myProperties.subList(1, myProperties.size))
+                val aggregated = myAggregateComputable.compute(iterable)
+                myProperty.setVersionedValue(aggregated, mySnapshot.dependenciesSerial)
+            }
         }
     }
 
@@ -1134,10 +1169,14 @@ open class SmartVersionedPropertyArray<V>(name: String, size: Int, initialValue:
 
     override fun connect(aliased: SmartVersionedDataHolder<V>) {
         myProperty.connect(aliased)
+        // force version update or no one will know it changed
+        nextVersion()
     }
 
     override fun disconnect() {
         myProperty.disconnect()
+        // force version update or no one will know it changed
+        nextVersion()
     }
 
     override fun connectionFinalized() {
@@ -1185,3 +1224,20 @@ open class SmartVersionedPropertyArray<V>(name: String, size: Int, initialValue:
     }
 }
 
+class DistributingIterator(val size: Int, sumValue: Int) : Iterator<Int> {
+    protected var index = 0
+    protected val whole = sumValue / size
+    protected val remainder = sumValue - whole * size
+
+    override fun hasNext(): Boolean {
+        return index < size
+    }
+
+    override fun next(): Int {
+        return whole + if (index++ < remainder) 1 else 0
+    }
+}
+
+open class SmartVersionedIntAggregatorDistributor(name: String, size: Int, initialValue: Int) : SmartVersionedPropertyArray<Int>(name, size, initialValue, DataValueComputable { it.sum() }, DataValueComputable { DistributingIterator(size, it) }) {
+    constructor(size: Int, initialValue: Int) : this("<unnamed>", size, initialValue)
+}
