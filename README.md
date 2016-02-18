@@ -526,9 +526,9 @@ Even better when all the logic is wrapped into a class, like `SmartTableColumnBa
 
         val pipeSequence = RepeatedCharSequence('|')
         val endOfLine = RepeatedCharSequence('\n')
-        val pipePadding = RepeatedCharSequence(' ') // or empty if dont' want padding
+        val pipePadding = RepeatedCharSequence(' ') // or empty if don't want padding
         val alignMarker = RepeatedCharSequence(':')
-        val discretionaryAlignMarker = 1 // 1 always add discretionary alignMarker, 0 - leaave as is, anything else - always remove
+        val discretionaryAlignMarker = 1 // 1 always add discretionary alignMarker, 0 - leave as is, anything else - always remove
 
         val tableRows = table.splitPartsSegmented('\n', false)
         var row = 0
