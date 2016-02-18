@@ -634,7 +634,7 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
 
                 if (col > 0) formattedRow.appendOptimized(pipeSequence.repeat(lastSpan))
                 formattedRow.append(formattedCol)
-                formattedCol.widthDataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint, span)
+                formattedCol.widthDataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint, span, 0)
                 formattedCol.alignmentDataPoint = tableBalancer.alignmentDataPoint(col)
 
                 lastSpan = span

@@ -44,10 +44,10 @@ class SmartTableColumnBalancer() {
     protected var myDependencies: List<SmartVersionedDataHolder<Int>> = listOf()
 
     fun width(index: Int, textLength: SmartVersionedDataHolder<Int>): SmartVersionedDataHolder<Int> {
-        return width(index, textLength, 1)
+        return width(index, textLength, 1, 0)
     }
 
-    fun width(index: Int, textLength: SmartVersionedDataHolder<Int>, columnSpan: Int): SmartVersionedDataHolder<Int> {
+    fun width(index: Int, textLength: SmartVersionedDataHolder<Int>, columnSpan: Int, widthOffset: Int): SmartVersionedDataHolder<Int> {
         if (columnSpan < 1) throw IllegalArgumentException("columnSpan must be >= 1")
 
         ensureColumnDataPoints(index + columnSpan - 1)
@@ -58,7 +58,7 @@ class SmartTableColumnBalancer() {
             return myColumnWidthDataPoints[index]
         } else {
             // this one is a span
-            val colSpan = TableColumnSpan(this, index, columnSpan, textLength)
+            val colSpan = TableColumnSpan(this, index, columnSpan, textLength, widthOffset)
             myColumnSpans.add(colSpan)
             return colSpan.widthDataPoint
         }
@@ -116,15 +116,15 @@ class SmartTableColumnBalancer() {
 
         myDependencies = dependencies
 
-        myColumnWidths = Array(myColumnLengths.size, { 0 })
-        myAdditionalColumnWidths = Array(myColumnLengths.size, { 0 })
+        myColumnWidths = Array(myColumnWidthDataPoints.size, { 0 })
+        myAdditionalColumnWidths = Array(myColumnWidthDataPoints.size, { 0 })
 
         for (index in 0..myColumnWidthDataPoints.lastIndex) {
             myColumnWidthDataPoints[index].alias = SmartDependentData(myVersionData, { columnWidth(index) })
         }
 
         for (columnSpan in myColumnSpans) {
-            columnSpan.widthDataPoint.alias = SmartDependentData(myVersionData, { spanWidth(columnSpan.startIndex, columnSpan.endIndex) })
+            columnSpan.widthDataPoint.alias = SmartDependentData(myVersionData, { spanWidth(columnSpan.startIndex, columnSpan.endIndex) - columnSpan.widthOffset })
         }
 
         // we now set our version alias to dependent data that will do the column balancing computations
@@ -215,11 +215,13 @@ class SmartTableColumnBalancer() {
 
     internal fun columnLength(index: Int): Int = myColumnWidths[index]
 
-    class TableColumnSpan(tableColumnBalancer: SmartTableColumnBalancer, index: Int, columnSpan: Int, textLength: SmartVersionedDataHolder<Int>) {
+    class TableColumnSpan(tableColumnBalancer: SmartTableColumnBalancer, index: Int, columnSpan: Int, textLength: SmartVersionedDataHolder<Int>, widthOffset:Int) {
+
         protected val myTableColumnBalancer = tableColumnBalancer
         protected val myStartIndex = index
         protected val myEndIndex = index + columnSpan
         protected val myTextLengthDataPoint = textLength
+        protected val myWidthOffset:Int = widthOffset
         protected val myWidthDataPoint = SmartVersionedDataAlias(IMMUTABLE_ZERO)
         protected val myColumns: Set<Int>
 
@@ -242,6 +244,8 @@ class SmartTableColumnBalancer() {
         val startIndex: Int get() = myStartIndex
         val endIndex: Int get() = myEndIndex
         val lastIndex: Int get() = myEndIndex - 1
+
+        val widthOffset: Int get() = myWidthOffset
 
         val textLengthDataPoint: SmartVersionedDataHolder<Int> get() = myTextLengthDataPoint
         val widthDataPoint: SmartVersionedDataAlias<Int> get() = myWidthDataPoint
@@ -271,7 +275,7 @@ class SmartTableColumnBalancer() {
             myUnfixedColumns = unfixed
 
             if (!unfixed.isEmpty()) {
-                val extraLength = (myTextLength - fixedWidth).minBound(0)
+                val extraLength = (myTextLength + myWidthOffset - fixedWidth).minBound(0)
                 val whole = extraLength / unfixed.size
                 var remainder = extraLength - whole * unfixed.size
 

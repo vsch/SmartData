@@ -1,3 +1,7 @@
+### 0.0.7 - Bug Fixes
+
+- add `MarkdownTableFormatter` and `MarkdownTableFormatSettings`
+
 ### 0.0.6 - Bug Fixes
 
 - add `SmartTableColumnBalancer` which handles optimizing column widths with or without spanning columns present in the table.

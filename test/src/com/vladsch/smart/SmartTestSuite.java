@@ -28,7 +28,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         SmartCharSequenceTestSuite.class,
         SafeCharSequenceTestSuite.class,
-        SmartDataTestSuite.class
+        SmartDataTestSuite.class,
+        MarkdownTableFormatterTest.class
 })
 
 public class SmartTestSuite {

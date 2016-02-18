@@ -143,7 +143,7 @@ class SmartTableColumnBalancerTest {
         val widthRow2Col2 = tableBalancer.width(1, row2col2)
         val widthRow2Col3 = tableBalancer.width(2, row2col3)
 
-        val widthRow3Col1 = tableBalancer.width(0, row3col1, 2)
+        val widthRow3Col1 = tableBalancer.width(0, row3col1, 2, 0)
         val widthRow3Col3 = tableBalancer.width(2, row3col3)
 
         tableBalancer.finalizeTable()
@@ -244,7 +244,7 @@ class SmartTableColumnBalancerTest {
         val widthRow2Col2 = tableBalancer.width(1, row2col2)
         val widthRow2Col3 = tableBalancer.width(2, row2col3)
 
-        val widthRow3Col1 = tableBalancer.width(0, row3col1, 2)
+        val widthRow3Col1 = tableBalancer.width(0, row3col1, 2, 0)
         val widthRow3Col3 = tableBalancer.width(2, row3col3)
 
         tableBalancer.finalizeTable()
