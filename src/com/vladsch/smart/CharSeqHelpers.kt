@@ -50,7 +50,7 @@ fun CharSequence.countTrailing(vararg c: Char, index: Int? = null): Int {
     return this.length
 }
 
-fun CharSequence.trimEnd(s: String = " \t", index:Int? = null): CharSequence {
+fun CharSequence.trimEnd(s: String = " \t", index: Int? = null): CharSequence {
     @Suppress("NAME_SHADOWING")
     var index = index ?: length - 1
     if (index > length - 1) index = length - 1
@@ -101,7 +101,7 @@ fun CharSequence.smart(): SmartCharSequence {
     return SmartCharSequenceBase.smart(this)
 }
 
-fun CharSequence.extractGroups(regex: String) : ArrayList<CharSequence>? {
+fun CharSequence.extractGroups(regex: String): ArrayList<CharSequence>? {
     var matchResult = regex.toRegex().matchEntire(this)
     if (matchResult != null) {
         val segments = ArrayList<CharSequence>(matchResult.groups.size)
@@ -164,7 +164,45 @@ fun CharSequence.indexLeading(index: Int, scanner: (char: Char) -> Int?): Int {
     return length
 }
 
-fun CharSequence.asString():String{
+fun CharSequence.asString(): String {
     return StringBuilder().append(this).toString()
 }
+
+fun CharSequence.asSmart(): SmartCharSequence {
+    return SmartCharSequenceBase.smart(this)
+}
+
+fun SmartCharSequence.trimStart() :SmartCharSequence {
+    return trimStart(' ', '\t', '\n')
+}
+
+fun SmartCharSequence.trimStart(vararg chars:Char) :SmartCharSequence {
+    val leading = countLeading(*chars)
+    return if (leading == 0) this else if (leading == length) EMPTY_SEQUENCE else subSequence(leading, length)
+}
+
+fun SmartCharSequence.trimEnd() :SmartCharSequence {
+    return trimEnd(' ', '\t', '\n')
+}
+
+fun SmartCharSequence.trimEnd(vararg chars:Char) :SmartCharSequence {
+    val trailing = countTrailing(*chars)
+    return if (trailing == 0) this else if (trailing == length) EMPTY_SEQUENCE else subSequence(0, length-trailing)
+}
+
+fun SmartCharSequence.trim() :SmartCharSequence {
+    return trim(' ', '\t', '\n')
+}
+
+fun SmartCharSequence.trim(vararg chars:Char) :SmartCharSequence {
+    val leading = countLeading(*chars)
+    if (leading == length) return EMPTY_SEQUENCE
+
+    val trailing = countTrailing(*chars)
+    return if (trailing == 0) {
+        if (leading == 0) this
+        else subSequence(leading, length)
+    } else subSequence(leading, length - trailing)
+}
+
 

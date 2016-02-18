@@ -200,17 +200,23 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
         val i = getCharSequenceIndex(index)
         if (i >= 0) {
             val trackedLocation = segments[i].trackedSourceLocation(index - myLengths[i])
-            return trackedLocation.withIndex(index)
+            return trackedLocation.withIndex(trackedLocation.index + myLengths[i])
+                    .withPrevClosest(trackedLocation.prevIndex + myLengths[i])
+                    .withNextClosest(trackedLocation.nextIndex + myLengths[i])
         }
         throw IndexOutOfBoundsException("charAt(" + index + ") is not within underlying char sequence range [0, " + myLengths[myLengths.size - 1])
     }
 
     override fun trackedLocation(source: Any?, offset: Int): TrackedLocation? {
         var i = 0
+        myCacheVersion.nextVersion()
         for (charSequence in segments) {
             val trackedLocation = charSequence.trackedLocation(source, offset)
             if (trackedLocation != null) {
-                return trackedLocation.withIndex(trackedLocation.index + myLengths[i])
+                if (myLengths[i] == 0) return trackedLocation
+                else return trackedLocation.withIndex(trackedLocation.index + myLengths[i])
+                        .withPrevClosest(trackedLocation.prevIndex + myLengths[i])
+                        .withNextClosest(trackedLocation.nextIndex + myLengths[i])
             }
             i++
         }

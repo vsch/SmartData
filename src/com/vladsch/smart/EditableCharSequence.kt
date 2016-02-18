@@ -29,8 +29,6 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
     private var myVariableChars: SmartSegmentedCharSequence = SmartCharSequenceBase.segmentedFlat(SmartCharSequenceBase.smart(chars))
     private var myVersion = SmartVolatileVersion()
 
-    val chars: SmartCharSequence get() = myVariableChars
-
     private var myChars: SmartCharSequence
         get() = myVariableChars
         private set(value) {

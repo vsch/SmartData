@@ -106,7 +106,12 @@ class SmartReplacedCharSequence(replacedChars: SmartCharSequence, val chars: Cha
         if (location != null) {
             val length = length
             if (length < myReplacedChars.length) {
-                return location.withIndex(if (location.index < length) location.index else length - 1).withPrevClosest(if (location.prevIndex < length) location.index else length - 1).withNextClosest(if (location.nextIndex < length) location.index else length - 1)
+                @Suppress("NAME_SHADOWING")
+                var location = location
+                if (location.index > length) location = location.withIndex(length)
+                if (location.prevIndex > length) location = location.withPrevClosest(length)
+                if (location.prevIndex > length) location = location.withNextClosest(length)
+                return location
             }
         }
         return location

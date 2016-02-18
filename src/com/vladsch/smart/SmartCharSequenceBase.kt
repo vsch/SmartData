@@ -337,7 +337,6 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         return myCachedProxy?.hashCode() ?: 0
     }
 
-
     companion object {
         @JvmStatic fun segmentedFlat(vararg others: SmartCharSequence): SmartSegmentedCharSequence {
             if (others.size == 0)

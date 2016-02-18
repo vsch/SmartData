@@ -154,23 +154,18 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     override fun getCharsImpl(): CharArray = resultSequence.getCharsImpl()
     override fun getCachedProxy(): SmartCharSequence = resultSequence.cachedProxy
 
-    override fun trackedSourceLocation(index: Int): TrackedLocation {
-        checkIndex(index)
-        val location = resultSequence.trackedSourceLocation(index)
-        return adjustTrackedSourceLocation(location)
-    }
-
-    protected fun adjustTrackedLocation(location: TrackedLocation?): TrackedLocation? {
-        if (location != null) {
-            val leadPadding = myLeftPadding.length + myPrefix.value.length
-            if (leadPadding > 0) {
-                return adjustTrackedSourceLocation(location)
-            }
-        }
+    override fun trackedLocation(source: Any?, offset: Int): TrackedLocation? {
+        val location = resultSequence.trackedLocation(source, offset)
         return location
     }
 
-    protected fun adjustTrackedSourceLocation(location: TrackedLocation): TrackedLocation {
+    override fun trackedSourceLocation(index: Int): TrackedLocation {
+        checkIndex(index)
+        val location = resultSequence.trackedSourceLocation(index)
+        return location
+    }
+
+    protected fun adjustTrackedLocation(location: TrackedLocation): TrackedLocation {
         val leadPadding = myLeftPadding.length + myPrefix.value.length
         if (leadPadding > 0) {
             return location.withIndex(leadPadding + location.index).withPrevClosest(leadPadding + location.prevIndex).withNextClosest(leadPadding + location.nextIndex)
@@ -189,11 +184,6 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
             if (!markers.isEmpty()) return markers
         }
         return TrackedLocation.EMPTY_LIST
-    }
-
-    override fun trackedLocation(source: Any?, offset: Int): TrackedLocation? {
-        val location = resultSequence.trackedLocation(source, offset)
-        return adjustTrackedLocation(location)
     }
 
     override fun splicedWith(other: CharSequence?): SmartCharSequence? {

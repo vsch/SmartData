@@ -22,6 +22,7 @@
 package com.vladsch.smart
 
 import org.junit.Test
+import kotlin.test.assertEquals
 
 class MarkdownTableFormatterTest {
 
@@ -145,8 +146,8 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
 
         val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
  --------|:-------- |:--------:|-------:
-Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
-Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
+Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data          |         Row 1 Col 3 Much Data
+Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data  |
 """.toCharArray())
 
         val settings = MarkdownTableFormatSettings()
@@ -157,9 +158,9 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
         println("Formatted Table\n$formattedTable\n")
 
         kotlin.test.assertEquals("""| Header 0 | Header 1 | Header 2 | Header 3 |
-| --------|:-------- |:--------:|-------:|
-| Row 1 Col 0 Data | Row 1 Col 1 Data | Row 1 Col 2 More Data | Row 1 Col 3 Much Data |
-| Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data | Row 2 Col 3 Data |
+|:---------|:----------|:----------:|--------:|
+| Row 1 Col 0 Data | Row 1 Col 1 Data |      Row 1 Col 2 More Data      |          Row 1 Col 3 Much Data |
+| Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data |   Row 2 Col 3 Data |
 """, formattedTable.toString())
     }
 
@@ -295,4 +296,98 @@ Row 7 Col 0 Default Alignment | Row 7 Col 1-3 More Data Row 7 Col 2 a lot more D
 Row 8 Col 0-3 Default Alignment Row 8 Col 1 More Data Row 8 Col 2 a lot more Data Row 8 Col 3 Data     ||||
 """, formattedTable.toString())
     }
+
+    @Test
+    fun formatTableSimpleTracking() {
+
+        val chars = """Header 0|Header 1|Header 2|Header 3
+Header 0 line 2|Header 1 extra|More Header 2|Another Header 3
+ --------|:-------- |:--------:|-------:
+Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
+Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
+""".toCharArray()
+        val table = SmartCharArraySequence(chars)
+
+        val settings = MarkdownTableFormatSettings()
+        var formattedTable = MarkdownTableFormatter(settings).formatTable(table)
+
+        val rows = table.splitPartsSegmented('\n', true)
+        var rowOffset = 0
+        for (row in rows.segments) {
+            val cols = row.splitPartsSegmented('|', true)
+            var colOffset = rowOffset
+            for (col in cols.segments) {
+                val start = formattedTable.trackedLocation(chars, colOffset + col.countLeading(' '))
+                val end = formattedTable.trackedLocation(chars, colOffset + col.length - 2 - col.countTrailing(' '))
+
+                if (!col.contains('-')) {
+                    assertEquals(true, start != null, "testing start source for $colOffset '${col.asString()}'")
+                    assertEquals(true, end != null, "testing start source for ${colOffset + col.length - 2} '${col.asString()}'")
+
+                    assertEquals(table.subSequence(start!!.offset, end!!.offset + 1).toString(), formattedTable.subSequence(start.index, end.index + 1).toString(), "Testing tracked content match from ${start.offset}, ${end.offset} to ${start.index}, ${end.index}")
+                }
+
+                colOffset += col.length
+            }
+            rowOffset += row.length
+        }
+
+        println("Unformatted Table\n$table\n")
+        println("Formatted Table\n$formattedTable\n")
+
+        kotlin.test.assertEquals("""| Header 0                      | Header 1              |          Header 2           |              Header 3 |
+| Header 0 line 2               | Header 1 extra        |        More Header 2        |      Another Header 3 |
+|:------------------------------|:----------------------|:---------------------------:|----------------------:|
+| Row 1 Col 0 Data              | Row 1 Col 1 Data      |    Row 1 Col 2 More Data    | Row 1 Col 3 Much Data |
+| Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data |      Row 2 Col 3 Data |
+""", formattedTable.toString())
+    }
+
+    @Test
+    fun formatTableIndentedTracking() {
+
+        val chars = """    Header 0|Header 1|Header 2|Header 3
+ Header 0 line 2|Header 1 extra|More Header 2|Another Header 3
+ --------|:-------- |:--------:|-------:
+    Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
+    Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
+""".toCharArray()
+        val table = SmartCharArraySequence(chars)
+
+        val settings = MarkdownTableFormatSettings()
+        var formattedTable = MarkdownTableFormatter(settings).formatTable(table)
+
+        val rows = table.splitPartsSegmented('\n', true)
+        var rowOffset = 0
+        for (row in rows.segments) {
+            val cols = row.splitPartsSegmented('|', true)
+            var colOffset = rowOffset
+            for (col in cols.segments) {
+                val start = formattedTable.trackedLocation(chars, colOffset + col.countLeading(' '))
+                val end = formattedTable.trackedLocation(chars, colOffset + col.length - 2 - col.countTrailing(' '))
+
+                if (!col.contains('-')) {
+                    assertEquals(true, start != null, "testing start source for $colOffset '${col.asString()}'")
+                    assertEquals(true, end != null, "testing start source for ${colOffset + col.length - 2} '${col.asString()}'")
+
+                    assertEquals(table.subSequence(start!!.offset, end!!.offset + 1).toString(), formattedTable.subSequence(start.index, end.index + 1).toString(), "Testing tracked content match from ${start.offset}, ${end.offset} to ${start.index}, ${end.index}")
+                }
+
+                colOffset += col.length
+            }
+            rowOffset += row.length
+        }
+
+        println("Unformatted Table\n$table\n")
+        println("Formatted Table\n$formattedTable\n")
+
+        kotlin.test.assertEquals("""    | Header 0                      | Header 1              |          Header 2           |              Header 3 |
+    | Header 0 line 2               | Header 1 extra        |        More Header 2        |      Another Header 3 |
+    |:------------------------------|:----------------------|:---------------------------:|----------------------:|
+    | Row 1 Col 0 Data              | Row 1 Col 1 Data      |    Row 1 Col 2 More Data    | Row 1 Col 3 Much Data |
+    | Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data |      Row 2 Col 3 Data |
+""", formattedTable.toString())
+    }
+
+
 }
