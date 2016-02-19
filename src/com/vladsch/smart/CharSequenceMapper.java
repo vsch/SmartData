@@ -21,6 +21,9 @@
 
 package com.vladsch.smart;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface CharSequenceMapper {
-    char mapChar(CharSequence charSequence, int index);
+    char mapChar(@NotNull CharSequence charSequence, int index);
+    char mapChar(@NotNull char[] charSequence, int offset, int index);
 }

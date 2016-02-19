@@ -29,6 +29,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
     private var myLengths = IntArray(0)
     private var myVariableContent: Boolean = false
     val segments: List<SmartCharSequence>
+    private var myLastSegment: Int? = null
 
     constructor(vararg charSequences: CharSequence) {
         val smartCharSequences = Companion.smart(charSequences.toList())
@@ -58,6 +59,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
         }
         myLengths = lengths
         myVariableContent = variableContent
+        myLastSegment = 0
     }
 
     val isVariableContent: Boolean
@@ -73,8 +75,28 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
         }
 
     public override fun charAtImpl(index: Int): Char {
+        var lastSegment = myLastSegment
+        if (lastSegment != null) {
+            if (index >= myLengths[lastSegment] && index <= myLengths[lastSegment + 1]) return segments[lastSegment][index - myLengths[lastSegment]]
+            // see if it is next or previous
+            if (lastSegment < myLengths.lastIndex && index >= myLengths[lastSegment + 1] && index < myLengths[lastSegment + 2]) {
+                lastSegment++
+                myLastSegment = lastSegment
+                return segments[lastSegment][index - myLengths[lastSegment]]
+            }
+
+            if (lastSegment > 0 && index >= myLengths[lastSegment - 1] && index < myLengths[lastSegment]) {
+                lastSegment--
+                myLastSegment = lastSegment
+                return segments[lastSegment][index - myLengths[lastSegment]]
+            }
+        }
+
         val i = getCharSequenceIndex(index)
-        if (i >= 0) return segments[i][index - myLengths[i]]
+        if (i >= 0) {
+            myLastSegment = i
+            return segments[i][index - myLengths[i]]
+        }
         throw IndexOutOfBoundsException("charAt(" + index + ") is not within underlying char sequence range [0, " + myLengths[myLengths.size - 1])
     }
 
@@ -200,6 +222,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
         val i = getCharSequenceIndex(index)
         if (i >= 0) {
             val trackedLocation = segments[i].trackedSourceLocation(index - myLengths[i])
+            if (myLengths[i] == 0) return trackedLocation
             return trackedLocation.withIndex(trackedLocation.index + myLengths[i])
                     .withPrevClosest(trackedLocation.prevIndex + myLengths[i])
                     .withNextClosest(trackedLocation.nextIndex + myLengths[i])

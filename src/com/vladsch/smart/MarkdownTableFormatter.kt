@@ -42,8 +42,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         val pipeSequence = RepeatedCharSequence('|')
         val endOfLine = RepeatedCharSequence('\n')
         val space = RepeatedCharSequence(' ')
-        val afterPipePadding = if (settings.TABLE_SPACE_AFTER_PIPE) space else EMPTY_SEQUENCE // or empty if don't want padding around pipes
-        val beforePipePadding = if (settings.TABLE_SPACE_BEFORE_PIPE) space else EMPTY_SEQUENCE // or empty if don't want padding around pipes
+        val pipePadding = if (settings.TABLE_SPACE_AROUND_PIPE) space else EMPTY_SEQUENCE // or empty if don't want padding around pipes
         val alignMarker = RepeatedCharSequence(':')
 
         val tableRows = table.splitPartsSegmented('\n', false)
@@ -62,7 +61,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
         for (line in tableRows.segments) {
             var formattedRow = EditableCharSequence()
-            var rowText = line
+            var rowText = line.trimEnd()
 
             // remove the indent prefix
             if (!indentPrefix.isEmpty()) rowText = rowText.removePrefix(indentPrefix, true) as SmartCharSequence
@@ -80,25 +79,26 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             var lastSpan = 1
             while (col < segments.size) {
                 var column = segments[col]
-
-                val colStart = column.trackedSourceLocation(0)
-                val colEnd = column.trackedSourceLocation(column.lastIndex)
-
                 val untrimmedWidth = column.length
 
-                if (!(colStart.offset <= caretOffset && caretOffset <= colEnd.offset + 1)) {
-                    column = column.trim() as SmartCharSequence
-                    //                    println("caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset}")
-                } else {
-                    //                    println("> caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset} <")
+                if (!column.isEmpty()) {
+                    val colStart = column.trackedSourceLocation(0)
+                    val colEnd = column.trackedSourceLocation(column.lastIndex)
 
-                    // trim spaces after caret
-                    val caretIndex = caretOffset - colStart.offset
-                    column = column.subSequence(0, caretIndex).append(column.subSequence(caretIndex, column.length).trimEnd())
+                    if (!(colStart.offset <= caretOffset && caretOffset <= colEnd.offset + 1)) {
+                        column = column.trim() as SmartCharSequence
+                        //                    println("caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset}")
+                    } else {
+                        //                    println("> caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset} <")
 
-                    if (!column.isEmpty()) {
-                        // can trim off leading since we may add spaces
-                        column = column.trimStart()
+                        // trim spaces after caret
+                        val caretIndex = caretOffset - colStart.offset
+                        column = column.subSequence(0, caretIndex).append(column.subSequence(caretIndex, column.length).trimEnd())
+
+                        if (!column.isEmpty()) {
+                            // can trim off leading since we may add spaces
+                            column = column.trimStart()
+                        }
                     }
                 }
 
@@ -129,8 +129,8 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                         }
                     }
                 } else {
-                    if (settings.TABLE_LEAD_TRAIL_PIPES || col > 0) formattedCol.prefix = afterPipePadding
-                    if (settings.TABLE_LEAD_TRAIL_PIPES || col < segments.lastIndex) formattedCol.suffix = if (column[column.lastIndex] != ' ') beforePipePadding else EMPTY_SEQUENCE
+                    if (settings.TABLE_LEAD_TRAIL_PIPES || col > 0) formattedCol.prefix = pipePadding
+                    if (settings.TABLE_LEAD_TRAIL_PIPES || col < segments.lastIndex) formattedCol.suffix = if (column[column.lastIndex] != ' ') pipePadding else EMPTY_SEQUENCE
                 }
 
                 // see if we have spanned columns
@@ -162,6 +162,6 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         }
 
         tableBalancer.finalizeTable()
-        return formattedTable.contents
+        return formattedTable.contents.cachedProxy
     }
 }

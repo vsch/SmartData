@@ -36,12 +36,13 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     protected val myReplacedChars = replacedChars
     protected var myFirstIndent = SmartVersionedProperty("paraCharSeq:FirstIndent", 0)
     protected var myIndent = SmartVersionedProperty("paraCharSeq:Indent", 0)
+    protected var myFirstWidthOffset = SmartVersionedProperty("varCharSeq:FirstWidth", 0)
     protected var myWidth = SmartVersionedProperty("varCharSeq:Width", 0)
     protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment", TextAlignment.LEFT)
     protected var myKeepMarkdownHardBreaks = SmartVersionedProperty("varCharSeq:keepMarkdownHardBreaks", true)
     protected var myKeepLineBreaks = SmartVersionedProperty("varCharSeq:keepLineBreaks", false)
 
-    protected var myResultSequence = SmartDependentData(listOf(myFirstIndent, myIndent, myAlignment, myWidth, myKeepMarkdownHardBreaks), DataComputable { computeResultSequence() })
+    protected var myResultSequence = SmartDependentData(listOf(myFirstIndent, myIndent, myAlignment, myFirstWidthOffset, myWidth, myKeepMarkdownHardBreaks), DataComputable { computeResultSequence() })
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
 
     var alignment: TextAlignment get() = myAlignment.value
@@ -52,6 +53,11 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     var width: Int get() = myWidth.value
         set(value) {
             myWidth.value = value.minBound(0)
+        }
+
+    var firstWidthOffset: Int get() = myFirstWidthOffset.value
+        set(value) {
+            myFirstWidthOffset.value = value
         }
 
     var indent: Int get() = myIndent.value
@@ -175,14 +181,16 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         val lineWords = ArrayList<CharSequence>()
         var result = ArrayList<CharSequence>()
         var lineIndent = firstIndent
+        var lineWidth = (width + firstWidthOffset).minBound(0)
 
         fun lineBreak(lineBreak: CharSequence, lastLine: Boolean) {
-            addLine(result, lineWords, lineCount, width - pos - lineIndent, lastLine)
+            addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, lastLine)
             lineWords.clear()
             result.add(lineBreak)
             pos = 0
             lineCount++
             lineIndent = indent
+            lineWidth = width
         }
 
         while (i < iMax) {
@@ -194,7 +202,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                     i++
                 }
                 TextType.WORD -> {
-                    if (pos == 0 || lineIndent + pos + token.range.span + 1 <= width) {
+                    if (pos == 0 || lineIndent + pos + token.range.span + 1 <= lineWidth) {
                         // fits, add it
                         if (pos > 0) pos++
                         lineWords.add(chars.subSequence(token.range.start, token.range.end))
@@ -224,7 +232,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             }
         }
 
-        if (!lineWords.isEmpty()) addLine(result, lineWords, lineCount, width - pos - lineIndent, true)
+        if (!lineWords.isEmpty()) addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, true)
         return SmartSegmentedCharSequence(SmartCharSequenceBase.spliceSequences(result)).cachedProxy
     }
 
@@ -299,7 +307,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) = resultSequence.getChars(dst, dstOffset)
     override fun charAtImpl(index: Int): Char = resultSequence[index]
     override fun properSubSequence(startIndex: Int, endIndex: Int): SmartCharSequence = resultSequence.subSequence(startIndex, endIndex)
-    override fun getCharsImpl(): CharArray = resultSequence.getChars()
+    override fun getCharsImpl(): CharArray = resultSequence.chars
     override fun getCachedProxy(): SmartCharSequence = resultSequence.cachedProxy
 
     override fun trackedSourceLocation(index: Int): TrackedLocation {

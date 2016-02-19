@@ -23,8 +23,7 @@ package com.vladsch.smart;
 
 public class MarkdownTableFormatSettings {
     public boolean TABLE_LEAD_TRAIL_PIPES = true;
-    public boolean TABLE_SPACE_BEFORE_PIPE = true;
-    public boolean TABLE_SPACE_AFTER_PIPE = true;
+    public boolean TABLE_SPACE_AROUND_PIPE = true;
     public boolean TABLE_ADJUST_COLUMN_WIDTH = true;
     public boolean TABLE_APPLY_COLUMN_ALIGNMENT = true;
     public int TABLE_LEFT_ALIGN_MARKER = 1;
@@ -32,10 +31,9 @@ public class MarkdownTableFormatSettings {
     public MarkdownTableFormatSettings() {
     }
 
-    public MarkdownTableFormatSettings(boolean TABLE_LEAD_TRAIL_PIPES, boolean TABLE_SPACE_BEFORE_PIPE, boolean TABLE_SPACE_AFTER_PIPE, boolean TABLE_ADJUST_COLUMN_WIDTH, boolean TABLE_APPLY_COLUMN_ALIGNMENT, int TABLE_LEFT_ALIGN_MARKER) {
+    public MarkdownTableFormatSettings(boolean TABLE_LEAD_TRAIL_PIPES, boolean TABLE_SPACE_AROUND_PIPE, boolean TABLE_ADJUST_COLUMN_WIDTH, boolean TABLE_APPLY_COLUMN_ALIGNMENT, int TABLE_LEFT_ALIGN_MARKER) {
         this.TABLE_LEAD_TRAIL_PIPES = TABLE_LEAD_TRAIL_PIPES;
-        this.TABLE_SPACE_BEFORE_PIPE = TABLE_SPACE_BEFORE_PIPE;
-        this.TABLE_SPACE_AFTER_PIPE = TABLE_SPACE_AFTER_PIPE;
+        this.TABLE_SPACE_AROUND_PIPE = TABLE_SPACE_AROUND_PIPE;
         this.TABLE_ADJUST_COLUMN_WIDTH = TABLE_ADJUST_COLUMN_WIDTH;
         this.TABLE_APPLY_COLUMN_ALIGNMENT = TABLE_APPLY_COLUMN_ALIGNMENT;
         this.TABLE_LEFT_ALIGN_MARKER = TABLE_LEFT_ALIGN_MARKER;

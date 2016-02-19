@@ -43,9 +43,8 @@ class SmartReversedCharSequence(chars: SmartCharSequence) : SmartCharSequenceBas
 
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) {
         val iMax = length
-        val proxy = myChars.cachedProxy
         for (i in 0..iMax - 1) {
-            dst[dstOffset + i] = proxy[reversedOffset(i)]
+            dst[dstOffset + reversedOffset(i)] = myChars[i]
         }
     }
 

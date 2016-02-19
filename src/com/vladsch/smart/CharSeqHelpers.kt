@@ -205,4 +205,24 @@ fun SmartCharSequence.trim(vararg chars:Char) :SmartCharSequence {
     } else subSequence(leading, length - trailing)
 }
 
+object LowerCaseMapper : CharSequenceMapper {
+    override fun mapChar(charSequence: CharSequence, index: Int): Char {
+        return Character.toLowerCase(charSequence[index])
+    }
+
+    override fun mapChar(charSequence: CharArray, offset: Int, index: Int): Char {
+        return Character.toLowerCase(charSequence[offset + index])
+    }
+}
+
+object UpperCaseMapper : CharSequenceMapper {
+    override fun mapChar(charSequence: CharSequence, index: Int): Char {
+        return Character.toUpperCase(charSequence[index])
+    }
+
+    override fun mapChar(charSequence: CharArray, offset: Int, index: Int): Char {
+        return Character.toUpperCase(charSequence[offset + index])
+    }
+}
+
 

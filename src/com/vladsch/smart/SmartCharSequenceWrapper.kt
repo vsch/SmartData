@@ -43,14 +43,18 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
 
     override fun charAtImpl(index: Int): Char = myChars[myStart + index]
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) {
-        val iMax = length
-        for (i in 0..iMax - 1) {
-            dst[dstOffset + i] = charAtImpl(i)
+        if (myChars is SmartCharSequence) myChars.subSequence(myStart, myEnd).getChars(dst, dstOffset)
+        else {
+            val iMax = length
+            for (i in 0..iMax - 1) {
+                dst[dstOffset + i] = charAtImpl(i)
+            }
         }
     }
 
     // disable proxy copying, use mapping, it's fast enough
-    override fun getCachedProxy(): SmartCharSequence = this
+//    override fun getCachedProxy(): SmartCharSequence = this
+
     override fun toString(): String = myChars.subSequence(myStart, myEnd).toString()
 
     /*

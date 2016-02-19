@@ -31,18 +31,21 @@ class SmartMappedCharSequence(chars: SmartCharSequence, mapper: CharSequenceMapp
 
     override fun charAtImpl(index: Int): Char = myMapper.mapChar(myReplacedChars, index)
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) {
+        myReplacedChars.getChars(dst, dstOffset)
+
         val iMax = length
-        for (i in 0..iMax-1) {
-            dst[dstOffset+i] = myMapper.mapChar(myReplacedChars, i)
+        for (i in 0..iMax - 1) {
+            dst[dstOffset + i] = myMapper.mapChar(dst, dstOffset, i)
         }
     }
 
     // disable proxy copying, use mapping, it's fast enough
     override fun getCachedProxy(): SmartCharSequence = this
+
     override fun toString(): String {
-//        val charArr = CharArray(length)
-//        getCharsImpl(charArr, 0)
-//        return String(charArr)
+        //        val charArr = CharArray(length)
+        //        getCharsImpl(charArr, 0)
+        //        return String(charArr)
         return String(chars)
     }
 

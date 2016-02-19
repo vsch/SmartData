@@ -81,8 +81,7 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
 """.toCharArray())
 
         val settings = MarkdownTableFormatSettings()
-        settings.TABLE_SPACE_AFTER_PIPE = false
-        settings.TABLE_SPACE_BEFORE_PIPE = false
+        settings.TABLE_SPACE_AROUND_PIPE = false
         var formattedTable = MarkdownTableFormatter(settings).formatTable(table)
 
         println("Unformatted Table\n$table\n")
@@ -96,57 +95,11 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
     }
 
     @Test
-    fun formatTableSimpleNoLeadPipePadding() {
-
-        val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
- --------|:-------- |:--------:|-------:
-Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
-Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
-""".toCharArray())
-
-        val settings = MarkdownTableFormatSettings()
-        settings.TABLE_SPACE_BEFORE_PIPE = false
-        var formattedTable = MarkdownTableFormatter(settings).formatTable(table)
-
-        println("Unformatted Table\n$table\n")
-        println("Formatted Table\n$formattedTable\n")
-
-        kotlin.test.assertEquals("""| Header 0                     | Header 1             |          Header 2          |              Header 3|
-|:-----------------------------|:---------------------|:--------------------------:|---------------------:|
-| Row 1 Col 0 Data             | Row 1 Col 1 Data     |    Row 1 Col 2 More Data   | Row 1 Col 3 Much Data|
-| Row 2 Col 0 Default Alignment| Row 2 Col 1 More Data| Row 2 Col 2 a lot more Data|      Row 2 Col 3 Data|
-""", formattedTable.toString())
-    }
-
-    @Test
-    fun formatTableSimpleNoTrailPipePadding() {
-
-        val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
- --------|:-------- |:--------:|-------:
-Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
-Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
-""".toCharArray())
-
-        val settings = MarkdownTableFormatSettings()
-        settings.TABLE_SPACE_AFTER_PIPE = false
-        var formattedTable = MarkdownTableFormatter(settings).formatTable(table)
-
-        println("Unformatted Table\n$table\n")
-        println("Formatted Table\n$formattedTable\n")
-
-        kotlin.test.assertEquals("""|Header 0                      |Header 1              |         Header 2           |             Header 3 |
-|:-----------------------------|:---------------------|:--------------------------:|---------------------:|
-|Row 1 Col 0 Data              |Row 1 Col 1 Data      |   Row 1 Col 2 More Data    |Row 1 Col 3 Much Data |
-|Row 2 Col 0 Default Alignment |Row 2 Col 1 More Data |Row 2 Col 2 a lot more Data |     Row 2 Col 3 Data |
-""", formattedTable.toString())
-    }
-
-    @Test
     fun formatTableSimpleNoColAdj() {
 
         val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
  --------|:-------- |:--------:|-------:
-Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data          |         Row 1 Col 3 Much Data
+Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data          |Row 1 Col 3 Much Data           |
 Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data  |
 """.toCharArray())
 
@@ -158,9 +111,9 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
         println("Formatted Table\n$formattedTable\n")
 
         kotlin.test.assertEquals("""| Header 0 | Header 1 | Header 2 | Header 3 |
-|:---------|:----------|:----------:|--------:|
-| Row 1 Col 0 Data | Row 1 Col 1 Data |      Row 1 Col 2 More Data      |          Row 1 Col 3 Much Data |
-| Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data |   Row 2 Col 3 Data |
+|:--------|:---------|:--------:|-------:|
+| Row 1 Col 0 Data | Row 1 Col 1 Data |     Row 1 Col 2 More Data     |          Row 1 Col 3 Much Data |
+| Row 2 Col 0 Default Alignment | Row 2 Col 1 More Data | Row 2 Col 2 a lot more Data | Row 2 Col 3 Data |
 """, formattedTable.toString())
     }
 

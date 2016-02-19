@@ -1,3 +1,10 @@
+### 0.0.8 - Optimization
+
+- add optimization of SmartSegmentedCharSequence for sequential access of indices either forward or backward
+- change tableFormatter now returns a cachedProxy SmartCharArrayCharSequence not the SmartSegmentedCharSequence
+- fix source tracking location not being properly adjusted by wrapper and a few other classes
+- add firstWidthOffset to SmartParagraphCharSequence to provide line width delta for the first line of the paragraph. Now can control how the paragraph is reformatted to fit its destination without postprocessing when the paragraph starts from a lead in prefix that is not part of the reformat operation. ie. Markdown list item, footnote definition, etc. 
+
 ### 0.0.7 - Bug Fixes
 
 - add `MarkdownTableFormatter` and `MarkdownTableFormatSettings`

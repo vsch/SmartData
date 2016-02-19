@@ -47,7 +47,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     //        }
     //    }
 
-    open internal fun getCharsImpl(): CharArray {
+    internal open fun getCharsImpl(): CharArray {
         val iMax = length
         val chars = CharArray(iMax)
         getCharsImpl(chars, 0)
@@ -357,10 +357,6 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             }
             return if (segments.isEmpty()) EMPTY_SEGMENTED_SEQUENCE else SmartSegmentedCharSequence(segments)
         }
-
-        private val LowerCaseMapper = CharSequenceMapper { charSequence, index -> Character.toLowerCase(charSequence[index]) }
-
-        private val UpperCaseMapper = CharSequenceMapper { charSequence, index -> Character.toUpperCase(charSequence[index]) }
 
         @JvmStatic fun smart(other: CharSequence): SmartCharSequence {
             return if (other is SmartCharSequence) other.contents else SmartCharSequenceWrapper(other, 0, other.length)

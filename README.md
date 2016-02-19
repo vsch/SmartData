@@ -200,7 +200,29 @@ These are CharSequences that have extra characteristics, including the ability t
 
 Some are dynamic and will return a different result if their properties change. They also support SmartVersionedData and SmartVersionedProperties allowing their properties to be taken from data points "connected" to their properties instead of being manually configured. 
 
-The example below shows this at work:
+- `SmartCharArraySequence` char[] wrapper and cachedProxy implementation for the rest of the smart char sequences
+
+- `SmartCharSequenceMarker` wrapper for a smart char sequence with 0 length but can be used to track a location in another sequence, not fully developed yet
+
+- `SmartCharSequenceWrapper` CharSequence wrapper 
+
+- `SmartMappedCharSequence`  mapped version of a char sequence, same length as original but characters are computed. Used for lowercase() and uppercase() sequences 
+
+- `SmartParagraphCharSequence` char sequence wrapper that reformats the contained sequence to margins 
+
+- `SmartRepeatedCharSequence`  sequence slicer/repeater, will repeat original sequence to N characters. If original is shorter then characters are taken from the begining.
+
+- `SmartReplacedCharSequence`  sequence used for tracking original location while replacing contents
+
+- `SmartReversedCharSequence`  sequence that reverses characters of original
+
+- `SmartSegmentedCharSequence` sequence consisting of other sequences
+
+- `SmartVariableCharSequence`  sequence that can add prefix, suffix, left padding, right padding to another sequence to format it to desired lenght and desired alignment. Contents vary with property settings 
+
+- `MarkdownTableFormatter` sequence that takes another sequence containing a Markdown table and returns the table formatted according to passed options. Uses `SmartTableColumnBalancer` to handle column width computation for single and spanned columns.
+
+An example below shows some of this dynamic content at work:
 
 ```kotlin
     fun test_VariableSequence() {
