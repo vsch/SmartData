@@ -21,7 +21,7 @@
 
 package com.vladsch.smart
 
-open class SafeCharSequenceRange @JvmOverloads constructor(charSequence: CharSequence, startIndex: Int = 0, endIndex: Int = charSequence.length, safeError: SafeCharSequenceError = SafeCharSequenceErrorImpl()) : SafeCharSequenceRanger, SafeCharSequenceError by safeError {
+open class SafeCharSequenceRange @JvmOverloads constructor(charSequence: CharSequence, startIndex: Int = 0, endIndex: Int = charSequence.length, safeError: SafeCharSequenceError = SafeCharSequenceErrorImpl()) : SafeCharSequenceRanger, SafeCharSequenceError by safeError, /*SmartSourceLocationTracker,*/ SmartCharSequenceContainer {
 
     protected val myError = safeError
     protected val myChars: CharSequence = charSequence
@@ -39,6 +39,10 @@ open class SafeCharSequenceRange @JvmOverloads constructor(charSequence: CharSeq
         myStart = if (rawStart > rawEnd) rawEnd else rawStart
         myEnd = rawEnd
         if (myStart != rawStart) addSafeError()
+    }
+
+    override fun toString(): String {
+        return asString()
     }
 
     protected var myEndIndex = myEnd - myStart
@@ -166,5 +170,44 @@ open class SafeCharSequenceRange @JvmOverloads constructor(charSequence: CharSeq
         val safeEnd = safeIndex(endIndex)
         if (fixedStartIndex != startIndex) addSafeError()
         return Range(safeStart, safeEnd)
+    }
+
+//    override fun trackedSourceLocation(index: Int): TrackedLocation {
+//        if (myChars is SmartSourceLocationTracker) {
+//            val trackedLocation = myChars.trackedSourceLocation(index + myStart)
+//
+//            if (myStart == 0) return trackedLocation
+//
+//            return trackedLocation.withIndex(trackedLocation.index - myStart)
+//                    .withPrevClosest(trackedLocation.prevIndex - myStart)
+//                    .withNextClosest(trackedLocation.nextIndex - myStart)
+//        }
+//
+//        val safeIndex = safeInclusiveIndex(index)
+//        return TrackedLocation(safeIndex, myStart + myStartIndex + safeIndex, myChars)
+//    }
+//
+//    override fun trackedLocation(source: Any?, offset: Int): TrackedLocation? {
+//        if (myChars is SmartSourceLocationTracker) {
+//            val trackedLocation = myChars.trackedLocation(source, offset)
+//
+//            if (trackedLocation != null && trackedLocation.index >= myStart && trackedLocation.index < myEnd) {
+//                if (myStart == 0) return trackedLocation
+//                return trackedLocation.withIndex(trackedLocation.index - myStart)
+//                        .withPrevClosest(trackedLocation.prevIndex - myStart)
+//                        .withNextClosest(trackedLocation.nextIndex - myStart)
+//            }
+//        }
+//        return if ((source == null || source === myChars) && offset >= myStart + myStartIndex && offset < myEnd + myEndIndex) TrackedLocation(offset - myStart - myStartIndex, offset, myChars) else null
+//    }
+
+    override fun getContents(): SmartCharSequence {
+        if (myChars is SmartCharSequenceContainer) return myChars.getContents(myStart + myStartIndex, myStart + myEndIndex)
+        return myChars.subSequence(myStart + myStartIndex, myStart + myEndIndex).asSmart()
+    }
+
+    override fun getContents(startIndex: Int, endIndex: Int): SmartCharSequence {
+        if (myChars is SmartCharSequenceContainer) return myChars.getContents(myStart + myStartIndex + startIndex, myStart + myStartIndex + endIndex)
+        return myChars.subSequence(myStart + myStartIndex + startIndex, myStart + myStartIndex + endIndex).asSmart()
     }
 }

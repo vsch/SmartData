@@ -32,10 +32,11 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     override fun getOriginal(): SmartCharSequenceBase<T> = this
 
     override fun getContents(): SmartCharSequenceBase<T> = this
+    override fun getContents(startIndex: Int, endIndex: Int): SmartCharSequence = subSequence(startIndex, endIndex)
 
     /*
-         *  raw access, never via proxy or in proxy via original
-         */
+             *  raw access, never via proxy or in proxy via original
+             */
     internal abstract fun properSubSequence(startIndex: Int, endIndex: Int): T
 
     internal abstract fun charAtImpl(index: Int): Char
@@ -359,13 +360,13 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         }
 
         @JvmStatic fun smart(other: CharSequence): SmartCharSequence {
-            return if (other is SmartCharSequence) other.contents else SmartCharSequenceWrapper(other, 0, other.length)
+            return if (other is SmartCharSequenceContainer) other.contents else SmartCharSequenceWrapper(other, 0, other.length)
         }
 
-        @JvmStatic fun smart(others: Collection<CharSequence>): List<SmartCharSequence> {
+        @JvmStatic fun smartList(others: Collection<CharSequence>): List<SmartCharSequence> {
             val smartCharSequences = ArrayList<SmartCharSequence>(others.size)
             for (other in others) {
-                smartCharSequences.add(Companion.smart(other))
+                smartCharSequences.add(smart(other))
             }
             return smartCharSequences
         }
@@ -375,8 +376,13 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return if (list.size == 1) list[0] else SmartSegmentedCharSequence(list)
         }
 
-        @JvmStatic fun smart(others: List<SmartCharSequence>): SmartCharSequence {
-            return if (others.size == 1) others[0] else SmartSegmentedCharSequence(others)
+        @JvmStatic fun smart(vararg others: CharSequence): SmartCharSequence {
+            val list = spliceSequences(others.asList())
+            return if (list.size == 1) list[0] else SmartSegmentedCharSequence(list)
+        }
+
+        @JvmStatic fun smart(others: List<CharSequence>): SmartCharSequence {
+            return if (others.size == 1) others[0].asSmart() else SmartSegmentedCharSequence(others)
         }
 
         @Suppress("NAME_SHADOWING")
@@ -456,7 +462,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         }
 
         @JvmStatic fun smartContents(charSequence: CharSequence): SmartCharSequence {
-            if (charSequence !is SmartCharSequence) return SmartCharSequenceWrapper(charSequence)
+            if (charSequence !is SmartCharSequenceContainer) return SmartCharSequenceWrapper(charSequence)
             return charSequence.contents
         }
 

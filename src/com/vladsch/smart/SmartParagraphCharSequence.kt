@@ -55,6 +55,8 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             myWidth.value = value.minBound(0)
         }
 
+    val firstWidth: Int get() = (myWidth.value + myFirstWidthOffset.value).minBound(0)
+
     var firstWidthOffset: Int get() = myFirstWidthOffset.value
         set(value) {
             myFirstWidthOffset.value = value
@@ -167,13 +169,12 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     }
 
     protected fun computeResultSequence(): SmartCharSequence {
-        if (myWidth.value <= 0) return myReplacedChars.cachedProxy
+        if (firstWidth <= 0) return myReplacedChars.cachedProxy
 
         val chars = myReplacedChars.cachedProxy
         val tokens = tokenizeSequence(chars)
         var iMax = tokens.size
-        val width = myWidth.value.minBound(1)
-        val lineBreak = RepeatedCharSequence('\n')
+        val lineBreak = RepeatedCharSequence(" \n")
         val hardBreak = RepeatedCharSequence("  \n")
         var pos = 0
         var i = 0
@@ -181,7 +182,8 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         val lineWords = ArrayList<CharSequence>()
         var result = ArrayList<CharSequence>()
         var lineIndent = firstIndent
-        var lineWidth = (width + firstWidthOffset).minBound(0)
+        var lineWidth = firstWidth
+        val nextWidth = if (myWidth.value <= 0) Integer.MAX_VALUE else myWidth.value
 
         fun lineBreak(lineBreak: CharSequence, lastLine: Boolean) {
             addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, lastLine)
@@ -190,7 +192,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             pos = 0
             lineCount++
             lineIndent = indent
-            lineWidth = width
+            lineWidth = nextWidth
         }
 
         while (i < iMax) {
@@ -232,8 +234,12 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             }
         }
 
-        if (!lineWords.isEmpty()) addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, true)
-        return SmartSegmentedCharSequence(SmartCharSequenceBase.spliceSequences(result)).cachedProxy
+        if (!lineWords.isEmpty()) {
+            addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, true)
+            result.add(" ")
+        }
+
+        return SmartCharSequenceBase.smart(result).cachedProxy
     }
 
     private fun addLine(result: ArrayList<CharSequence>, lineWords: ArrayList<CharSequence>, lineCount: Int, extraSpaces: Int, lastLine: Boolean) {

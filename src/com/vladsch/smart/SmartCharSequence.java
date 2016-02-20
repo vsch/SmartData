@@ -35,7 +35,7 @@ import java.util.List;
  * <p>
  * 2. merging of neighbouring sub-sequences into one sequence over the same source data
  */
-public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMarkerHolder, CharSequenceBackedByArray, SmartVersionedData {
+public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMarkerHolder, CharSequenceBackedByArray, SmartVersionedData, SmartSourceLocationTracker, SmartCharSequenceContainer {
     @NotNull
     @Override
     SmartCharSequence subSequence(int start, int end);
@@ -53,33 +53,6 @@ public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMar
      */
     @NotNull
     SmartCharSequence getOriginal();
-
-    /**
-     * if the sequence is editable, ie it constantly replaces its contents with new contents then it should return the current snapshot of its contents
-     * the rest just return themselves
-     * @return non editable contents
-     */
-    @NotNull
-    SmartCharSequence getContents();
-
-    /**
-     * trackedSourceLocation
-     *
-     * @param index offset into the sequence
-     * @return TrackedLocation data
-     */
-    @NotNull
-    TrackedLocation trackedSourceLocation(int index);
-
-    /**
-     * get Source location information for a given source data and originalOffset in it
-     *
-     * @param source source data object or null if any will do
-     * @param offset original offset in that source data object
-     * @return TrackedLocation for this offset or null if none found for this originalOffset
-     */
-    @Nullable
-    public TrackedLocation trackedLocation(@Nullable Object source, int offset);
 
     /**
      * spliceWith    append a sequence to the end of this one if they both have the same underlying sourceData and the given sequence is immediately following this sequence

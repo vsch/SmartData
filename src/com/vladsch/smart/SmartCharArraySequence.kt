@@ -114,9 +114,12 @@ open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: Ch
 
     override fun trackedLocation(source: Any?, offset: Int): TrackedLocation? {
         if (myOriginal != null) {
-            val trackedLocation = myOriginal.subSequence(myStart, myEnd).trackedLocation(source, offset)
-            if (trackedLocation != null) {
-                return trackedLocation
+            val trackedLocation = myOriginal.trackedLocation(source, offset)
+            if (trackedLocation != null && trackedLocation.index >= myStart && trackedLocation.index < myEnd) {
+                if (myStart == 0) return trackedLocation
+                return trackedLocation.withIndex(trackedLocation.index - myStart)
+                        .withPrevClosest(trackedLocation.prevIndex - myStart)
+                        .withNextClosest(trackedLocation.nextIndex - myStart)
             }
         }
         return if ((source == null || source === myChars) && offset >= myStart && offset < myEnd) TrackedLocation(offset - myStart, offset, myChars) else null

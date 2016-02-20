@@ -73,7 +73,7 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
     fun flatten(): EditableCharSequence {
         val smartCharSequences = ArrayList<SmartCharSequence>()
         myChars.flattened(smartCharSequences)
-        myChars = if (smartCharSequences.size == 1) smartCharSequences[0] else SmartSegmentedCharSequence(SmartCharSequenceBase.spliceSequences(smartCharSequences))
+        myChars = if (smartCharSequences.size == 1) smartCharSequences[0] else SmartCharSequenceBase.smart(smartCharSequences)
         return this
     }
 
@@ -180,7 +180,8 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
     override fun getMarkers(id: String?): MutableList<TrackedLocation> = myChars.getMarkers(id)
 
     override fun getOriginal(): SmartCharSequence = myChars.original
-    override fun getContents(): SmartCharSequence = myChars
+    override fun getContents(): SmartCharSequence = myChars.contents
+    override fun getContents(startIndex: Int, endIndex: Int): SmartCharSequence = myChars.getContents(startIndex, endIndex)
 
     override fun mapped(mapper: CharSequenceMapper): SmartCharSequence = myChars.mapped(mapper)
 

@@ -40,6 +40,34 @@ fun CharSequence.countLeading(vararg c: Char, index: Int? = null): Int {
     return this.length
 }
 
+fun CharSequence.countLeading(pattern:Regex, index: Int? = null): Int {
+    @Suppress("NAME_SHADOWING")
+    var index = index ?: 0
+    var count = 0
+    var chars = subSequence(index, length)
+    while (true) {
+        val removed = chars.removePrefix(pattern)
+        if (removed === chars) return count
+        chars = removed
+        count++
+    }
+}
+
+fun CharSequence.countTrailing(pattern:Regex, index: Int? = null): Int {
+    @Suppress("NAME_SHADOWING")
+    var index = index ?: length - 1
+    if (index > length - 1) index = length - 1
+
+    var count = 0
+    var chars = subSequence(0, index)
+    while (true) {
+        val removed = chars.removeSuffix(pattern)
+        if (removed === chars) return count
+        chars = removed
+        count++
+    }
+}
+
 fun CharSequence.countTrailing(vararg c: Char, index: Int? = null): Int {
     @Suppress("NAME_SHADOWING")
     var index = index ?: length - 1
@@ -87,6 +115,20 @@ fun CharSequence.removePrefix(stripPrefix: CharSequence, removePartial: Boolean)
         return subSequence(pos, length)
     }
     return this
+}
+
+fun CharSequence.removePrefix(strip: Regex?): CharSequence {
+    val range = strip?.find(this)?.range ?: return this
+    if (range.start != 0) return this
+    return subSequence(range.endInclusive + 1, length)
+}
+
+fun CharSequence.removeSuffix(strip: Regex?): CharSequence {
+    var range = strip?.find(this, 0)?.range ?: return this
+    while (range.start + range.endInclusive + 1 < length) {
+        range = strip?.find(this, range.start + range.endInclusive + 1)?.range ?: return this
+    }
+    return subSequence(0, range.start)
 }
 
 fun CharSequence.splitParts(char: Char, includeDelimiter: Boolean): ArrayList<CharSequence> {
@@ -172,29 +214,29 @@ fun CharSequence.asSmart(): SmartCharSequence {
     return SmartCharSequenceBase.smart(this)
 }
 
-fun SmartCharSequence.trimStart() :SmartCharSequence {
+fun SmartCharSequence.trimStart(): SmartCharSequence {
     return trimStart(' ', '\t', '\n')
 }
 
-fun SmartCharSequence.trimStart(vararg chars:Char) :SmartCharSequence {
+fun SmartCharSequence.trimStart(vararg chars: Char): SmartCharSequence {
     val leading = countLeading(*chars)
     return if (leading == 0) this else if (leading == length) EMPTY_SEQUENCE else subSequence(leading, length)
 }
 
-fun SmartCharSequence.trimEnd() :SmartCharSequence {
+fun SmartCharSequence.trimEnd(): SmartCharSequence {
     return trimEnd(' ', '\t', '\n')
 }
 
-fun SmartCharSequence.trimEnd(vararg chars:Char) :SmartCharSequence {
+fun SmartCharSequence.trimEnd(vararg chars: Char): SmartCharSequence {
     val trailing = countTrailing(*chars)
-    return if (trailing == 0) this else if (trailing == length) EMPTY_SEQUENCE else subSequence(0, length-trailing)
+    return if (trailing == 0) this else if (trailing == length) EMPTY_SEQUENCE else subSequence(0, length - trailing)
 }
 
-fun SmartCharSequence.trim() :SmartCharSequence {
+fun SmartCharSequence.trim(): SmartCharSequence {
     return trim(' ', '\t', '\n')
 }
 
-fun SmartCharSequence.trim(vararg chars:Char) :SmartCharSequence {
+fun SmartCharSequence.trim(vararg chars: Char): SmartCharSequence {
     val leading = countLeading(*chars)
     if (leading == length) return EMPTY_SEQUENCE
 

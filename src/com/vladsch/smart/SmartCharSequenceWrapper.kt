@@ -53,28 +53,40 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
     }
 
     // disable proxy copying, use mapping, it's fast enough
-//    override fun getCachedProxy(): SmartCharSequence = this
+    //    override fun getCachedProxy(): SmartCharSequence = this
 
     override fun toString(): String = myChars.subSequence(myStart, myEnd).toString()
 
-    /*
-     *  use proxy if fresh otherwise raw access
-     */
     override fun get(index: Int): Char = myChars[myStart + index]
 
-    /*
-     * Implementation
-     */
     override fun getVersion(): SmartVersion = myVersion
 
     override val length: Int get() = myEnd - myStart
 
     override fun trackedSourceLocation(index: Int): TrackedLocation {
+        if (myChars is SmartSourceLocationTracker) {
+            val trackedLocation = myChars.trackedSourceLocation(index + myStart)
+
+            if (myStart == 0) return trackedLocation
+
+            return trackedLocation.withIndex(trackedLocation.index - myStart)
+                    .withPrevClosest(trackedLocation.prevIndex - myStart)
+                    .withNextClosest(trackedLocation.nextIndex - myStart)
+        }
         checkIndex(index)
         return TrackedLocation(index, myStart + index, myChars)
     }
 
     override fun trackedLocation(source: Any?, offset: Int): TrackedLocation? {
+        if (myChars is SmartSourceLocationTracker) {
+            val trackedLocation = myChars.trackedLocation(source, offset)
+
+            if (trackedLocation != null && trackedLocation.index >= myStart && trackedLocation.index < myEnd) {
+                return trackedLocation.withIndex(trackedLocation.index - myStart)
+                        .withPrevClosest(trackedLocation.prevIndex - myStart)
+                        .withNextClosest(trackedLocation.nextIndex - myStart)
+            }
+        }
         return if ((source == null || source === myChars) && offset >= myStart && offset < myEnd) TrackedLocation(offset - myStart, offset, myChars) else null
     }
 

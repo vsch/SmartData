@@ -32,14 +32,14 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
     private var myLastSegment: Int? = null
 
     constructor(vararg charSequences: CharSequence) {
-        val smartCharSequences = Companion.smart(charSequences.toList())
+        val smartCharSequences = smartList(charSequences.toList())
         segments = smartCharSequences
         myVersion = SmartDependentVersionHolder(segments)
         myCacheVersion = SmartDependentRunnableVersionHolder(this, Runnable { computeCachedData() })
     }
 
     constructor(charSequences: Collection<CharSequence>) {
-        segments = Companion.smart(charSequences)
+        segments = smartList(charSequences)
         myVersion = SmartDependentVersionHolder(segments)
         myCacheVersion = SmartDependentRunnableVersionHolder(this, Runnable { computeCachedData() })
     }
@@ -199,7 +199,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
                 return this
             } else {
                 // partial of our sequence
-                val trackingSequences = Companion.trackingSequences(segments, iStart, startIndex - myLengths[iStart], iEnd, endIndex - myLengths[iEnd])
+                val trackingSequences = trackingSequences(segments, iStart, startIndex - myLengths[iStart], iEnd, endIndex - myLengths[iEnd])
                 if (trackingSequences.size == 1) {
                     return trackingSequences[0]
                 } else {

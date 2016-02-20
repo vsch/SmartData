@@ -32,6 +32,10 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars: SafeCharSequence, i
         myIndex = myChars.safeIndex(index)
     }
 
+    override fun toString(): String {
+        return startOfLineToIndexChars.asString() + ">|<" + indexToEndOfLineChars.asString()
+    }
+
     override fun getChar(): Char = myChars[myIndex]
     override fun getBeforeIndexChars(): SafeCharSequence = myChars.subSequence(0, myIndex)
     override fun getAfterIndexChars(): SafeCharSequence = myChars.subSequence(myIndex, myChars.length)
@@ -91,18 +95,19 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars: SafeCharSequence, i
     }
 
     override fun getEndOfPreviousLine(): Int {
-        if (myIndex == myChars.length && myIndex > 0) myIndex--
         return myChars.safeIndex(startOfLine - 1)
     }
 
     override fun getStartOfNextLine(): Int {
-        return myChars.safeIndex(endOfLine)
+        val endLine = myChars.safeIndex(endOfLine)
+        if (endLine == myChars.length) addSafeError()
+        return endLine
     }
 
     override fun endOfPreviousSkipLines(lines: Int): Int {
         var skipLines = lines
         val savedIndex = index
-        index = startOfLine
+        index = endOfPreviousLine
         clearHadSafeErrors()
         while (!hadSafeErrors && skipLines-- > 0) {
             index = endOfPreviousLine
@@ -115,7 +120,7 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars: SafeCharSequence, i
     override fun startOfNextSkipLines(lines: Int): Int {
         var skipLines = lines
         val savedIndex = index
-        index = endOfLine
+        index = startOfNextLine
         clearHadSafeErrors()
         while (!hadSafeErrors && skipLines-- > 0) {
             index = startOfNextLine
