@@ -55,7 +55,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             myWidth.value = value.minBound(0)
         }
 
-    val firstWidth: Int get() = (myWidth.value + myFirstWidthOffset.value).minBound(0)
+    val firstWidth: Int get() = if (myWidth.value == 0) 0 else (myWidth.value + myFirstWidthOffset.value).minBound(0)
 
     var firstWidthOffset: Int get() = myFirstWidthOffset.value
         set(value) {

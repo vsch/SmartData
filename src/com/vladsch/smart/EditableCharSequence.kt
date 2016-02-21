@@ -157,7 +157,7 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
         return myChars.segmented()
     }
 
-    override fun editable(): EditableCharSequence = this
+    override fun asEditable(): EditableCharSequence = this
 
     override fun trackedLocation(source: Any?, offset: Int): TrackedLocation? = myChars.trackedLocation(source, offset)
 

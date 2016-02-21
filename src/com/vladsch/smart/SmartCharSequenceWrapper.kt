@@ -57,7 +57,13 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
 
     override fun toString(): String = myChars.subSequence(myStart, myEnd).toString()
 
-    override fun get(index: Int): Char = myChars[myStart + index]
+    override fun get(index: Int): Char {
+        // RELEASE : remove test for release
+//        if (myStart + index < 0 || myStart + index >= myChars.length) {
+//            val tmp = 0;
+//        }
+        return myChars[myStart + index]
+    }
 
     override fun getVersion(): SmartVersion = myVersion
 

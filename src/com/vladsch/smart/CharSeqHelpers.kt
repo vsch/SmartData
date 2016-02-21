@@ -34,13 +34,17 @@ fun CharSequence.countLeading(vararg c: Char, index: Int? = null): Int {
     @Suppress("NAME_SHADOWING")
     var index = index ?: 0
     if (index < 0) index = 0
+
+    if (index >= length) return 0
+
+    val startIndex = index
     for (i in index..this.length - 1) {
-        if (this[i] !in c) return i
+        if (this[i] !in c) return i-startIndex
     }
     return this.length
 }
 
-fun CharSequence.countLeading(pattern:Regex, index: Int? = null): Int {
+fun CharSequence.countLeading(pattern: Regex, index: Int? = null): Int {
     @Suppress("NAME_SHADOWING")
     var index = index ?: 0
     var count = 0
@@ -53,7 +57,7 @@ fun CharSequence.countLeading(pattern:Regex, index: Int? = null): Int {
     }
 }
 
-fun CharSequence.countTrailing(pattern:Regex, index: Int? = null): Int {
+fun CharSequence.countTrailing(pattern: Regex, index: Int? = null): Int {
     @Suppress("NAME_SHADOWING")
     var index = index ?: length - 1
     if (index > length - 1) index = length - 1
@@ -72,10 +76,54 @@ fun CharSequence.countTrailing(vararg c: Char, index: Int? = null): Int {
     @Suppress("NAME_SHADOWING")
     var index = index ?: length - 1
     if (index > length - 1) index = length - 1
+    if (index < 0) return 0
+
+    val startIndex = index
     for (i in (0..index).reversed()) {
-        if (this[i] !in c) return this.length - i - 1
+        if (this[i] !in c) return startIndex - i
     }
     return this.length
+}
+
+fun CharSequence.studyLeading(pattern: Regex, index: Int? = null): StudyResult {
+    @Suppress("NAME_SHADOWING")
+    var index = index ?: 0
+    var count = 0
+    var chars = subSequence(index, length)
+    val instances = ArrayList<String>()
+    val totalPrefix = StringBuilder()
+    while (true) {
+        val removed = chars.removePrefix(pattern)
+        if (removed === chars) break
+        val prefix = chars.subSequence(0, chars.length - removed.length)
+        instances.add(prefix.asString())
+        totalPrefix.append(prefix)
+        chars = removed
+        count++
+    }
+    return StudyResult(totalPrefix.toString(), count, instances)
+}
+
+fun CharSequence.studyTrailing(pattern: Regex, index: Int? = null): StudyResult {
+    @Suppress("NAME_SHADOWING")
+    var index = index ?: length - 1
+    if (index > length - 1) index = length - 1
+
+    var count = 0
+    var chars = subSequence(0, index)
+    val instances = ArrayList<String>()
+    val totalPrefix = StringBuilder()
+
+    while (true) {
+        val removed = chars.removeSuffix(pattern)
+        if (removed === chars) break
+        val prefix = chars.subSequence(removed.length, chars.length)
+        instances.add(prefix.asString())
+        totalPrefix.append(prefix)
+        chars = removed
+        count++
+    }
+    return StudyResult(totalPrefix.toString(), count, instances)
 }
 
 fun CharSequence.trimEnd(s: String = " \t", index: Int? = null): CharSequence {
@@ -212,6 +260,10 @@ fun CharSequence.asString(): String {
 
 fun CharSequence.asSmart(): SmartCharSequence {
     return SmartCharSequenceBase.smart(this)
+}
+
+fun CharSequence.asEditable(): EditableCharSequence {
+    return SmartCharSequenceBase.editableCharSequence(this)
 }
 
 fun SmartCharSequence.trimStart(): SmartCharSequence {

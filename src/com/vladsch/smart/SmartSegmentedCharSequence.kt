@@ -77,7 +77,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
     public override fun charAtImpl(index: Int): Char {
         var lastSegment = myLastSegment
         if (lastSegment != null) {
-            if (index >= myLengths[lastSegment] && index <= myLengths[lastSegment + 1]) return segments[lastSegment][index - myLengths[lastSegment]]
+            if (index >= myLengths[lastSegment] && index < myLengths[lastSegment + 1]) return segments[lastSegment][index - myLengths[lastSegment]]
             // see if it is next or previous
             if (lastSegment < myLengths.lastIndex && index >= myLengths[lastSegment + 1] && index < myLengths[lastSegment + 2]) {
                 lastSegment++

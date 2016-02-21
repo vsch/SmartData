@@ -72,11 +72,11 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         checkBounds(startIndex, endIndex)
         if (startIndex == 0 && endIndex == length) return original.contents as T
         val subSequence = original.properSubSequence(startIndex, endIndex)
-        val cachedProxy = freshProxyOrNull
-        if (subSequence is SmartCharSequenceBase<*> && cachedProxy is SmartCharSequenceBase<*>) {
-            // grab a copy of the cached proxy if it is not stale
-            subSequence.myCachedProxy = cachedProxy.properSubSequence(startIndex, endIndex)
-        }
+//        val cachedProxy = freshProxyOrNull
+//        if (subSequence is SmartCharSequenceBase<*> && cachedProxy is SmartCharSequenceBase<*>) {
+//            // grab a copy of the cached proxy if it is not stale
+//            subSequence.myCachedProxy = cachedProxy.properSubSequence(startIndex, endIndex)
+//        }
         assert(subSequence === subSequence.contents)
         return subSequence
     }
@@ -204,7 +204,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         return if (base is SmartReversedCharSequence) base else SmartReversedCharSequence(base)
     }
 
-    override fun editable(): EditableCharSequence {
+    override fun asEditable(): EditableCharSequence {
         return EditableCharSequence(this)
     }
 
@@ -403,7 +403,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
                 val smartCharSequences = ArrayList<SmartCharSequence>(endIndex - startIndex + 1)
 
                 smartCharSequences.add(charSequences[startIndex].subSequence(startOffset, charSequences[startIndex].length))
-                if (endIndex - startIndex > 1) smartCharSequences.addAll(charSequences.subList(startIndex + 1, endIndex - 1))
+                if (endIndex - startIndex > 1) smartCharSequences.addAll(charSequences.subList(startIndex + 1, endIndex))
                 smartCharSequences.add(charSequences[endIndex].subSequence(0, endOffset))
                 return smartCharSequences
             }

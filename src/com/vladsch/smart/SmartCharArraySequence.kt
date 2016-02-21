@@ -33,6 +33,7 @@ import com.intellij.util.text.CharSequenceBackedByArray
 open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: CharArray, startIndex: Int = 0, endIndex: Int = chars.size) : SmartCharSequenceBase<SmartCharArraySequence>(), CharSequenceBackedByArray, CharSequenceWithStringHash {
 
     @JvmOverloads constructor(chars: CharArray, start: Int = 0, end: Int = chars.size) : this(null, chars, start, end)
+    @JvmOverloads constructor(chars: String, start: Int = 0, end: Int = chars.length) : this(null, chars.toCharArray(), start, end)
 
     final protected val myOriginal: SmartCharSequenceBase<*>? = original
     final protected val myVersion: SmartVersion = if (original != null ) SmartCacheVersion(original.version) else SmartImmutableVersion()

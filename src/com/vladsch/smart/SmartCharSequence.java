@@ -117,7 +117,7 @@ public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMar
     @NotNull
     SmartCharSequence reversed();
     @NotNull
-    EditableCharSequence editable();
+    EditableCharSequence asEditable();
     @NotNull
     SmartSegmentedCharSequence segmented();
     @NotNull
