@@ -21,6 +21,8 @@
 
 package com.vladsch.smart
 
+import java.util.*
+
 
 /**
  * markdown table formatter
@@ -31,8 +33,33 @@ package com.vladsch.smart
 class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     constructor() : this(MarkdownTableFormatSettings())
 
+    private var myAlignmentDataPoints: List<SmartVersionedDataAlias<TextAlignment>> = listOf()
+    private var myColumnWidthDataPoints: List<SmartVersionedDataAlias<Int>> = listOf()
+    private val myRowColumns: ArrayList<List<SmartCharSequence>> = ArrayList()
+    private val myRows: ArrayList<SmartCharSequence> = ArrayList()
+
+    val columnCount: Int get() = myColumnWidthDataPoints.size
+
+    fun columnWidth(index: Int): Int {
+        return myColumnWidthDataPoints[index].value
+    }
+
+    fun columnAlignmentDataPoint(index: Int): TextAlignment {
+        return myAlignmentDataPoints[index].value
+    }
+
     fun formatTable(table: SmartCharSequence): SmartCharSequence {
         return formatTable(table, -1)
+    }
+
+    val rows:Int get() = myRows.size
+
+    fun rowSequence(index:Int):SmartCharSequence {
+        return myRows[index]
+    }
+
+    fun rowColumns(index:Int):List<SmartCharSequence> {
+        return myRowColumns[index]
     }
 
     fun formatTable(table: SmartCharSequence, caretOffset: Int): SmartCharSequence {
@@ -44,6 +71,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         val space = RepeatedCharSequence(' ')
         val pipePadding = if (settings.TABLE_SPACE_AROUND_PIPE) space else EMPTY_SEQUENCE // or empty if don't want padding around pipes
         val alignMarker = RepeatedCharSequence(':')
+        var rowColumns = ArrayList<SmartCharSequence>()
 
         val tableRows = table.splitPartsSegmented('\n', false)
         var row = 0
@@ -73,6 +101,11 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             //val locStart = line.trackedSourceLocation(0)
             //val locEnd = line.trackedSourceLocation(line.lastIndex)
             //println("caretOffset $caretOffset startLine: ${locStart.offset}, endLine: ${locEnd.offset}")
+            if (settings.TABLE_LEAD_TRAIL_PIPES) {
+                formattedRow.append(indentPrefix, pipeSequence)
+            } else {
+                formattedRow.append(indentPrefix)
+            }
 
             val segments = rowText.splitPartsSegmented('|', false).segments
             var col = 0
@@ -80,29 +113,30 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             while (col < segments.size) {
                 var column = segments[col]
                 val untrimmedWidth = column.length
+                val origColumn = if (column.isEmpty()) space else column
 
                 if (!column.isEmpty()) {
                     val colStart = column.trackedSourceLocation(0)
                     val colEnd = column.trackedSourceLocation(column.lastIndex)
 
                     if (!(colStart.offset <= caretOffset && caretOffset <= colEnd.offset + 1)) {
-                        column = column.trim() as SmartCharSequence
-                        //                    println("caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset}")
+                        column = column.trim()
+                        //println("caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset}")
                     } else {
-                        //                    println("> caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset} <")
-
+                        //println("> caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset} <")
                         // trim spaces after caret
                         val caretIndex = caretOffset - colStart.offset
                         column = column.subSequence(0, caretIndex).append(column.subSequence(caretIndex, column.length).trimEnd())
 
                         if (!column.isEmpty()) {
                             // can trim off leading since we may add spaces
-                            column = column.trimStart()
+                            val leadingSpaces = column.countLeading(' ', '\t').maxBound(caretIndex)
+                            if (leadingSpaces > 0) column = column.subSequence(leadingSpaces, column.length)
                         }
                     }
                 }
 
-                if (column.isEmpty()) column = column.append(space)
+                if (column.isEmpty()) column = column.append(origColumn.subSequence(0, 1))
 
                 val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
                 val formattedCol = SmartVariableCharSequence(column, if (headerParts != null) EMPTY_SEQUENCE else column)
@@ -139,6 +173,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
                 if (col > 0) formattedRow.appendOptimized(pipeSequence.repeat(lastSpan))
                 formattedRow.append(formattedCol)
+                rowColumns.add(formattedCol)
 
                 val widthOffset = if (span > 1 && col == segments.lastIndex - span + 1 && !settings.TABLE_LEAD_TRAIL_PIPES) 1 else 0
                 val dataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint, span, widthOffset)
@@ -154,14 +189,22 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
             // here if we add pipes then add lastSpan, else lastSpan-1
             if (settings.TABLE_LEAD_TRAIL_PIPES) {
-                formattedTable.appendOptimized(indentPrefix, pipeSequence, formattedRow, pipeSequence.repeat(lastSpan), endOfLine)
+                formattedRow.append(pipeSequence.repeat(lastSpan), endOfLine)
+                formattedTable.appendOptimized(formattedRow)
             } else {
-                formattedTable.appendOptimized(indentPrefix, formattedRow, if (lastSpan > 1) pipeSequence.repeat(lastSpan) else EMPTY_SEQUENCE, endOfLine)
+                formattedRow.append(if (lastSpan > 1) pipeSequence.repeat(lastSpan) else EMPTY_SEQUENCE, endOfLine)
+                formattedTable.appendOptimized(formattedRow)
             }
+
+            myRows.add(formattedRow)
+            myRowColumns.add(rowColumns)
             row++
         }
 
         tableBalancer.finalizeTable()
+        myAlignmentDataPoints = tableBalancer.columnAlignmentDataPoints
+        myColumnWidthDataPoints = tableBalancer.columnWidthDataPoints
+
         return formattedTable.contents.cachedProxy
     }
 }

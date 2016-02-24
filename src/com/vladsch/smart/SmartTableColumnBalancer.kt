@@ -43,6 +43,18 @@ class SmartTableColumnBalancer() {
     protected val myVersionData: SmartVersionedDataAlias<Int> = SmartVersionedDataAlias(IMMUTABLE_ZERO)
     protected var myDependencies: List<SmartVersionedDataHolder<Int>> = listOf()
 
+    val columnCount:Int get() = myColumnWidthDataPoints.size
+    val columnWidthDataPoints:List<SmartVersionedDataAlias<Int>> get() = myColumnWidthDataPoints
+    val columnAlignmentDataPoints:List<SmartVersionedDataAlias<TextAlignment>> get() = myAlignmentDataPoints
+
+    fun columnWidthDataPoint(index:Int):SmartVersionedDataAlias<Int> {
+        return myColumnWidthDataPoints[index]
+    }
+
+    fun columnAlignmentDataPoint(index:Int):SmartVersionedDataAlias<TextAlignment> {
+        return myAlignmentDataPoints[index]
+    }
+
     fun width(index: Int, textLength: SmartVersionedDataHolder<Int>): SmartVersionedDataHolder<Int> {
         return width(index, textLength, 1, 0)
     }
