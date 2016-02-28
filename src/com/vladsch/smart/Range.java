@@ -14,6 +14,7 @@
  */
 package com.vladsch.smart;
 
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,6 +33,10 @@ public class Range {
     public int component1() { return myStart; }
 
     public int component2() { return myEnd; }
+
+    public TextRange asTextRange() {
+        return new TextRange(myStart, myEnd);
+    }
 
     public Range(int start, int end) {
         myStart = start;
