@@ -319,4 +319,27 @@ object UpperCaseMapper : CharSequenceMapper {
     }
 }
 
+object SpaceToNonBreakSpaceMapper : CharSequenceMapper {
+    override fun mapChar(charSequence: CharSequence, index: Int): Char {
+        val c = charSequence[index]
+        return if (c == ' ') '\u00A0' else c
+    }
+
+    override fun mapChar(charSequence: CharArray, offset: Int, index: Int): Char {
+        val c = charSequence[offset + index]
+        return if (c == ' ') '\u00A0' else c
+    }
+}
+
+object NonBreakSpaceToSpaceMapper : CharSequenceMapper {
+    override fun mapChar(charSequence: CharSequence, index: Int): Char {
+        val c = charSequence[index]
+        return if (c == '\u00A0') ' ' else c
+    }
+
+    override fun mapChar(charSequence: CharArray, offset: Int, index: Int): Char {
+        val c = charSequence[offset + index]
+        return if (c == '\u00A0') ' ' else c
+    }
+}
 
