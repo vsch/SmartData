@@ -43,15 +43,15 @@ class SmartTableColumnBalancer() {
     protected val myVersionData: SmartVersionedDataAlias<Int> = SmartVersionedDataAlias(IMMUTABLE_ZERO)
     protected var myDependencies: List<SmartVersionedDataHolder<Int>> = listOf()
 
-    val columnCount:Int get() = myColumnWidthDataPoints.size
-    val columnWidthDataPoints:List<SmartVersionedDataAlias<Int>> get() = myColumnWidthDataPoints
-    val columnAlignmentDataPoints:List<SmartVersionedDataAlias<TextAlignment>> get() = myAlignmentDataPoints
+    val columnCount: Int get() = myColumnWidthDataPoints.size
+    val columnWidthDataPoints: List<SmartVersionedDataAlias<Int>> get() = myColumnWidthDataPoints
+    val columnAlignmentDataPoints: List<SmartVersionedDataAlias<TextAlignment>> get() = myAlignmentDataPoints
 
-    fun columnWidthDataPoint(index:Int):SmartVersionedDataAlias<Int> {
+    fun columnWidthDataPoint(index: Int): SmartVersionedDataAlias<Int> {
         return myColumnWidthDataPoints[index]
     }
 
-    fun columnAlignmentDataPoint(index:Int):SmartVersionedDataAlias<TextAlignment> {
+    fun columnAlignmentDataPoint(index: Int): SmartVersionedDataAlias<TextAlignment> {
         return myAlignmentDataPoints[index]
     }
 
@@ -101,10 +101,14 @@ class SmartTableColumnBalancer() {
         return myAlignmentDataPoints[index]
     }
 
-    fun alignment(index: Int, alignment: SmartVersionedDataHolder<TextAlignment>) {
+    fun alignment(index: Int, alignment: SmartVersionedDataHolder<TextAlignment>): SmartVersionedDataHolder<TextAlignment> {
         ensureColumnDataPoints(index)
-        if (myAlignmentDataPoints[index].alias !== IMMUTABLE_LEFT_ALIGNMENT) throw IllegalStateException("Alignment provider for index $index is already defined ${myAlignmentDataPoints[index]}, new one is in error $alignment")
-        myAlignmentDataPoints[index].alias = alignment
+        if (myAlignmentDataPoints[index].alias === IMMUTABLE_LEFT_ALIGNMENT) {
+            //throw IllegalStateException("Alignment provider for index $index is already defined ${myAlignmentDataPoints[index]}, new one is in error $alignment")
+            myAlignmentDataPoints[index].alias = alignment
+        }
+
+        return myAlignmentDataPoints[index].alias
     }
 
 
@@ -227,13 +231,13 @@ class SmartTableColumnBalancer() {
 
     internal fun columnLength(index: Int): Int = myColumnWidths[index]
 
-    class TableColumnSpan(tableColumnBalancer: SmartTableColumnBalancer, index: Int, columnSpan: Int, textLength: SmartVersionedDataHolder<Int>, widthOffset:Int) {
+    class TableColumnSpan(tableColumnBalancer: SmartTableColumnBalancer, index: Int, columnSpan: Int, textLength: SmartVersionedDataHolder<Int>, widthOffset: Int) {
 
         protected val myTableColumnBalancer = tableColumnBalancer
         protected val myStartIndex = index
         protected val myEndIndex = index + columnSpan
         protected val myTextLengthDataPoint = textLength
-        protected val myWidthOffset:Int = widthOffset
+        protected val myWidthOffset: Int = widthOffset
         protected val myWidthDataPoint = SmartVersionedDataAlias(IMMUTABLE_ZERO)
         protected val myColumns: Set<Int>
 

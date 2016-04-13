@@ -52,13 +52,13 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         return formatTable(table, -1)
     }
 
-    val rows:Int get() = myRows.size
+    val rows: Int get() = myRows.size
 
-    fun rowSequence(index:Int):SmartCharSequence {
+    fun rowSequence(index: Int): SmartCharSequence {
         return myRows[index]
     }
 
-    fun rowColumns(index:Int):List<SmartCharSequence> {
+    fun rowColumns(index: Int): List<SmartCharSequence> {
         return myRowColumns[index]
     }
 
@@ -76,6 +76,8 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         val tableRows = table.splitPartsSegmented('\n', false)
         var row = 0
         var indentPrefix: CharSequence = EMPTY_SEQUENCE
+        var hadHeader = false
+        var hadSeparator = false
 
         // see if there is an indentation prefix, these are always spaces in multiples of 4
         if (tableRows.segments.size > 0) {
@@ -110,6 +112,61 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             val segments = rowText.splitPartsSegmented('|', false).segments
             var col = 0
             var lastSpan = 1
+
+            var hadSeparatorCols = false
+            var allSeparatorCols = true
+
+            if (hadHeader && !hadSeparator) {
+                while (col < segments.size) {
+                    var column = segments[col]
+                    val origColumn = if (column.isEmpty()) space else column
+
+                    if (!column.isEmpty()) {
+                        val colStart = column.trackedSourceLocation(0)
+                        val colEnd = column.trackedSourceLocation(column.lastIndex)
+
+                        if (!(colStart.offset <= caretOffset && caretOffset <= colEnd.offset + 1)) {
+                            column = column.trim()
+                            //println("caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset}")
+                        } else {
+                            //println("> caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset} <")
+                            // trim spaces after caret
+                            val caretIndex = caretOffset - colStart.offset
+                            column = column.subSequence(0, caretIndex).append(column.subSequence(caretIndex, column.length).trimEnd())
+
+                            if (!column.isEmpty()) {
+                                // can trim off leading since we may add spaces
+                                val leadingSpaces = column.countLeading(' ', '\t').maxBound(caretIndex)
+                                if (leadingSpaces > 0) column = column.subSequence(leadingSpaces, column.length)
+                            }
+                        }
+                    }
+
+                    if (column.isEmpty()) column = column.append(origColumn.subSequence(0, 1))
+
+                    val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
+
+                    if (headerParts != null) {
+                        hadSeparatorCols = true
+                    } else {
+                        allSeparatorCols = false
+                    }
+
+                    var span = 1
+                    while (col + span <= segments.lastIndex && segments[col + span].isEmpty()) span++
+
+                    col += span
+                }
+            }
+
+            val isSeparator = hadHeader && !hadSeparator && hadSeparatorCols && allSeparatorCols
+
+            if (isSeparator) hadSeparator = true
+            else hadHeader = true
+
+            col = 0
+            lastSpan = 1
+
             while (col < segments.size) {
                 var column = segments[col]
                 val untrimmedWidth = column.length
@@ -138,7 +195,9 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
                 if (column.isEmpty()) column = column.append(origColumn.subSequence(0, 1))
 
-                val headerParts = column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?")
+                val headerParts = if (isSeparator) column.extractGroupsSegmented("(\\s+)?(:)?(-{1,})(:)?(\\s+)?") else null
+                assert(!isSeparator || headerParts != null, {"isSeparator but column does not match separator col"})
+
                 val formattedCol = SmartVariableCharSequence(column, if (headerParts != null) EMPTY_SEQUENCE else column)
 
                 if (headerParts != null) {
