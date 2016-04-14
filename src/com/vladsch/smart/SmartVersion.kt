@@ -26,12 +26,20 @@ import java.util.*
 object SmartVersionManager {
     private var mySerial = Integer.MIN_VALUE + 1
 
-    class GroupedUpdate : ThreadLocal<GroupedUpdate>() {
+    class GroupedUpdate {
         var myInGroup = 0
         var myFrozenSerial = 0
     }
 
-    private var groupedUpdate = GroupedUpdate()
+    private val myGroupedUpdate = ThreadLocal<GroupedUpdate>()
+
+    private val groupedUpdate: GroupedUpdate get() = myGroupedUpdate.get() ?: initGroupedUpdate()
+
+    private fun initGroupedUpdate(): GroupedUpdate {
+        val grouped = GroupedUpdate()
+        myGroupedUpdate.set(grouped)
+        return grouped
+    }
 
     val isGrouped: Boolean get() = groupedUpdate.myInGroup > 0
 
@@ -67,6 +75,18 @@ object SmartVersionManager {
             }
         }
 
+    private fun leaveGroupedUpdate() {
+        --groupedUpdate.myInGroup
+    }
+
+    private fun enterGroupedUpdate() {
+        val wasInGroup = groupedUpdate.myInGroup++
+        if (wasInGroup == 0) {
+            // that way all updated data will be the latest version
+            groupedUpdate.myFrozenSerial = nextVersionRaw
+        }
+    }
+
     fun groupedUpdate(runnable: () -> Unit) {
         enterGroupedUpdate()
         try {
@@ -82,18 +102,6 @@ object SmartVersionManager {
             runnable.run()
         } finally {
             leaveGroupedUpdate()
-        }
-    }
-
-    private fun leaveGroupedUpdate() {
-        groupedUpdate.myInGroup--
-    }
-
-    private fun enterGroupedUpdate() {
-        var wasGroupedUpdate = groupedUpdate.myInGroup++ > 0
-        if (!wasGroupedUpdate) {
-            // that way all updated data will be the latest version
-            groupedUpdate.myFrozenSerial = nextVersionRaw
         }
     }
 
@@ -235,7 +243,8 @@ fun <V> IterableValueDependenciesAdapter(iterable: Iterable<SmartVersionedDataHo
 
 open class SmartVolatileVersion(versionSerial: Int) : SmartVersion {
     constructor() : this(SmartVersionManager.nextSerial)
-    constructor(version:SmartVersion) : this(version.versionSerial)
+
+    constructor(version: SmartVersion) : this(version.versionSerial)
 
     protected var myVersion = versionSerial
         private set
