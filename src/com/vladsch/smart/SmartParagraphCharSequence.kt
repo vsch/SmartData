@@ -174,7 +174,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         val chars = myReplacedChars.cachedProxy
         val tokens = tokenizeSequence(chars)
         var iMax = tokens.size
-        val lineBreak = RepeatedCharSequence(" \n")
+        val lineBreak = RepeatedCharSequence("\n")
         val hardBreak = RepeatedCharSequence("  \n")
         var pos = 0
         var i = 0
@@ -236,7 +236,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
         if (!lineWords.isEmpty()) {
             addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, true)
-            result.add(" ")
+//            result.add(" ")
         }
 
         return SmartCharSequenceBase.smart(result).cachedProxy
