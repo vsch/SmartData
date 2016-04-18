@@ -32,6 +32,7 @@ class SmartTableColumnBalancer() {
     // inputs
     protected val myColumnLengths = HashMap<Int, ArrayList<SmartVersionedDataHolder<Int>>>()
     protected val myColumnSpans = ArrayList<TableColumnSpan>()
+    protected var myMinColumnWidth = 3
 
     // values during balancing computation
     protected var myColumnWidths = Array(0, { 0 })
@@ -46,6 +47,12 @@ class SmartTableColumnBalancer() {
     val columnCount: Int get() = myColumnWidthDataPoints.size
     val columnWidthDataPoints: List<SmartVersionedDataAlias<Int>> get() = myColumnWidthDataPoints
     val columnAlignmentDataPoints: List<SmartVersionedDataAlias<TextAlignment>> get() = myAlignmentDataPoints
+
+    var minColumnWidth: Int
+        get() = myMinColumnWidth
+        set(value) {
+            myMinColumnWidth = value.minBound(0);
+        }
 
     fun columnWidthDataPoint(index: Int): SmartVersionedDataAlias<Int> {
         return myColumnWidthDataPoints[index]
@@ -155,7 +162,7 @@ class SmartTableColumnBalancer() {
     fun balanceColumns() {
         // get all the single column text lengths
         for (index in 0..myColumnWidthDataPoints.lastIndex) {
-            var width = 0
+            var width = myMinColumnWidth
             val lengths = myColumnLengths[index]
             if (lengths != null) {
                 for (length in lengths) {

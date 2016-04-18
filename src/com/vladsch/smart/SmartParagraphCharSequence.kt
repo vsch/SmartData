@@ -105,6 +105,14 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         override fun toString(): String {
             return "token: $type $range"
         }
+
+        fun subSequence(charSequence: SmartCharSequence): SmartCharSequence {
+            return charSequence.subSequence(range.start, range.end)
+        }
+
+        fun subSequence(charSequence: CharSequence): CharSequence {
+            return charSequence.subSequence(range.start, range.end)
+        }
     }
 
     protected enum class TextType {
@@ -179,16 +187,21 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         var pos = 0
         var i = 0
         var lineCount = 0
-        val lineWords = ArrayList<CharSequence>()
+        val lineWords = ArrayList<Token<TextType>>()
         var result = ArrayList<CharSequence>()
         var lineIndent = firstIndent
         var lineWidth = firstWidth
         val nextWidth = if (myWidth.value <= 0) Integer.MAX_VALUE else myWidth.value
 
-        fun lineBreak(lineBreak: CharSequence, lastLine: Boolean) {
-            addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, lastLine)
+        fun lineBreak(spaceToken: Token<TextType>?, lineBreak: CharSequence, lastLine: Boolean) {
+            addLine(result, chars, lineWords, lineCount, lineWidth - pos - lineIndent, lastLine)
+            if (spaceToken != null) {
+                result.add(SmartReplacedCharSequence(spaceToken.subSequence(chars), lineBreak))
+            } else {
+                result.add(lineBreak)
+            }
+
             lineWords.clear()
-            result.add(lineBreak)
             pos = 0
             lineCount++
             lineIndent = indent
@@ -201,33 +214,41 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
             when (token.type) {
                 TextType.SPACE -> {
+                    if (pos > 0) lineWords.add(token)
                     i++
                 }
                 TextType.WORD -> {
                     if (pos == 0 || lineIndent + pos + token.range.span + 1 <= lineWidth) {
                         // fits, add it
                         if (pos > 0) pos++
-                        lineWords.add(chars.subSequence(token.range.start, token.range.end))
+                        lineWords.add(token)
                         pos += token.range.span
                         i++
                     } else {
                         // need to insert a line break and repeat
-                        lineBreak(lineBreak, false)
+                        val lineBreakToken = lineWords[lineWords.lastIndex]
+
+                        if (lineBreakToken.type == TextType.WORD) {
+                            lineBreak(null, lineBreak, false)
+                        } else {
+                            lineBreak(lineBreakToken, lineBreak, false)
+                        }
                     }
                 }
                 TextType.MARKDOWN_BREAK -> {
                     if (pos > 0) {
                         if (myKeepMarkdownHardBreaks.value) {
-                            lineBreak(hardBreak, true)
+                            lineBreak(token, hardBreak, true)
                         } else if (myKeepLineBreaks.value) {
-                            lineBreak(lineBreak, true)
+                            lineWords.add(token)
+                            lineBreak(token, lineBreak, true)
                         }
                     }
                     i++
                 }
                 TextType.BREAK -> {
                     if (pos > 0 && myKeepLineBreaks.value) {
-                        lineBreak(lineBreak, true)
+                        lineBreak(token, lineBreak, true)
                     }
                     i++
                 }
@@ -235,14 +256,14 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         }
 
         if (!lineWords.isEmpty()) {
-            addLine(result, lineWords, lineCount, lineWidth - pos - lineIndent, true)
-//            result.add(" ")
+            addLine(result, chars, lineWords, lineCount, lineWidth - pos - lineIndent, true)
+            //            result.add(" ")
         }
 
         return SmartCharSequenceBase.smart(result).cachedProxy
     }
 
-    private fun addLine(result: ArrayList<CharSequence>, lineWords: ArrayList<CharSequence>, lineCount: Int, extraSpaces: Int, lastLine: Boolean) {
+    private fun addLine(result: ArrayList<CharSequence>, charSequence: SmartCharSequence, lineWords: ArrayList<Token<TextType>>, lineCount: Int, extraSpaces: Int, lastLine: Boolean) {
         var leadSpaces = 0
         var addSpaces = 0
         var remSpaces = 0
@@ -273,15 +294,24 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
         if (leadSpaces > 0) result.add(RepeatedCharSequence(' ', leadSpaces))
         var firstWord = true
+        var hadSpace = true
 
         for (word in lineWords) {
-            if (firstWord) firstWord = false
-            else {
+            if (word.type == TextType.WORD) {
+                if (firstWord) firstWord = false
+                else if (!hadSpace) {
+                    var spcSize = if (remSpaces > 0) 1 else 0
+                    result.add(RepeatedCharSequence(' ', addSpaces + 1 + spcSize))
+                    remSpaces -= spcSize
+                }
+                result.add(word.subSequence(charSequence))
+                hadSpace = false
+            } else {
                 var spcSize = if (remSpaces > 0) 1 else 0
-                result.add(RepeatedCharSequence(' ', addSpaces + 1 + spcSize))
+                result.add(SmartReplacedCharSequence(word.subSequence(charSequence), RepeatedCharSequence(' ', addSpaces + 1 + spcSize)))
                 remSpaces -= spcSize
+                hadSpace = true
             }
-            result.add(word)
         }
 
         if (remSpaces > 0) {
