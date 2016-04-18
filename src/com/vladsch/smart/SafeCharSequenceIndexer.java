@@ -37,6 +37,7 @@ public interface SafeCharSequenceIndexer extends SafeCharSequenceError {
     int getIndent();
     int getColumn();
     int columnOf(int index);
+    int tabExpandedColumnOf(int index, int tabSize);
     int getEndOfPreviousLine();
     int getStartOfNextLine();
     int endOfPreviousSkipLines(int lines);

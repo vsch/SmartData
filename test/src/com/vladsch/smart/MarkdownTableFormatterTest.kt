@@ -300,8 +300,8 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
     fun formatTableIndentedTracking() {
 
         val chars = """    Header 0|Header 1|Header 2|Header 3
- Header 0 line 2|Header 1 extra|More Header 2|Another Header 3
- --------|:-------- |:--------:|-------:
+     Header 0 line 2|Header 1 extra|More Header 2|Another Header 3
+     --------|:-------- |:--------:|-------:
     Row 1 Col 0 Data|Row 1 Col 1 Data|Row 1 Col 2 More Data|Row 1 Col 3 Much Data
     Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|Row 2 Col 3 Data
 """.toCharArray()

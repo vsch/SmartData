@@ -135,4 +135,21 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars: SafeCharSequence, i
     override fun getIndent(): Int = firstNonBlank - startOfLine
     override fun getColumn(): Int = columnOf(myIndex)
     override fun columnOf(index: Int): Int = myChars.safeIndex(index) - startOfLine
+    override fun tabExpandedColumnOf(index: Int, tabSize: Int): Int {
+        val start = startOfLine
+        var end = myChars.safeIndex(index)
+        var col = 0
+
+        if (tabSize <= 1) return end - start
+
+        for (i in start..end) {
+            if (myChars[i] == '\t') {
+                col += tabSize - col % tabSize
+            } else {
+                col++
+            }
+        }
+
+        return col
+    }
 }

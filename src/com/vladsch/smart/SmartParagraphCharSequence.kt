@@ -192,9 +192,10 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         var lineIndent = firstIndent
         var lineWidth = firstWidth
         val nextWidth = if (myWidth.value <= 0) Integer.MAX_VALUE else myWidth.value
+        var wordsOnLine = 0
 
         fun lineBreak(spaceToken: Token<TextType>?, lineBreak: CharSequence, lastLine: Boolean) {
-            addLine(result, chars, lineWords, lineCount, lineWidth - pos - lineIndent, lastLine)
+            addLine(result, chars, lineWords, wordsOnLine, lineCount, lineWidth - pos - lineIndent, lastLine)
             if (spaceToken != null) {
                 result.add(SmartReplacedCharSequence(spaceToken.subSequence(chars), lineBreak))
             } else {
@@ -203,6 +204,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
             lineWords.clear()
             pos = 0
+            wordsOnLine = 0
             lineCount++
             lineIndent = indent
             lineWidth = nextWidth
@@ -223,6 +225,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                         if (pos > 0) pos++
                         lineWords.add(token)
                         pos += token.range.span
+                        wordsOnLine++
                         i++
                     } else {
                         // need to insert a line break and repeat
@@ -255,15 +258,15 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             }
         }
 
-        if (!lineWords.isEmpty()) {
-            addLine(result, chars, lineWords, lineCount, lineWidth - pos - lineIndent, true)
+        if (wordsOnLine > 0) {
+            addLine(result, chars, lineWords, wordsOnLine, lineCount, lineWidth - pos - lineIndent, true)
             //            result.add(" ")
         }
 
         return SmartCharSequenceBase.smart(result).cachedProxy
     }
 
-    private fun addLine(result: ArrayList<CharSequence>, charSequence: SmartCharSequence, lineWords: ArrayList<Token<TextType>>, lineCount: Int, extraSpaces: Int, lastLine: Boolean) {
+    private fun addLine(result: ArrayList<CharSequence>, charSequence: SmartCharSequence, lineWords: ArrayList<Token<TextType>>, wordsOnLine:Int, lineCount: Int, extraSpaces: Int, lastLine: Boolean) {
         var leadSpaces = 0
         var addSpaces = 0
         var remSpaces = 0
@@ -282,10 +285,10 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             }
             TextAlignment.JUSTIFIED -> {
                 leadSpaces = indent
-                if (!lastLine && lineWords.size > 1 && distributeSpaces > 0) {
-                    addSpaces = distributeSpaces / (lineWords.size - 1)
-                    remSpaces = distributeSpaces - addSpaces * (lineWords.size - 1)
-                    if (addSpaces * (lineWords.size - 1) + remSpaces != distributeSpaces) {
+                if (!lastLine && wordsOnLine > 1 && distributeSpaces > 0) {
+                    addSpaces = distributeSpaces / (wordsOnLine - 1)
+                    remSpaces = distributeSpaces - addSpaces * (wordsOnLine - 1)
+                    if (addSpaces * (wordsOnLine - 1) + remSpaces != distributeSpaces) {
                         val tmp = 0
                     }
                 }
