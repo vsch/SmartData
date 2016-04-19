@@ -260,7 +260,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
         if (wordsOnLine > 0) {
             addLine(result, chars, lineWords, wordsOnLine, lineCount, lineWidth - pos - lineIndent, true)
-            //            result.add(" ")
+            if (!" \t".contains(result[result.lastIndex])) result.add(" ")
         }
 
         return SmartCharSequenceBase.smart(result).cachedProxy

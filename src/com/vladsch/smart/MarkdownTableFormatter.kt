@@ -178,7 +178,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     companion object {
         @JvmStatic val HEADER_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
         @JvmStatic val HEADER_COLUMN = SmartRepeatedCharSequence('-', 3)
-        @JvmStatic val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 3)
+        @JvmStatic val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 1)
 
         fun parseTable(table: SmartCharSequence, caretOffset: Int, trimCells: Boolean): MarkdownTable {
             val space = RepeatedCharSequence(' ')

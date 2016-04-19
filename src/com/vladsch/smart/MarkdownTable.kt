@@ -39,7 +39,7 @@ data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: In
 
 data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     val totalColumns: Int get() {
-        return columnOf(rowCells.size - 1)
+        return columnOf(rowCells.size)
     }
 
     fun columnOf(index: Int): Int {
