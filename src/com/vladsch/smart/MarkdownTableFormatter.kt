@@ -63,13 +63,12 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     //    }
 
     fun formatTable(tableChars: SmartCharSequence, caretOffset: Int): SmartCharSequence {
-        val parsedTable = parseTable(tableChars, caretOffset)
+        val parsedTable = parseTable(tableChars, caretOffset, !settings.TABLE_ADJUST_COLUMN_WIDTH && settings.TABLE_TRIM_CELLS)
 
         if (settings.TABLE_FILL_MISSING_COLUMNS) parsedTable.fillMissingColumns()
 
         return formatTable(parsedTable, parsedTable.indentPrefix)
     }
-
 
     fun formatTable(markdownTable: MarkdownTable, indentPrefix: CharSequence = EMPTY_SEQUENCE): SmartCharSequence {
         val tableBalancer = SmartTableColumnBalancer()
@@ -105,8 +104,8 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
                 if (columnChars.isEmpty()) columnChars = columnChars.append(space)
 
-                val headerParts = if (tableRow.isSeparator) columnChars.extractGroupsSegmented(HEADER_COLUMN_PATTERN) else null
-                assert(!tableRow.isSeparator || headerParts != null, { "isSeparator but column does not match separator col" })
+                val headerParts = if (row == markdownTable.separatorRow) columnChars.extractGroupsSegmented(HEADER_COLUMN_PATTERN) else null
+                assert(row != markdownTable.separatorRow || headerParts != null, { "isSeparator but column does not match separator col" })
 
                 val formattedCol = SmartVariableCharSequence(columnChars, if (headerParts != null) EMPTY_SEQUENCE else columnChars)
 
@@ -179,15 +178,14 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     companion object {
         @JvmStatic val HEADER_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
         @JvmStatic val HEADER_COLUMN = SmartRepeatedCharSequence('-', 3)
+        @JvmStatic val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 3)
 
-        fun parseTable(table: SmartCharSequence, caretOffset: Int): MarkdownTable {
+        fun parseTable(table: SmartCharSequence, caretOffset: Int, trimCells: Boolean): MarkdownTable {
             val space = RepeatedCharSequence(' ')
             var indentPrefix: CharSequence = EMPTY_SEQUENCE
             val tableRows = table.splitPartsSegmented('\n', false)
             var row = 0
             val tableRowCells = ArrayList<TableRow>()
-            var hadHeader = false
-            var hadSeparator = false
             var offsetRow: Int? = null
             var offsetCol: Int? = null
 
@@ -195,11 +193,13 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             var minIndent: Int? = null
             for (line in tableRows.segments) {
                 val tableRow = SafeCharSequenceIndex(line)
-                val spaceCount = tableRow.tabExpandedColumnOf(tableRow.firstNonBlank, 4)
+                val spaceCount = tableRow.tabExpandedColumnOf((tableRow.firstNonBlank - 1).minBound(0), 4)
                 if (minIndent == null || minIndent > spaceCount) minIndent = spaceCount
             }
 
             val removeSpaces = ((minIndent ?: 0) / 4) * 4
+            val stripPrefix = if (removeSpaces > 0) "\\s{1,$removeSpaces}".toRegex() else "".toRegex()
+
             if (removeSpaces > 0) {
                 indentPrefix = RepeatedCharSequence(' ', removeSpaces)
             }
@@ -208,7 +208,9 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 var rowText = line // line.trimEnd()
 
                 // remove the indent prefix
-                if (!indentPrefix.isEmpty()) rowText = rowText.removePrefix(indentPrefix, true) as SmartCharSequence
+                if (!indentPrefix.isEmpty()) {
+                    rowText = rowText.removePrefix(stripPrefix) as SmartCharSequence
+                }
 
                 // remove leading pipes, and trailing pipes that are singles
                 if (rowText.length > 0 && rowText[0] == '|') rowText = rowText.subSequence(1, rowText.length)
@@ -223,7 +225,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
                 while (col < segments.size) {
                     var column = segments[col]
-                    val untrimmedWidth = column.length
+                    val untrimmedWidth = if (trimCells) column.trim().length else column.length
                     val origColumn = if (column.isEmpty()) space else column
 
                     if (!column.isEmpty()) {
@@ -236,29 +238,30 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                         } else {
                             //println("> caretOffset $caretOffset starCol: ${colStart.offset}, endCol: ${colEnd.offset} <")
                             // trim spaces after caret
-                            val caretIndex = caretOffset - colStart.offset
-                            column = column.subSequence(0, caretIndex).append(column.subSequence(caretIndex, column.length).trimEnd())
-
                             offsetCol = col
                             offsetRow = row
 
-                            if (!column.isEmpty()) {
-                                // can trim off leading since we may add spaces
-                                val leadingSpaces = column.countLeading(' ', '\t').maxBound(caretIndex)
-                                if (leadingSpaces > 0) column = column.subSequence(leadingSpaces, column.length)
+                            if (trimCells) {
+                                column = column.trim()
+                            } else {
+                                val caretIndex = caretOffset - colStart.offset
+                                column = column.subSequence(0, caretIndex).append(column.subSequence(caretIndex, column.length).trimEnd())
+                                if (!column.isEmpty()) {
+                                    // can trim off leading since we may add spaces
+                                    val leadingSpaces = column.countLeading(' ', '\t').maxBound(caretIndex)
+                                    if (leadingSpaces > 0) column = column.subSequence(leadingSpaces, column.length)
+                                }
                             }
                         }
                     }
 
                     if (column.isEmpty()) column = column.append(origColumn.subSequence(0, 1))
 
-                    if (hadHeader && !hadSeparator) {
-                        val headerParts = column.extractGroupsSegmented(HEADER_COLUMN_PATTERN)
-                        if (headerParts != null) {
-                            hadSeparatorCols = true
-                        } else {
-                            allSeparatorCols = false
-                        }
+                    val headerParts = column.extractGroupsSegmented(HEADER_COLUMN_PATTERN)
+                    if (headerParts != null) {
+                        hadSeparatorCols = true
+                    } else {
+                        allSeparatorCols = false
                     }
 
                     // see if we have spanned columns
@@ -269,10 +272,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                     col += span
                 }
 
-                val isSeparator = hadHeader && !hadSeparator && hadSeparatorCols && allSeparatorCols
-
-                if (isSeparator) hadSeparator = true
-                else hadHeader = true
+                val isSeparator = hadSeparatorCols && allSeparatorCols
 
                 tableRowCells.add(TableRow(tableColumns, isSeparator))
                 row++

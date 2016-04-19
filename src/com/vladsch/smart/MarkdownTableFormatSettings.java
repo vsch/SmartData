@@ -27,17 +27,27 @@ public class MarkdownTableFormatSettings {
     public boolean TABLE_ADJUST_COLUMN_WIDTH = true;
     public boolean TABLE_APPLY_COLUMN_ALIGNMENT = true;
     public boolean TABLE_FILL_MISSING_COLUMNS = true;
+    public boolean TABLE_TRIM_CELLS = false;
     public int TABLE_LEFT_ALIGN_MARKER = 1;
 
     public MarkdownTableFormatSettings() {
     }
 
-    public MarkdownTableFormatSettings(boolean TABLE_LEAD_TRAIL_PIPES, boolean TABLE_SPACE_AROUND_PIPE, boolean TABLE_ADJUST_COLUMN_WIDTH, boolean TABLE_APPLY_COLUMN_ALIGNMENT, int TABLE_LEFT_ALIGN_MARKER, boolean TABLE_FILL_MISSING_COLUMNS) {
+    public MarkdownTableFormatSettings(boolean TABLE_LEAD_TRAIL_PIPES,
+            boolean TABLE_SPACE_AROUND_PIPE,
+            boolean TABLE_ADJUST_COLUMN_WIDTH,
+            boolean TABLE_APPLY_COLUMN_ALIGNMENT,
+            int TABLE_LEFT_ALIGN_MARKER,
+            boolean TABLE_FILL_MISSING_COLUMNS,
+            boolean TABLE_TRIM_CELLS
+    ) {
         this.TABLE_LEAD_TRAIL_PIPES = TABLE_LEAD_TRAIL_PIPES;
         this.TABLE_SPACE_AROUND_PIPE = TABLE_SPACE_AROUND_PIPE;
         this.TABLE_ADJUST_COLUMN_WIDTH = TABLE_ADJUST_COLUMN_WIDTH;
         this.TABLE_APPLY_COLUMN_ALIGNMENT = TABLE_APPLY_COLUMN_ALIGNMENT;
         this.TABLE_LEFT_ALIGN_MARKER = TABLE_LEFT_ALIGN_MARKER;
         this.TABLE_FILL_MISSING_COLUMNS = TABLE_FILL_MISSING_COLUMNS;
+        this.TABLE_TRIM_CELLS = TABLE_TRIM_CELLS;
+
     }
 }

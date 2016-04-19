@@ -45,7 +45,7 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
     fun columnOf(index: Int): Int {
         var columns = 0
 
-        for (i in 0..index.maxBound(rowCells.size - 1)) {
+        for (i in 0..(index-1).maxBound(rowCells.size - 1)) {
             val cell = rowCells[i]
             columns += cell.colSpan
         }
@@ -65,14 +65,18 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
         return index
     }
 
+    private fun appendColumn(index: Int = rowCells.size) {
+        if (isSeparator) {
+            rowCells.add(index, TableCell(MarkdownTableFormatter.HEADER_COLUMN, MarkdownTableFormatter.HEADER_COLUMN.length, 1))
+        } else {
+            rowCells.add(index, TableCell(MarkdownTableFormatter.EMPTY_COLUMN, MarkdownTableFormatter.EMPTY_COLUMN.length, 1))
+        }
+    }
+
     fun appendColumns(count: Int) {
         for (i in 1..count) {
             // add empty column
-            if (isSeparator) {
-                rowCells.add(TableCell(MarkdownTableFormatter.HEADER_COLUMN, 0, 1))
-            } else {
-                rowCells.add(TableCell(EMPTY_SEQUENCE, 0, 1))
-            }
+            appendColumn()
         }
     }
 
@@ -80,7 +84,8 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
         if (count <= 0) return
 
         val totalColumns = totalColumns
-        if (column >= totalColumns) {
+
+        if (column > totalColumns) {
             // append to the end
             appendColumns(column - totalColumns + count)
         } else {
@@ -97,11 +102,7 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
             } else {
                 for (i in 1..count) {
                     // add empty column
-                    if (isSeparator) {
-                        rowCells.add(index, TableCell(MarkdownTableFormatter.HEADER_COLUMN, 0, 1))
-                    } else {
-                        rowCells.add(index, TableCell(EMPTY_SEQUENCE, 0, 1))
-                    }
+                    appendColumn(index)
                 }
             }
         }
@@ -125,7 +126,7 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
         return isSeparator || index >= rowCells.size || rowCells[index].charSequence.isBlank()
     }
 
-    fun isEmpty():Boolean {
+    fun isEmpty(): Boolean {
         if (isSeparator) return false
 
         for (cell in rowCells) {
@@ -136,6 +137,17 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
 }
 
 class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequence, val offsetRow: Int?, val offsetColumn: Int?) {
+    private var mySeparatorRow: Int = 0
+    private var mySeparatorRowCount: Int = 0
+
+    init {
+        computeSeparatorRow()
+    }
+
+    val separatorRow: Int get() = mySeparatorRow
+
+    val separatorRowCount: Int get() = mySeparatorRowCount
+
     val maxColumns: Int get() {
         var columns = 0
 
@@ -185,6 +197,34 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
             emptyRow.appendColumns(maxColumns)
             rows.add(rowIndex, emptyRow)
         }
+
+        computeSeparatorRow()
+    }
+
+    fun computeSeparatorRow() {
+        var firstSeparator = -1
+        var secondSeparator = -1
+        var firstNonSeparator = -1
+        var separators = 0
+
+        var rowIndex = 0
+
+        for (row in rows) {
+            if (row.isSeparator) {
+                separators++
+                if (firstSeparator == -1) firstSeparator = rowIndex
+                else if (secondSeparator == -1) secondSeparator = rowIndex
+            } else if (firstNonSeparator == -1) firstNonSeparator = rowIndex
+            rowIndex++
+        }
+
+        if (secondSeparator == -1) mySeparatorRow = firstSeparator
+        else {
+            if (firstNonSeparator >= 0 && firstNonSeparator < firstSeparator) mySeparatorRow = firstSeparator
+            else mySeparatorRow = secondSeparator
+        }
+
+        mySeparatorRowCount = separators
     }
 
     fun insertSeparatorRow(rowIndex: Int) {
@@ -192,6 +232,9 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
         val emptyRow = TableRow(ArrayList(), true)
         emptyRow.appendColumns(maxColumns)
         rows.add(rowIndex, emptyRow)
+        mySeparatorRowCount++
+
+        computeSeparatorRow()
     }
 
     fun deleteRows(rowIndex: Int, count: Int) {
@@ -200,6 +243,8 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
             rows.removeAt(rowIndex)
             remaining--
         }
+
+        computeSeparatorRow()
     }
 
     fun isEmptyColumn(column: Int): Boolean {
@@ -214,6 +259,10 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
 
     fun isEmptyRow(rowIndex: Int): Boolean {
         return rowIndex < rows.size && rows[rowIndex].isEmpty()
+    }
+
+    fun isSeparatorRow(rowIndex: Int): Boolean {
+        return rowIndex == mySeparatorRow
     }
 }
 
