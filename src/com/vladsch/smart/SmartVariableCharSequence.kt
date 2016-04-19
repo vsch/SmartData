@@ -113,8 +113,8 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
             when (myAlignment.value) {
                 TextAlignment.RIGHT -> leftPadding = paddingSize
                 TextAlignment.CENTER -> {
-                    var leftPrePad = myPrefix.value.countLeading(' ')
-                    var rightPrePad = mySuffix.value.countTrailing(' ')
+                    var leftPrePad = myPrefix.value.countLeading(' ') + myVariableChars.value.countLeading(' ')
+                    var rightPrePad = mySuffix.value.countTrailing(' ') + myVariableChars.value.countTrailing(' ')
                     val commonPrePad = leftPrePad.min(rightPrePad)
                     rightPrePad -= commonPrePad
                     leftPrePad -= commonPrePad - rightPrePad

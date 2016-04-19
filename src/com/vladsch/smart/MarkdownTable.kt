@@ -37,7 +37,9 @@ data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: In
     }
 }
 
-data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
+class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
+    constructor(rowCells: ArrayList<TableCell>) : this(rowCells, isSeparator(rowCells))
+
     val totalColumns: Int get() {
         return columnOf(rowCells.size)
     }
@@ -45,7 +47,7 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
     fun columnOf(index: Int): Int {
         var columns = 0
 
-        for (i in 0..(index-1).maxBound(rowCells.size - 1)) {
+        for (i in 0..(index - 1).maxBound(rowCells.size - 1)) {
             val cell = rowCells[i]
             columns += cell.colSpan
         }
@@ -133,6 +135,17 @@ data class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean
             if (!cell.charSequence.isBlank()) return false
         }
         return true
+    }
+
+    companion object {
+        @JvmStatic fun isSeparator(rowCells: ArrayList<TableCell>): Boolean {
+            if (rowCells.isEmpty()) return false;
+
+            for (cell in rowCells) {
+                if (!MarkdownTableFormatter.HEADER_COLUMN_PATTERN_REGEX.matches(cell.charSequence)) return false
+            }
+            return true
+        }
     }
 }
 

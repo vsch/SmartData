@@ -177,6 +177,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
     companion object {
         @JvmStatic val HEADER_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
+        @JvmStatic val HEADER_COLUMN_PATTERN_REGEX = HEADER_COLUMN_PATTERN.toRegex()
         @JvmStatic val HEADER_COLUMN = SmartRepeatedCharSequence('-', 3)
         @JvmStatic val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 1)
 
@@ -273,7 +274,6 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 }
 
                 val isSeparator = hadSeparatorCols && allSeparatorCols
-
                 tableRowCells.add(TableRow(tableColumns, isSeparator))
                 row++
             }
