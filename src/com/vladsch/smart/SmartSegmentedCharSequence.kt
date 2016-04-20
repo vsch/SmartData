@@ -75,23 +75,6 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
         }
 
     public override fun charAtImpl(index: Int): Char {
-        var lastSegment = myLastSegment
-        if (lastSegment != null) {
-            if (index >= myLengths[lastSegment] && index < myLengths[lastSegment + 1]) return segments[lastSegment][index - myLengths[lastSegment]]
-            // see if it is next or previous
-            if (lastSegment < myLengths.lastIndex && index >= myLengths[lastSegment + 1] && index < myLengths[lastSegment + 2]) {
-                lastSegment++
-                myLastSegment = lastSegment
-                return segments[lastSegment][index - myLengths[lastSegment]]
-            }
-
-            if (lastSegment > 0 && index >= myLengths[lastSegment - 1] && index < myLengths[lastSegment]) {
-                lastSegment--
-                myLastSegment = lastSegment
-                return segments[lastSegment][index - myLengths[lastSegment]]
-            }
-        }
-
         val i = getCharSequenceIndex(index)
         if (i >= 0) {
             myLastSegment = i
@@ -177,6 +160,24 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
     }
 
     protected fun getCharSequenceIndex(index: Int): Int {
+        var lastSegment = myLastSegment
+
+        if (lastSegment != null) {
+            if (index >= myLengths[lastSegment] && index < myLengths[lastSegment + 1]) return lastSegment
+            // see if it is next or previous
+            if (lastSegment + 2 <= myLengths.lastIndex && index >= myLengths[lastSegment + 1] && index < myLengths[lastSegment + 2]) {
+                lastSegment++
+                myLastSegment = lastSegment
+                return lastSegment
+            }
+
+            if (lastSegment > 0 && index >= myLengths[lastSegment - 1] && index < myLengths[lastSegment]) {
+                lastSegment--
+                myLastSegment = lastSegment
+                return lastSegment
+            }
+        }
+
         myCacheVersion.nextVersion()
         for (i in 1..myLengths.size - 1) {
             if (index < myLengths[i] || index == myLengths[i] && i + 1 == myLengths.size) {
