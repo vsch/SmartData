@@ -63,11 +63,14 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     //    }
 
     fun formatTable(tableChars: SmartCharSequence, caretOffset: Int): SmartCharSequence {
-        val parsedTable = parseTable(tableChars, caretOffset, !settings.TABLE_ADJUST_COLUMN_WIDTH && settings.TABLE_TRIM_CELLS)
+        val table = parseTable(tableChars, caretOffset, !settings.TABLE_ADJUST_COLUMN_WIDTH && settings.TABLE_TRIM_CELLS)
 
-        if (settings.TABLE_FILL_MISSING_COLUMNS) parsedTable.fillMissingColumns()
+        if (settings.TABLE_FILL_MISSING_COLUMNS) {
+            val unbalancedTable = table.minColumns != table.maxColumns
+            if (unbalancedTable) table.fillMissingColumns(null)
+        }
 
-        return formatTable(parsedTable, parsedTable.indentPrefix)
+        return formatTable(table, table.indentPrefix)
     }
 
     fun formatTable(markdownTable: MarkdownTable, indentPrefix: CharSequence = EMPTY_SEQUENCE): SmartCharSequence {
@@ -278,7 +281,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 row++
             }
 
-            return MarkdownTable(tableRowCells, indentPrefix, offsetRow, offsetCol)
+            return MarkdownTable(tableRowCells, indentPrefix, null, offsetRow, offsetCol)
         }
     }
 

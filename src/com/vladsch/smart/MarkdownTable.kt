@@ -91,14 +91,13 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
             // append to the end
             appendColumns(column - totalColumns + count)
         } else {
-            var index = indexOf(column)
-
             // insert in the middle
-            val cell = rowCells[index]
+            var index = indexOf(column)
             val cellColumn = columnOf(index)
 
             if (cellColumn > column) {
                 // spanning column, we expand its span
+                val cell = rowCells[index]
                 rowCells.removeAt(index)
                 rowCells.add(index, cell.withColSpan(cell.colSpan + count))
             } else {
@@ -149,7 +148,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     }
 }
 
-class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequence, val offsetRow: Int?, val offsetColumn: Int?) {
+class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequence, val exactColumn: Int?, val offsetRow: Int?, val offsetColumn: Int?) {
     private var mySeparatorRow: Int = 0
     private var mySeparatorRowCount: Int = 0
 
@@ -162,31 +161,23 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
     val separatorRowCount: Int get() = mySeparatorRowCount
 
     val maxColumns: Int get() {
-        var columns = 0
-
-        for (row in rows) {
-            columns = columns.max(row.totalColumns)
-        }
-
-        return columns
+        return maxColumnsWithout()
     }
 
     val minColumns: Int get() {
-        var columns = Integer.MAX_VALUE
-
-        for (row in rows) {
-            columns = columns.min(row.totalColumns)
-        }
-
-        return columns
+        return minColumnsWithout()
     }
 
-    fun fillMissingColumns() {
+    fun fillMissingColumns(column: Int?) {
         val maxColumns = this.maxColumns
 
         for (row in rows) {
             val rowColumns = row.totalColumns
-            row.appendColumns(maxColumns - rowColumns)
+            val count = maxColumns - rowColumns
+            if (count > 0) {
+                if (column != null) row.insertColumns(column, 1)
+                if (column == null || count > 1) row.appendColumns(count)
+            }
         }
     }
 
@@ -276,6 +267,29 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
 
     fun isSeparatorRow(rowIndex: Int): Boolean {
         return rowIndex == mySeparatorRow
+    }
+
+    fun maxColumnsWithout(vararg skipRows: Int): Int {
+        var columns = 0
+        var index = 0
+
+        for (row in rows) {
+            if (index !in skipRows) columns = columns.max(row.totalColumns)
+            index++
+        }
+        return columns
+    }
+
+    fun minColumnsWithout(vararg skipRows: Int): Int {
+        var columns = Integer.MAX_VALUE
+        var index = 0
+
+        for (row in rows) {
+            if (index !in skipRows) columns = columns.min(row.totalColumns)
+            index++
+        }
+
+        return if (columns == Int.MAX_VALUE) 0 else columns
     }
 }
 
