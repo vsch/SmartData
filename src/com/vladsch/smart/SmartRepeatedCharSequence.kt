@@ -103,7 +103,8 @@ class SmartRepeatedCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
 
     protected fun computeResultSequence(): SmartCharSequence {
         val chars = StringBuilder().append(myVariableChars.value).toString().toCharArray()
-        return SmartCharSequenceWrapper(RepeatedCharSequence(chars, myStartIndex.value, myEndIndex.value)).cachedProxy
+//        return SmartCharSequenceWrapper(RepeatedCharSequence(chars, myStartIndex.value, myEndIndex.value)).cachedProxy
+        return SmartCharSequenceWrapper(RepeatedCharSequence(chars, myStartIndex.value, myEndIndex.value))
     }
 
     override var length: Int get() = myLength.value

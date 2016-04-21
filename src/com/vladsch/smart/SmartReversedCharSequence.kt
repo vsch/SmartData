@@ -40,6 +40,7 @@ class SmartReversedCharSequence(chars: SmartCharSequence) : SmartCharSequenceBas
     override val length: Int get() = myChars.length
 
     override fun charAtImpl(index: Int): Char = myChars.cachedProxy[reversedOffset(index)]
+//    override fun charAtImpl(index: Int): Char = myChars[reversedOffset(index)]
 
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) {
         val iMax = length

@@ -175,7 +175,8 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         myAlignmentDataPoints = tableBalancer.columnAlignmentDataPoints
         myColumnWidthDataPoints = tableBalancer.columnWidthDataPoints
 
-        return formattedTable.contents.cachedProxy
+//        return formattedTable.contents.cachedProxy
+        return formattedTable.contents
     }
 
     companion object {

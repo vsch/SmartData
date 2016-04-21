@@ -123,7 +123,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     }
 
     override fun extractGroups(regex: String): List<SmartCharSequence>? {
-        var matchResult = regex.toRegex().matchEntire(cachedProxy)
+//        var matchResult = regex.toRegex().matchEntire(cachedProxy)
+        var matchResult = regex.toRegex().matchEntire(this)
         if (matchResult != null) {
             val segments = ArrayList<SmartCharSequence>(matchResult.groups.size)
             var group = 0
@@ -141,7 +142,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     }
 
     override fun splitParts(delimiter: Char, includeDelimiter: Boolean): List<SmartCharSequence> {
-        return (cachedProxy as CharSequence).splitParts(delimiter, includeDelimiter) as List<SmartCharSequence>
+//        return (cachedProxy as CharSequence).splitParts(delimiter, includeDelimiter) as List<SmartCharSequence>
+        return (this as CharSequence).splitParts(delimiter, includeDelimiter) as List<SmartCharSequence>
     }
 
     override fun splitPartsSegmented(delimiter: Char, includeDelimiter: Boolean): SmartSegmentedCharSequence {
@@ -149,7 +151,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     }
 
     override fun wrapParts(delimiter: Char, includeDelimiter: Boolean, prefix: CharSequence, suffix: CharSequence): SmartCharSequence {
-        return SmartSegmentedCharSequence(cachedProxy.wrapParts(delimiter, includeDelimiter, prefix, suffix))
+//        return SmartSegmentedCharSequence(cachedProxy.wrapParts(delimiter, includeDelimiter, prefix, suffix))
+        return SmartSegmentedCharSequence((this as CharSequence).wrapParts(delimiter, includeDelimiter, prefix, suffix))
     }
 
     override fun expandTabs(tabSize: Int): SmartCharSequence {
@@ -158,7 +161,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         val length = length
         var col = 0
         val tabExpansion = RepeatedCharSequence(' ', tabSize)
-        val proxy = cachedProxy.chars
+//        val proxy = cachedProxy.chars
+        val proxy = this
 
         for (i in 0..length - 1) {
             val c = proxy[i]
@@ -330,7 +334,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return equivalent(other)
         }
 
-        if (!cachedProxy.equivalent(other.cachedProxy)) return false
+//        if (!cachedProxy.equivalent(other.cachedProxy)) return false
+        if (!equivalent(other)) return false
         return true
     }
 
