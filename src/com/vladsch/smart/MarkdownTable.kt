@@ -67,7 +67,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
         return index
     }
 
-    private fun appendColumn(index: Int = rowCells.size) {
+    private fun addColumn(index: Int = rowCells.size) {
         if (isSeparator) {
             rowCells.add(index, TableCell(MarkdownTableFormatter.HEADER_COLUMN, MarkdownTableFormatter.HEADER_COLUMN.length, 1))
         } else {
@@ -78,7 +78,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     fun appendColumns(count: Int) {
         for (i in 1..count) {
             // add empty column
-            appendColumn()
+            addColumn()
         }
     }
 
@@ -87,9 +87,9 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
 
         val totalColumns = totalColumns
 
-        if (column > totalColumns) {
+        if (column >= totalColumns) {
             // append to the end
-            appendColumns(column - totalColumns + count)
+            appendColumns(count)
         } else {
             // insert in the middle
             var index = indexOf(column)
@@ -103,7 +103,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
             } else {
                 for (i in 1..count) {
                     // add empty column
-                    appendColumn(index)
+                    addColumn(index)
                 }
             }
         }
@@ -175,8 +175,12 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
             val rowColumns = row.totalColumns
             val count = maxColumns - rowColumns
             if (count > 0) {
-                if (column != null) row.insertColumns(column, 1)
-                if (column == null || count > 1) row.appendColumns(count)
+                var done = 0
+                if (column != null) {
+                    row.insertColumns(column, 1)
+                    done = 1
+                }
+                if (count - done > 0) row.appendColumns(count - done)
             }
         }
     }

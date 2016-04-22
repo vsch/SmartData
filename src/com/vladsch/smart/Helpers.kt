@@ -363,11 +363,11 @@ fun Int.min(vararg others: Int): Int {
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Int.minBound(vararg others: Int): Int {
+fun Int.minBound(vararg others: Int): Int {
     return this.max(*others)
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Int.maxBound(vararg others: Int): Int {
+fun Int.maxBound(vararg others: Int): Int {
     return this.min(*others)
 }

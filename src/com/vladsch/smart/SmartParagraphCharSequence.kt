@@ -25,6 +25,11 @@ import java.util.*
 
 class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSequenceBase<SmartCharSequence>() {
 
+    companion object {
+        @JvmStatic val MARKDOWN_START_LINE_CHAR = '\u2028'     // this one is not preserved but will cause a line break if not already at beginning of line
+        @JvmStatic val MARKDOWN_START_LINE = SmartRepeatedCharSequence('\u2028')     // this one is not preserved but will cause a line break if not already at beginning of line
+    }
+
     constructor(chars: CharSequence) : this(SmartCharSequenceWrapper(chars))
 
     constructor(chars: CharArray) : this(SmartCharArraySequence(chars))
@@ -119,7 +124,8 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         WORD,
         SPACE,
         BREAK,
-        MARKDOWN_BREAK;
+        MARKDOWN_BREAK,
+        MARKDOWN_START_LINE;
     }
 
     protected fun tokenizeSequence(chars: CharSequence): List<Token<TextType>> {
@@ -133,7 +139,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         while (pos < maxPos) {
             val c = chars[pos]
             if (inWord) {
-                if (c == ' ' || c == '\t' || c == '\n') {
+                if (c == ' ' || c == '\t' || c == '\n' || c == MARKDOWN_START_LINE_CHAR) {
                     inWord = false
                     if (lastPos < pos) {
                         // have a word
@@ -145,7 +151,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                 }
             } else {
                 // in white space
-                if (c != ' ' && c != '\t' && c != '\n') {
+                if (c != ' ' && c != '\t' && c != '\n' && c != MARKDOWN_START_LINE_CHAR) {
                     if (lastPos < pos) {
                         tokenList.add(Token(TextType.SPACE, Range(lastPos, pos)))
                         lastPos = pos
@@ -159,6 +165,10 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                         } else {
                             tokenList.add(Token(TextType.BREAK, Range(pos, pos + 1)))
                         }
+
+                        lastPos = pos + 1
+                    } else if (c == MARKDOWN_START_LINE_CHAR) {
+                        tokenList.add(Token(TextType.MARKDOWN_START_LINE, Range(pos, pos + 1)))
                         lastPos = pos + 1
                     }
 
@@ -255,18 +265,23 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                     }
                     i++
                 }
+                TextType.MARKDOWN_START_LINE -> {
+                    if (wordsOnLine > 0) {
+                        lineBreak(null, lineBreak, false)
+                    }
+                    i++
+                }
             }
         }
 
         if (wordsOnLine > 0) {
             addLine(result, chars, lineWords, wordsOnLine, lineCount, lineWidth - pos - lineIndent, true)
-            if (!" \t".contains(result[result.lastIndex])) result.add(" ")
         }
 
         return SmartCharSequenceBase.smart(result).cachedProxy
     }
 
-    private fun addLine(result: ArrayList<CharSequence>, charSequence: SmartCharSequence, lineWords: ArrayList<Token<TextType>>, wordsOnLine:Int, lineCount: Int, extraSpaces: Int, lastLine: Boolean) {
+    private fun addLine(result: ArrayList<CharSequence>, charSequence: SmartCharSequence, lineWords: ArrayList<Token<TextType>>, wordsOnLine: Int, lineCount: Int, extraSpaces: Int, lastLine: Boolean) {
         var leadSpaces = 0
         var addSpaces = 0
         var remSpaces = 0

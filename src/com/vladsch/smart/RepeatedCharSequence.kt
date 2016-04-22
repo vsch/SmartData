@@ -49,4 +49,8 @@ class RepeatedCharSequence(chars: CharArray, startIndex: Int, endIndex: Int) : C
     fun repeat(count:Int) : CharSequence {
         return RepeatedCharSequence(myChars, myStartIndex, (myEndIndex - myStartIndex)*count)
     }
+
+    override fun toString(): String{
+        return subSequence(0, length).asString()
+    }
 }

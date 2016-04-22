@@ -30,18 +30,70 @@ fun CharSequence.isAllSame(c: Char): Boolean {
     return this.length > 0
 }
 
-fun CharSequence.countLeading(vararg c: Char, index: Int? = null): Int {
+fun CharSequence.countLeading(vararg c: Char, index: Int? = null, endIndex: Int? = null): Int {
     @Suppress("NAME_SHADOWING")
     var index = index ?: 0
+    @Suppress("NAME_SHADOWING")
+    var endIndex = endIndex ?: this.length
+
+    if (endIndex > this.length) endIndex = this.length
     if (index < 0) index = 0
+    if (index >= endIndex) return 0
 
-    if (index >= length) return 0
-
-    val startIndex = index
-    for (i in index..this.length - 1) {
-        if (this[i] !in c) return i-startIndex
+    val origIndex = index
+    for (i in index..endIndex - 1) {
+        if (this[i] !in c) return i - origIndex
     }
-    return this.length
+    return endIndex - origIndex
+}
+
+fun CharSequence.countTrailing(vararg c: Char, index: Int? = null, startIndex: Int? = null): Int {
+    @Suppress("NAME_SHADOWING")
+    var index = index ?: length - 1
+    @Suppress("NAME_SHADOWING")
+    var startIndex = startIndex ?: 0
+
+    if (index > length - 1) index = length - 1
+    if (index < startIndex) return 0
+
+    val origIndex = index
+    for (i in (startIndex..index).reversed()) {
+        if (this[i] !in c) return origIndex - i
+    }
+    return origIndex - startIndex + 1
+}
+
+fun CharSequence.countLeadingNot(vararg c: Char, index: Int? = null, endIndex: Int? = null): Int {
+    @Suppress("NAME_SHADOWING")
+    var index = index ?: 0
+    @Suppress("NAME_SHADOWING")
+    var endIndex = endIndex ?: this.length
+
+    if (endIndex > this.length) endIndex = this.length
+    if (index < 0) index = 0
+    if (index >= endIndex) return 0
+
+    val origIndex = index
+    for (i in index..endIndex - 1) {
+        if (this[i] in c) return i - origIndex
+    }
+    return endIndex - origIndex
+}
+
+fun CharSequence.countTrailingNot(vararg c: Char, index: Int? = null, startIndex: Int? = null): Int {
+    @Suppress("NAME_SHADOWING")
+    var index = index ?: length - 1
+    @Suppress("NAME_SHADOWING")
+    var startIndex = startIndex ?: 0
+
+    if (index > length - 1) index = length - 1
+    if (index < startIndex) return 0
+
+    val origIndex = index
+    for (i in (startIndex..index).reversed()) {
+        if (this[i] in c) return origIndex - i
+    }
+    return origIndex - startIndex + 1
 }
 
 fun CharSequence.countLeading(pattern: Regex, index: Int? = null): Int {
@@ -70,19 +122,6 @@ fun CharSequence.countTrailing(pattern: Regex, index: Int? = null): Int {
         chars = removed
         count++
     }
-}
-
-fun CharSequence.countTrailing(vararg c: Char, index: Int? = null): Int {
-    @Suppress("NAME_SHADOWING")
-    var index = index ?: length - 1
-    if (index > length - 1) index = length - 1
-    if (index < 0) return 0
-
-    val startIndex = index
-    for (i in (0..index).reversed()) {
-        if (this[i] !in c) return startIndex - i
-    }
-    return this.length
 }
 
 fun CharSequence.studyLeading(pattern: Regex, index: Int? = null): StudyResult {
