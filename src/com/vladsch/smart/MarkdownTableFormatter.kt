@@ -100,6 +100,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             var colIndex = 0
             var col = 0
             var lastSpan = 1
+            var lastColumnEmpty = false
 
             while (colIndex < segments.size) {
                 val tableCell = segments[colIndex]
@@ -135,7 +136,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                     }
                 } else {
                     if (addLeadTrailPipes || colIndex > 0) formattedCol.prefix = pipePadding
-                    if (addLeadTrailPipes || colIndex < segments.lastIndex) formattedCol.suffix = if (columnChars[columnChars.lastIndex] != ' ') pipePadding else EMPTY_SEQUENCE
+                    if (addLeadTrailPipes || colIndex < segments.lastIndex) formattedCol.suffix = if (!columnChars.isEmpty() && columnChars[columnChars.lastIndex] != ' ') pipePadding else EMPTY_SEQUENCE
                 }
 
                 // see if we have spanned columns
@@ -155,6 +156,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
                 colIndex++
                 col += colSpan
+                lastColumnEmpty = columnChars.isBlank()
             }
 
             // here if we add pipes then add lastSpan, else lastSpan-1
@@ -162,7 +164,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 formattedRow.append(pipeSequence.repeat(lastSpan), endOfLine)
                 formattedTable.append(formattedRow)
             } else {
-                formattedRow.append(if (lastSpan > 1) pipeSequence.repeat(lastSpan) else EMPTY_SEQUENCE, endOfLine)
+                formattedRow.append(if (lastSpan > 1 || lastColumnEmpty) pipeSequence.repeat(lastSpan) else EMPTY_SEQUENCE, endOfLine)
                 formattedTable.append(formattedRow)
             }
 
@@ -195,7 +197,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             var minIndent: Int? = null
             for (line in tableRows.segments) {
                 val tableRow = SafeCharSequenceIndex(line)
-                val spaceCount = tableRow.tabExpandedColumnOf((tableRow.firstNonBlank - 1).minBound(0), 4)
+                val spaceCount = tableRow.tabExpandedColumnOf((tableRow.firstNonBlank - 1).minLimit(0), 4)
                 if (minIndent == null || minIndent > spaceCount) minIndent = spaceCount
             }
 
@@ -250,7 +252,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                                 column = column.subSequence(0, caretIndex).append(column.subSequence(caretIndex, column.length).trimEnd())
                                 if (!column.isEmpty()) {
                                     // can trim off leading since we may add spaces
-                                    val leadingSpaces = column.countLeading(' ', '\t').maxBound(caretIndex)
+                                    val leadingSpaces = column.countLeading(' ', '\t').maxLimit(caretIndex)
                                     if (leadingSpaces > 0) column = column.subSequence(leadingSpaces, column.length)
                                 }
                             }

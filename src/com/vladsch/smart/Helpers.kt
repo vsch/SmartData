@@ -363,11 +363,20 @@ fun Int.min(vararg others: Int): Int {
 }
 
 @Suppress("NOTHING_TO_INLINE")
-fun Int.minBound(vararg others: Int): Int {
-    return this.max(*others)
+inline fun Int.minLimit(minBound: Int): Int {
+    return if (this < minBound) minBound else this
 }
 
 @Suppress("NOTHING_TO_INLINE")
-fun Int.maxBound(vararg others: Int): Int {
-    return this.min(*others)
+inline fun Int.maxLimit(maxBound: Int): Int {
+    return if (this > maxBound) maxBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun Int.rangeLimit(minBound:Int, maxBound:Int): Int {
+    return if (this < minBound) minBound else if (this > maxBound) maxBound else this
+}
+
+inline fun com.intellij.openapi.diagnostic.Logger.debug(lazyMessage:()->String) {
+    if (this.isDebugEnabled) this.debug(lazyMessage())
 }

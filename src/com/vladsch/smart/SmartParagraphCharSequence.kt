@@ -62,10 +62,10 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
     var width: Int get() = myWidth.value
         set(value) {
-            myWidth.value = value.minBound(0)
+            myWidth.value = value.minLimit(0)
         }
 
-    val firstWidth: Int get() = if (myWidth.value == 0) 0 else (myWidth.value + myFirstWidthOffset.value).minBound(0)
+    val firstWidth: Int get() = if (myWidth.value == 0) 0 else (myWidth.value + myFirstWidthOffset.value).minLimit(0)
 
     var firstWidthOffset: Int get() = myFirstWidthOffset.value
         set(value) {
@@ -74,12 +74,12 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
     var indent: Int get() = myIndent.value
         set(value) {
-            myIndent.value = value.minBound(0)
+            myIndent.value = value.minLimit(0)
         }
 
     var firstIndent: Int get() = myFirstIndent.value
         set(value) {
-            myFirstIndent.value = value.minBound(0)
+            myFirstIndent.value = value.minLimit(0)
         }
 
     var keepMarkdownHardBreaks: Boolean get() = myKeepMarkdownHardBreaks.value

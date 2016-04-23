@@ -51,7 +51,7 @@ class SmartTableColumnBalancer() {
     var minColumnWidth: Int
         get() = myMinColumnWidth
         set(value) {
-            myMinColumnWidth = value.minBound(0);
+            myMinColumnWidth = value.minLimit(0);
         }
 
     fun columnWidthDataPoint(index: Int): SmartVersionedDataAlias<Int> {
@@ -298,7 +298,7 @@ class SmartTableColumnBalancer() {
             myUnfixedColumns = unfixed
 
             if (!unfixed.isEmpty()) {
-                val extraLength = (myTextLength + myWidthOffset - fixedWidth).minBound(0)
+                val extraLength = (myTextLength + myWidthOffset - fixedWidth).minLimit(0)
                 val whole = extraLength / unfixed.size
                 var remainder = extraLength - whole * unfixed.size
 

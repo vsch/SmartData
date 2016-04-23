@@ -78,7 +78,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
             val indentSize = if (lineCount == 0) firstIndent else indent
             val trimmed = line.trim()
 
-            val padding = (width - indentSize - trimmed.length).minBound(0)
+            val padding = (width - indentSize - trimmed.length).minLimit(0)
 
             val leftPad: Int
             val rightPad: Int

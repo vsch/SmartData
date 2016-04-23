@@ -39,7 +39,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
             var childStats = SmartCharSequence.Stats()
             segment.addStats(childStats)
             stats.segments += childStats.segments
-            maxNesting.minBound(childStats.nesting)
+            maxNesting.minLimit(childStats.nesting)
         }
 
         stats.nesting = maxNesting + 1

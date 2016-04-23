@@ -47,7 +47,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     fun columnOf(index: Int): Int {
         var columns = 0
 
-        for (i in 0..(index - 1).maxBound(rowCells.size - 1)) {
+        for (i in 0..(index - 1).maxLimit(rowCells.size - 1)) {
             val cell = rowCells[i]
             columns += cell.colSpan
         }

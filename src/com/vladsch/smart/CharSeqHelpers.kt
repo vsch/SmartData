@@ -54,7 +54,7 @@ fun CharSequence.countTrailing(vararg c: Char, index: Int? = null, startIndex: I
     var startIndex = startIndex ?: 0
 
     if (index > length - 1) index = length - 1
-    if (index < startIndex) return 0
+    if (startIndex < 0 || index < 0 || index < startIndex) return 0
 
     val origIndex = index
     for (i in (startIndex..index).reversed()) {
@@ -87,7 +87,7 @@ fun CharSequence.countTrailingNot(vararg c: Char, index: Int? = null, startIndex
     var startIndex = startIndex ?: 0
 
     if (index > length - 1) index = length - 1
-    if (index < startIndex) return 0
+    if (startIndex < 0 || index < 0 || index < startIndex) return 0
 
     val origIndex = index
     for (i in (startIndex..index).reversed()) {

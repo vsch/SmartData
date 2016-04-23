@@ -335,7 +335,7 @@ Partial Line"""
                 val csInfo2 = SafeCharSequenceIndex(charLines, charLines.startIndex(i) + j)
 
                 for (skip in 0..i + 3) {
-                    val skipped = if (i - skip - 1 < 0) 0 else (charLines.endIndex(i - skip - 1) - 1).minBound(0)
+                    val skipped = if (i - skip - 1 < 0) 0 else (charLines.endIndex(i - skip - 1) - 1).minLimit(0)
                     val endOfPreviousSkipLines = csInfo2.endOfPreviousSkipLines(skip)
                     if (skipped != endOfPreviousSkipLines) {
                         val test = csInfo2.endOfPreviousSkipLines(skip)
