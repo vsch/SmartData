@@ -47,6 +47,10 @@ open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: Ch
         }
     }
 
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        stats.segments++
+    }
+
     /*
      *  raw access, never via proxy or in proxy via original
      */

@@ -75,6 +75,34 @@ public class Range {
 
     public boolean isEmpty() { return myStart >= myEnd; }
 
+    public boolean doesContain(int index) {
+        return index >= myStart && index < myEnd;
+    }
+
+    public boolean isAdjacent(int index) {
+        return index == myStart - 1 || index == myEnd;
+    }
+
+    public boolean isStart(int index) {
+        return index == myStart;
+    }
+
+    public boolean isEnd(int index) {
+        return index == myEnd;
+    }
+
+    public boolean isLast(int index) {
+        return index >= myStart && index == myEnd - 1;
+    }
+
+    public boolean isAdjacentBefore(int index) {
+        return myEnd == index;
+    }
+
+    public boolean isAdjacentAfter(int index) {
+        return myStart - 1 == index;
+    }
+
     @NotNull
     public Range intersect(Range that) {
         int thisStart = myStart;

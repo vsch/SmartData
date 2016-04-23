@@ -27,6 +27,11 @@ class SmartReversedCharSequence(chars: SmartCharSequence) : SmartCharSequenceBas
     protected val myVersion: SmartVersion = chars.version
     protected val myChars = chars
 
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        myChars.addStats(stats)
+        stats.nesting++
+    }
+
     constructor(chars: CharArray, start: Int, end: Int) : this(SmartCharArraySequence(chars, start, end))
 
     constructor(chars: CharArray) : this(SmartCharArraySequence(chars, 0, chars.size))

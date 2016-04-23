@@ -30,6 +30,20 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
     private var myVariableContent: Boolean = false
     val segments: List<SmartCharSequence>
     private var myLastSegment: Int? = null
+    private var myLengthSpan: Int = 0
+
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        var maxNesting = 0
+
+        for (segment in segments) {
+            var childStats = SmartCharSequence.Stats()
+            segment.addStats(childStats)
+            stats.segments += childStats.segments
+            maxNesting.minBound(childStats.nesting)
+        }
+
+        stats.nesting = maxNesting + 1
+    }
 
     constructor(vararg charSequences: CharSequence) {
         val smartCharSequences = smartList(charSequences.toList())
@@ -57,9 +71,14 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
                 variableContent = charSequence.version.isMutable
             }
         }
+
         myLengths = lengths
         myVariableContent = variableContent
         myLastSegment = 0
+
+        i = 1
+        while (i < lengths.size) i = i.shl(1)
+        myLengthSpan = i
     }
 
     val isVariableContent: Boolean
@@ -159,6 +178,10 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
         }
     }
 
+    override fun getSourceLocations(sources: ArrayList<Any>, locations: ArrayList<Range>, sourceLocations: ArrayList<Range>) {
+        super.getSourceLocations(sources, locations, sourceLocations)
+    }
+
     protected fun getCharSequenceIndex(index: Int): Int {
         var lastSegment = myLastSegment
 
@@ -176,12 +199,66 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
                 myLastSegment = lastSegment
                 return lastSegment
             }
+        } else {
+            // need to update indices
+            myCacheVersion.nextVersion()
         }
 
-        myCacheVersion.nextVersion()
+        return getIndexBinary(index)
+        //        return getIndexLinear(index)
+
+        //        val result = getIndexLinear(index)
+        //        var fastResult = getIndexBinary(index)
+        //
+        //        if (result != fastResult) {
+        //            println("result:$result != fastResult:$fastResult")
+        //            assert(result == fastResult, { "result:$result != fastResult:$fastResult" })
+        //        }
+        //
+        //        return result
+    }
+
+    internal fun getIndexLinear(index: Int): Int {
         for (i in 1..myLengths.size - 1) {
             if (index < myLengths[i] || index == myLengths[i] && i + 1 == myLengths.size) {
                 return i - 1
+            }
+        }
+        return -1
+    }
+
+    internal fun getIndexBinary(index: Int): Int {
+        val iMax = myLengths.size
+
+        if (iMax >= 0) {
+            var i = myLengthSpan.shr(1) - 1
+            var span = myLengthSpan.shr(2)
+
+            loop@
+            while (true) {
+                val len = myLengths[i]
+
+                if (index <= len) {
+                    if (span == 0 || index == len) {
+                        return if (index == len && i < iMax - 1) i else i - 1
+                    }
+
+                    i -= span
+                    span /= 2
+                } else {
+                    if (span == 0) {
+                        return i
+                    }
+
+                    i += span
+                    span /= 2
+
+                    while (i >= iMax) {
+                        if (span == 0) break@loop
+                        i -= span
+                        span /= 2
+                    }
+                }
             }
         }
         return -1

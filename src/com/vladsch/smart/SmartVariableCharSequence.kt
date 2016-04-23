@@ -27,6 +27,11 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
 
     constructor(replacedChars: SmartCharSequence) : this(replacedChars, replacedChars)
 
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        myReplacedChars.addStats(stats)
+        stats.nesting++
+    }
+
     protected val myReplacedChars = replacedChars
     protected var myLeftPadding:CharSequence = EMPTY_SEQUENCE
     protected var myRightPadding:CharSequence = EMPTY_SEQUENCE

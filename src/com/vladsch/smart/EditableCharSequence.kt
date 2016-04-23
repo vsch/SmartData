@@ -36,6 +36,11 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
             myVersion.nextVersion()
         }
 
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        myChars.addStats(stats)
+        stats.nesting++
+    }
+
     override val length: Int get() = myChars.length
 
     override fun get(index: Int): Char = myChars[index]
@@ -192,4 +197,8 @@ class EditableCharSequence(chars: CharSequence) : SmartCharSequence {
     override fun extractGroups(regex: String): MutableList<SmartCharSequence>?  = myChars.extractGroups(regex)
 
     override fun extractGroupsSegmented(regex: String): SmartSegmentedCharSequence?  = myChars.extractGroupsSegmented(regex)
+
+    override fun getSourceLocations(sources: ArrayList<Any>, locations: ArrayList<Range>, sourceLocations: ArrayList<Range>) {
+        myChars.getSourceLocations(sources, locations, sourceLocations)
+    }
 }

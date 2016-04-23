@@ -34,6 +34,15 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
         }
     }
 
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        if (myChars is SmartCharSequence) {
+            myChars.addStats(stats)
+        } else {
+            stats.segments++
+        }
+        stats.nesting++
+    }
+
     /*
      *  raw access, never via proxy or in proxy via original
      */
@@ -59,9 +68,9 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
 
     override fun get(index: Int): Char {
         // RELEASE : remove test for release
-//        if (myStart + index < 0 || myStart + index >= myChars.length) {
-//            val tmp = 0;
-//        }
+        //        if (myStart + index < 0 || myStart + index >= myChars.length) {
+        //            val tmp = 0;
+        //        }
         return myChars[myStart + index]
     }
 

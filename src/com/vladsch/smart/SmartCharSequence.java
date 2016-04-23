@@ -83,6 +83,26 @@ public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMar
     char[] getChars();
 
     void getChars(@NotNull char[] dst, int dstOffset);
+
+    // get a snapshot of location to source mapping appended to locations and source locations
+    void getSourceLocations(@NotNull ArrayList<Object> sources, @NotNull ArrayList<Range> locations, @NotNull ArrayList<Range> sourceLocations);
+
+    public static class Stats {
+        public int segments = 0;
+        public int nesting = 0;
+
+        @Override
+        public String toString() {
+            return "{" +
+                    "segments=" + segments +
+                    ", nesting=" + nesting +
+                    '}';
+        }
+    }
+
+    // add some stats about content
+    void addStats(@NotNull Stats stats);
+
     /**
      * Editing functions
      */

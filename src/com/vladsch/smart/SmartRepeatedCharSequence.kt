@@ -48,6 +48,11 @@ class SmartRepeatedCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
 
     protected val myReplacedChars = replacedChars
 
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        myReplacedChars.addStats(stats)
+        stats.nesting++
+    }
+
     // versioned properties
     protected val myVariableChars = SmartVersionedProperty(chars)
     protected var myStartIndex = SmartVersionedProperty(startIndex)

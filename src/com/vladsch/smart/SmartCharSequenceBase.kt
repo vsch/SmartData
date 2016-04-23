@@ -89,6 +89,10 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         freshProxyOrNull?.getChars(dst, dstOffset) ?: getCharsImpl(dst, dstOffset)
     }
 
+    override fun getSourceLocations(sources: ArrayList<Any>, locations: ArrayList<Range>, sourceLocations: ArrayList<Range>) {
+        throw UnsupportedOperationException()
+    }
+
     override fun equivalent(other: CharSequence): Boolean {
         if (this === other) return true
 

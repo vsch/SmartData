@@ -22,10 +22,13 @@
 package com.vladsch.smart
 
 object EMPTY_SEQUENCE : SmartCharArraySequence(charArrayOf()) {
+    override fun addStats(stats: SmartCharSequence.Stats) { stats.segments++; }
 }
 
 object EMPTY_SEGMENTED_SEQUENCE : SmartSegmentedCharSequence(*arrayOf<SmartCharSequence>()) {
+    override fun addStats(stats: SmartCharSequence.Stats) { stats.segments++; }
 }
 
 object NULL_SEQUENCE : SmartSegmentedCharSequence(*arrayOf<SmartCharSequence>()) {
+    override fun addStats(stats: SmartCharSequence.Stats) { stats.segments++; }
 }

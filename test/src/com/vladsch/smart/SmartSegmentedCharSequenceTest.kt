@@ -38,6 +38,7 @@ abcdefghijklmnopqrstuvwxyz
 ABCDEFGHIJKLMNOPQRSTUVWXYZ
 """
     val charsAbc = stringAbc.toCharArray()
+    val debugPrint = true
 
     @Test
     fun test_basic() {
@@ -66,7 +67,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ
             }
         }
 
-        println("$testCount delete tests passed")
+        if (debugPrint) println("$testCount delete tests passed")
     }
 
     @Test
@@ -80,7 +81,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ
                 testCount++
             }
         }
-        println("$testCount insert tests passed")
+        if (debugPrint) println("$testCount insert tests passed")
     }
 
     @Test
@@ -103,7 +104,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ
                 }
             }
         }
-        println("$testCount replace tests passed")
+        if (debugPrint) println("$testCount replace tests passed")
     }
 
     @Test
@@ -122,12 +123,12 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ
                 , charSeqAbc.subSequence(81, 108)
         )
 
-        println(listSeq)
+        if (debugPrint) println(listSeq)
 
         var reconsAbc = ""
         var recons123 = ""
         for (i in 0..listSeq.lastIndex) {
-//            println(i.toString() + ": " + listSeq[i])
+//            if (debugPrint) println(i.toString() + ": " + listSeq[i])
 //            print(listSeq[i])
 
             val location = listSeq.trackedSourceLocation(i)
@@ -173,12 +174,12 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ
         val listSeqCached = listSeq.cachedProxy
         assertEquals(listSeqCached, listSeq)
 
-        println(listSeq)
+        if (debugPrint) println(listSeq)
 
         var reconsAbc = ""
         var recons123 = ""
         for (i in 0..listSeq.lastIndex) {
-//            println(i.toString() + ": " + listSeq[i])
+//            if (debugPrint) println(i.toString() + ": " + listSeq[i])
 //            print(listSeq[i])
 
             val location = listSeq.trackedSourceLocation(i)

@@ -30,6 +30,11 @@ class SmartCharSequenceMarker(val id: String, val selectedSequence: SmartCharSeq
     protected val myDummyVersion:SmartVersion = SmartVolatileVersion(selectedSequence.version)
     protected val myVersion: SmartVersion = SmartDependentVersion(listOf(myDummyVersion, selectedSequence.version))
 
+    override fun addStats(stats: SmartCharSequence.Stats) {
+        stats.segments++
+        stats.nesting++
+    }
+
     override fun getVersion(): SmartVersion = myVersion
 
     override fun getMarkers(id: String?): List<TrackedLocation> = myReplacedChars.getMarkers(id)

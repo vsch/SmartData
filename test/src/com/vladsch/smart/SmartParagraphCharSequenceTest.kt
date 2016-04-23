@@ -69,7 +69,7 @@ consectetur adipiscing elit, sed ut labore et dolore magna aliquam makes one won
 Bis nostrud exercitation ullam mmodo consequet.$hard
 Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
 
-    val logOutput = false
+    val logOutput = true
 
     fun ensureAligned(alignment: TextAlignment, chars: SmartCharSequence, firstIndent: Int, indent: Int, width: Int, respectHardBreaks: Boolean) {
         val lines = chars.splitParts('\n', false)

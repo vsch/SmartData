@@ -139,7 +139,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 }
 
                 // see if we have spanned columns
-                if (colIndex > 0) formattedRow.appendOptimized(pipeSequence.repeat(lastSpan))
+                if (colIndex > 0) formattedRow.append(pipeSequence.repeat(lastSpan))
                 formattedRow.append(formattedCol)
                 rowColumns.add(formattedCol)
 
@@ -160,14 +160,12 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             // here if we add pipes then add lastSpan, else lastSpan-1
             if (addLeadTrailPipes) {
                 formattedRow.append(pipeSequence.repeat(lastSpan), endOfLine)
-                formattedTable.appendOptimized(formattedRow)
+                formattedTable.append(formattedRow)
             } else {
                 formattedRow.append(if (lastSpan > 1) pipeSequence.repeat(lastSpan) else EMPTY_SEQUENCE, endOfLine)
-                formattedTable.appendOptimized(formattedRow)
+                formattedTable.append(formattedRow)
             }
 
-            //            myRows.add(formattedRow)
-            //            myRowColumns.add(rowColumns)
             row++
         }
 
@@ -175,8 +173,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         myAlignmentDataPoints = tableBalancer.columnAlignmentDataPoints
         myColumnWidthDataPoints = tableBalancer.columnWidthDataPoints
 
-//        return formattedTable.contents.cachedProxy
-        return formattedTable.contents
+        return formattedTable.contents//.cachedProxy
     }
 
     companion object {
