@@ -23,7 +23,7 @@ package com.vladsch.smart
 
 import java.util.*
 
-data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: Int, val colSpan: Int = 1) {
+data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: Int, val colSpan: Int = 1, val isUnterminated: Boolean = false) {
     init {
         assert(colSpan >= 1)
     }
@@ -42,6 +42,10 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
 
     val totalColumns: Int get() {
         return columnOf(rowCells.size)
+    }
+
+    val isUnterminated: Boolean get() {
+        return rowCells.size > 0 && rowCells[rowCells.size - 1].isUnterminated
     }
 
     fun columnOf(index: Int): Int {
@@ -154,6 +158,10 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
 
     init {
         computeSeparatorRow()
+    }
+
+    val isUnterminated: Boolean get() {
+        return rows.size > 0 && rows[rows.size - 1].isUnterminated
     }
 
     val separatorRow: Int get() = mySeparatorRow

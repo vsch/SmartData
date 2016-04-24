@@ -204,7 +204,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
             myCacheVersion.nextVersion()
         }
 
-        return getIndexBinary(index)
+        return adjustBinaryIndex(getIndexBinary(index))
         //        return getIndexLinear(index)
 
         //        val result = getIndexLinear(index)
@@ -225,6 +225,15 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
             }
         }
         return -1
+    }
+
+    internal fun adjustBinaryIndex(index: Int): Int {
+        @Suppress("NAME_SHADOWING")
+        var index = index
+        // since we can have 0 length segments we need to skip them
+        if (index < 0) return index
+        while (index + 1 < myLengths.size - 1 && myLengths[index] == myLengths[index + 1]) index++
+        return if (index >= myLengths.size - 1) -1 else index
     }
 
     internal fun getIndexBinary(index: Int): Int {

@@ -136,7 +136,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                     }
                 } else {
                     if (addLeadTrailPipes || colIndex > 0) formattedCol.prefix = pipePadding
-                    if (addLeadTrailPipes || colIndex < segments.lastIndex) formattedCol.suffix = if (!columnChars.isEmpty() && columnChars[columnChars.lastIndex] != ' ') pipePadding else EMPTY_SEQUENCE
+                    if (addLeadTrailPipes || colIndex < segments.size - 1) formattedCol.suffix = if (columnChars.length > 0 && columnChars[columnChars.length - 1] != ' ') pipePadding else EMPTY_SEQUENCE
                 }
 
                 // see if we have spanned columns
@@ -145,7 +145,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 rowColumns.add(formattedCol)
 
                 val colSpan = tableCell.colSpan
-                val widthOffset = if (colSpan > 1 && colIndex == segments.lastIndex && !addLeadTrailPipes) 1 else 0
+                val widthOffset = if (colSpan > 1 && colIndex == segments.size - 1 && !addLeadTrailPipes) 1 else 0
                 val dataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint, colSpan, widthOffset)
 
                 if (settings.TABLE_ADJUST_COLUMN_WIDTH) formattedCol.widthDataPoint = dataPoint
@@ -270,7 +270,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
                     // see if we have spanned columns
                     var span = 1
-                    while (col + span <= segments.lastIndex && segments[col + span].isEmpty()) span++
+                    while (col + span < segments.size && segments[col + span].isEmpty()) span++
 
                     tableColumns.add(TableCell(column, untrimmedWidth, span))
                     col += span
