@@ -21,6 +21,7 @@
 
 package com.vladsch.smart
 
+import com.intellij.openapi.editor.LogicalPosition
 import java.util.*
 
 data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: Int, val colSpan: Int = 1, val isUnterminated: Boolean = false) {
@@ -149,6 +150,19 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
             }
             return true
         }
+    }
+
+    fun logicalPosition(row: Int, column: Int, inColumnOffset: Int): LogicalPosition? {
+        val index = indexOf(column)
+        if (index < rowCells.size) {
+            var col = 0
+            for (i in 0..index - 1) {
+                col += rowCells[i].untrimmedWidth
+                col += rowCells[i].colSpan
+            }
+            return LogicalPosition(row, col + inColumnOffset)
+        }
+        return null
     }
 }
 
@@ -302,6 +316,13 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequenc
         }
 
         return if (columns == Int.MAX_VALUE) 0 else columns
+    }
+
+    fun logicalPosition(row: Int, column: Int, firstRowOffset: Int, inColumnOffset: Int): LogicalPosition? {
+        if (row < rows.size) {
+            return rows[row].logicalPosition(row + firstRowOffset, column, inColumnOffset)
+        }
+        return null
     }
 }
 
