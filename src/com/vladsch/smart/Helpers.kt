@@ -23,6 +23,7 @@ package com.vladsch.smart
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
 import java.net.URLEncoder
+import java.util.*
 
 fun String?.ifNullOr(condition: Boolean, altValue: String): String {
     return if (this == null || condition) altValue else this
@@ -329,9 +330,9 @@ fun <T : Any?> T.nullIf(nullIfValue: T): T? = if (this == null || this == nullIf
 fun <T : Any?> T.nullIf(nullIfValue: Boolean): T? = if (this == null || nullIfValue) null else this
 
 fun <T : Any?> Boolean.ifElse(ifTrue: T, ifFalse: T): T = if (this) ifTrue else ifFalse
-fun <T : Any?> Boolean.ifElse(ifTrue: ()->T, ifFalse: ()->T): T = if (this) ifTrue() else ifFalse()
-fun <T : Any?> Boolean.ifElse(ifTrue: T, ifFalse: ()->T): T = if (this) ifTrue else ifFalse()
-fun <T : Any?> Boolean.ifElse(ifTrue: ()->T, ifFalse: T): T = if (this) ifTrue() else ifFalse
+fun <T : Any?> Boolean.ifElse(ifTrue: () -> T, ifFalse: () -> T): T = if (this) ifTrue() else ifFalse()
+fun <T : Any?> Boolean.ifElse(ifTrue: T, ifFalse: () -> T): T = if (this) ifTrue else ifFalse()
+fun <T : Any?> Boolean.ifElse(ifTrue: () -> T, ifFalse: T): T = if (this) ifTrue() else ifFalse
 
 operator fun <T : Any> StringBuilder.plusAssign(text: T): Unit {
     this.append(text)
@@ -374,10 +375,19 @@ inline fun Int.maxLimit(maxBound: Int): Int {
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Int.rangeLimit(minBound:Int, maxBound:Int): Int {
+inline fun Int.rangeLimit(minBound: Int, maxBound: Int): Int {
     return if (this < minBound) minBound else if (this > maxBound) maxBound else this
 }
 
-inline fun com.intellij.openapi.diagnostic.Logger.debug(lazyMessage:()->String) {
+inline fun com.intellij.openapi.diagnostic.Logger.debug(lazyMessage: () -> String) {
     if (this.isDebugEnabled) this.debug(lazyMessage())
+}
+
+fun <K : Any, V : Any> Map<K, V>.withDefaults(defaults: Map<K, V>): Map<K, V> {
+    val map = HashMap<K, V>()
+    map.putAll(this)
+    for (entry in defaults) {
+        map.putIfAbsent(entry.key, entry.value)
+    }
+    return map
 }
