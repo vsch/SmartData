@@ -27,7 +27,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
     companion object {
         @JvmStatic val MARKDOWN_START_LINE_CHAR = '\u2028'     // this one is not preserved but will cause a line break if not already at beginning of line
-        @JvmStatic val MARKDOWN_START_LINE = SmartRepeatedCharSequence('\u2028')     // this one is not preserved but will cause a line break if not already at beginning of line
+        @JvmField val MARKDOWN_START_LINE = SmartCharArraySequence(CharArray(1, { '\u2028' }))     // this one is not preserved but will cause a line break if not already at beginning of line
     }
 
     constructor(chars: CharSequence) : this(SmartCharSequenceWrapper(chars))
