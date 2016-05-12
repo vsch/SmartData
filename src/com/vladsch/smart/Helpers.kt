@@ -391,3 +391,15 @@ fun <K : Any, V : Any> Map<K, V>.withDefaults(defaults: Map<K, V>): Map<K, V> {
     }
     return map
 }
+
+fun <K : Any, V : Any> MutableMap<K, V>.putIfMissing(key: K, value: () -> V): V {
+    val elem = this[key]
+    if (elem == null) {
+        val v = value()
+        this[key] = v
+        return v
+    } else {
+        return elem
+    }
+}
+
