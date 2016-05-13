@@ -387,7 +387,7 @@ fun <K : Any, V : Any> Map<K, V>.withDefaults(defaults: Map<K, V>): Map<K, V> {
     val map = HashMap<K, V>()
     map.putAll(this)
     for (entry in defaults) {
-        map.putIfAbsent(entry.key, entry.value)
+        map.putIfMissing(entry.key, entry.value)
     }
     return map
 }
@@ -396,6 +396,17 @@ fun <K : Any, V : Any> MutableMap<K, V>.putIfMissing(key: K, value: () -> V): V 
     val elem = this[key]
     if (elem == null) {
         val v = value()
+        this[key] = v
+        return v
+    } else {
+        return elem
+    }
+}
+
+fun <K : Any, V : Any> MutableMap<K, V>.putIfMissing(key: K, value: V): V {
+    val elem = this[key]
+    if (elem == null) {
+        val v = value
         this[key] = v
         return v
     } else {

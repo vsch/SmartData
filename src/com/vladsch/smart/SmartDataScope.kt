@@ -432,7 +432,7 @@ class SmartDataScopeManager {
         val orderedKeyList = HashMap<Int, ArrayList<SmartDataKey<*>>>()
         for (entry in keyComputeLevel) {
             if (needKeys.contains(entry.key)) {
-                orderedKeyList.putIfAbsent(entry.value, arrayListOf())
+                orderedKeyList.putIfMissing(entry.value, arrayListOf())
                 orderedKeyList[entry.value]!!.add(entry.key)
             }
         }
@@ -457,7 +457,7 @@ class SmartDataScopeManager {
             val resultDeps: Set<SmartDataKey<*>> = myDependentKeys[dataKey] ?: setOf()
 
             for (sourceKey in dataKey.dependencies) {
-                myDependentKeys.putIfAbsent(sourceKey, HashSet())
+                myDependentKeys.putIfMissing(sourceKey, HashSet())
                 myDependentKeys[sourceKey]!!.add(dataKey)
 
                 if (resultDeps.contains(sourceKey)) {
@@ -599,7 +599,7 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         if (dataPoint == null) {
             // not yet computed
             dataPoint = dataKey.createDataAlias(this, index)
-            myConsumers.putIfAbsent(dataKey, arrayListOf())
+            myConsumers.putIfMissing(dataKey, arrayListOf())
             myConsumers[dataKey]!!.add(index)
         }
         return dataPoint
@@ -607,7 +607,7 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
 
     private fun addConsumedScopes(keys: HashMap<SmartDataKey<*>, HashSet<SmartDataScope>>) {
         for (entry in myConsumers) {
-            keys.putIfAbsent(entry.key, HashSet())
+            keys.putIfMissing(entry.key, HashSet())
             val scopesSet = keys[entry.key]!!
 
             // include self in computations if scopes were added on our behalf
