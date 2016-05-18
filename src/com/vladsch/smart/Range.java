@@ -75,6 +75,14 @@ public class Range {
 
     public boolean isEmpty() { return myStart >= myEnd; }
 
+    public boolean isContainedBy(int start, int end) { return end >= myEnd && start <= myStart; }
+
+    public boolean isProperlyContainedBy(int start, int end) { return end > myEnd && start < myStart; }
+
+    public boolean isContainedBy(Range other) { return other.myEnd >= myEnd && other.myStart <= myStart; }
+
+    public boolean isProperlyContainedBy(Range other) { return other.myEnd > myEnd && other.myStart < myStart; }
+
     public boolean doesContain(int index) {
         return index >= myStart && index < myEnd;
     }
@@ -182,4 +190,5 @@ public class Range {
         result = 31 * result + myEnd;
         return result;
     }
+
 }
