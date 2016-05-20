@@ -365,17 +365,17 @@ fun Int.min(vararg others: Int): Int {
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Int.minLimit(minBound: Int): Int {
+fun Int.minLimit(minBound: Int): Int {
     return if (this < minBound) minBound else this
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Int.maxLimit(maxBound: Int): Int {
+fun Int.maxLimit(maxBound: Int): Int {
     return if (this > maxBound) maxBound else this
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Int.rangeLimit(minBound: Int, maxBound: Int): Int {
+fun Int.rangeLimit(minBound: Int, maxBound: Int): Int {
     return if (this < minBound) minBound else if (this > maxBound) maxBound else this
 }
 
