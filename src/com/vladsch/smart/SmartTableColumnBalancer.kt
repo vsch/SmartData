@@ -247,7 +247,7 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
         }
 
         val spaceWidth = myCharWidthProvider.spaceWidth
-        return spanWidth - (((preWidth + spaceWidth / 2) / spaceWidth) * spaceWidth)
+        return ((spanWidth + spaceWidth / 2)/spaceWidth)*spaceWidth - preWidth
     }
 
     internal fun columnWidth(index: Int): Int {
@@ -261,7 +261,7 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
         }
 
         val spaceWidth = myCharWidthProvider.spaceWidth
-        return myColumnWidths[index] + myAdditionalColumnWidths[index] + preWidth - ((preWidth + spaceWidth / 2) / spaceWidth) * spaceWidth
+        return (((myColumnWidths[index] + myAdditionalColumnWidths[index] + preWidth) + spaceWidth / 2) / spaceWidth) * spaceWidth - preWidth
     }
 
     internal fun columnLength(index: Int): Int = myColumnWidths[index]
