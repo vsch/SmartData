@@ -31,7 +31,7 @@ public interface CharWidthProvider {
     public static CharWidthProvider UNITY_PROVIDER = new CharWidthProvider() {
         @Override
         public int getSpaceWidth() {
-            return getCharWidth(' ');
+            return 1;
         }
 
         @Override
