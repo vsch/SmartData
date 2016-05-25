@@ -23,18 +23,21 @@ package com.vladsch.smart
 
 import java.util.*
 
-class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSequence) : SmartCharSequenceBase<SmartCharSequence>() {
+class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSequence, charWidthProvider: CharWidthProvider?) : SmartCharSequenceBase<SmartCharSequence>() {
 
-    constructor(replacedChars: SmartCharSequence) : this(replacedChars, replacedChars)
+    constructor(replacedChars: SmartCharSequence, chars: CharSequence) : this(replacedChars, chars, CharWidthProvider.UNITY_PROVIDER)
+
+    constructor(replacedChars: SmartCharSequence) : this(replacedChars, replacedChars, CharWidthProvider.UNITY_PROVIDER)
 
     override fun addStats(stats: SmartCharSequence.Stats) {
         myReplacedChars.addStats(stats)
         stats.nesting++
     }
 
+    protected val myCharWidthProvider = charWidthProvider ?: CharWidthProvider.UNITY_PROVIDER
     protected val myReplacedChars = replacedChars
-    protected var myLeftPadding:CharSequence = EMPTY_SEQUENCE
-    protected var myRightPadding:CharSequence = EMPTY_SEQUENCE
+    protected var myLeftPadding: CharSequence = EMPTY_SEQUENCE
+    protected var myRightPadding: CharSequence = EMPTY_SEQUENCE
 
     // versioned properties
     protected val myLeftPadChar = SmartVolatileData(' ')
@@ -43,10 +46,16 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     protected val myPrefix = SmartVolatileData<CharSequence>(EMPTY_SEQUENCE)
     protected val mySuffix = SmartVolatileData<CharSequence>(EMPTY_SEQUENCE)
     protected val myVariableChars = SmartVolatileData(SmartReplacedCharSequence(myReplacedChars, chars))
-    protected val myFixedLength = SmartDependentData(listOf(myPrefix, myVariableChars, mySuffix), { myVariableChars.value.length + myPrefix.value.length + mySuffix.value.length })
+    protected val myFixedLength = SmartDependentData(listOf(myPrefix, myVariableChars, mySuffix), {
+        if (myCharWidthProvider === CharWidthProvider.UNITY_PROVIDER) {
+            myVariableChars.value.length + myPrefix.value.length + mySuffix.value.length
+        } else {
+            (myCharWidthProvider.getStringWidth(myVariableChars.value) + myCharWidthProvider.getStringWidth(myPrefix.value) + myCharWidthProvider.getStringWidth(mySuffix.value))
+        }
+    })
 
     protected var myWidth = SmartVersionedProperty("varCharSeq:Width", 0)
-    protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment",TextAlignment.LEFT)
+    protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment", TextAlignment.LEFT)
 
     protected var myResultSequence = SmartDependentData(listOf(myFixedLength, myAlignment, myWidth, myLeftPadChar, myRightPadChar), DataComputable { computeResultSequence() })
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
@@ -110,7 +119,7 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
         get() = myResultSequence.value
 
     protected fun computeResultSequence(): SmartCharArraySequence {
-        val paddingSize = myWidth.value - myFixedLength.value
+        val paddingSize = (myWidth.value - myFixedLength.value + myCharWidthProvider.spaceWidth / 2) / myCharWidthProvider.spaceWidth
         var leftPadding = 0
         var rightPadding = 0
 
@@ -157,7 +166,10 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
         this.width = width
     }
 
-    override val length: Int get() = resultSequence.length
+    override val length: Int get() {
+        return resultSequence.length
+    }
+
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) = resultSequence.getCharsImpl(dst, dstOffset)
     override fun charAtImpl(index: Int): Char = resultSequence[index]
     override fun properSubSequence(startIndex: Int, endIndex: Int): SmartCharSequence = resultSequence.subSequence(startIndex, endIndex)

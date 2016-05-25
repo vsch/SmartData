@@ -494,7 +494,7 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
 
     @Test
     fun formatTableColumnBalancer() {
-        val tableBalancer = SmartTableColumnBalancer()
+        val tableBalancer = SmartTableColumnBalancer(CharWidthProvider.UNITY_PROVIDER)
         var formattedTable = EditableCharSequence()
 
         val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3
@@ -562,7 +562,7 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
 
     @Test
     fun spannedTableColumnBalancer() {
-        val tableBalancer = SmartTableColumnBalancer()
+        val tableBalancer = SmartTableColumnBalancer(CharWidthProvider.UNITY_PROVIDER)
         var formattedTable = EditableCharSequence()
 
         val table = SmartCharArraySequence("""Header 0|Header 1|Header 2|Header 3

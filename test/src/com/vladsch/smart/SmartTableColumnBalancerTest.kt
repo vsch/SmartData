@@ -28,7 +28,7 @@ class SmartTableColumnBalancerTest {
 
     @Test
     fun test_basic() {
-        val tableBalancer = SmartTableColumnBalancer()
+        val tableBalancer = SmartTableColumnBalancer(CharWidthProvider.UNITY_PROVIDER)
 
         val row1col1 = SmartVolatileData(5)
         val row1col2 = SmartVolatileData(15)
@@ -114,7 +114,7 @@ class SmartTableColumnBalancerTest {
 
     @Test
     fun test_simpleSpan() {
-        val tableBalancer = SmartTableColumnBalancer()
+        val tableBalancer = SmartTableColumnBalancer(CharWidthProvider.UNITY_PROVIDER)
 
         val row1col1 = SmartVolatileData(5)
         val row1col2 = SmartVolatileData(15)
@@ -215,7 +215,7 @@ class SmartTableColumnBalancerTest {
 
     @Test
     fun test_simpleAddWidthSpan() {
-        val tableBalancer = SmartTableColumnBalancer()
+        val tableBalancer = SmartTableColumnBalancer(CharWidthProvider.UNITY_PROVIDER)
 
         val row1col1 = SmartVolatileData(5)
         val row1col2 = SmartVolatileData(15)

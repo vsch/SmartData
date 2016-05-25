@@ -23,11 +23,13 @@ package com.vladsch.smart
 
 import java.util.*
 
-class SmartTableColumnBalancer() {
+class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
     companion object {
         private val IMMUTABLE_ZERO = SmartImmutableData(0)
         private val IMMUTABLE_LEFT_ALIGNMENT = SmartImmutableData(TextAlignment.LEFT)
     }
+
+    protected val myCharWidthProvider = charWidthProvider ?: CharWidthProvider.UNITY_PROVIDER
 
     // inputs
     protected val myColumnLengths = HashMap<Int, ArrayList<SmartVersionedDataHolder<Int>>>()
@@ -66,30 +68,30 @@ class SmartTableColumnBalancer() {
         return width(index, textLength, 1, 0)
     }
 
-    fun width(index: Int, textLength: SmartVersionedDataHolder<Int>, columnSpan: Int, widthOffset: Int): SmartVersionedDataHolder<Int> {
+    fun width(index: Int, textWidth: SmartVersionedDataHolder<Int>, columnSpan: Int, widthOffset: Int): SmartVersionedDataHolder<Int> {
         if (columnSpan < 1) throw IllegalArgumentException("columnSpan must be >= 1")
 
         ensureColumnDataPoints(index + columnSpan - 1)
 
         if (columnSpan == 1) {
             // regular column
-            addColumnLength(index, textLength)
+            addColumnLength(index, textWidth)
             return myColumnWidthDataPoints[index]
         } else {
             // this one is a span
-            val colSpan = TableColumnSpan(this, index, columnSpan, textLength, widthOffset)
+            val colSpan = TableColumnSpan(this, index, columnSpan, textWidth, widthOffset)
             myColumnSpans.add(colSpan)
             return colSpan.widthDataPoint
         }
     }
 
-    protected fun addColumnLength(index: Int, textLength: SmartVersionedDataHolder<Int>) {
+    protected fun addColumnLength(index: Int, textWidth: SmartVersionedDataHolder<Int>) {
         val list = myColumnLengths[index]
 
         if (list == null) {
-            myColumnLengths.put(index, arrayListOf(textLength))
+            myColumnLengths.put(index, arrayListOf(textWidth))
         } else {
-            list.add(textLength)
+            list.add(textWidth)
         }
     }
 
@@ -224,17 +226,43 @@ class SmartTableColumnBalancer() {
         for (columnSpan in myColumnSpans) {
             columnSpan.clearIterationData()
         }
+
     }
 
     internal fun spanWidth(startIndex: Int, endIndex: Int): Int {
-        var width = 0
-        for (index in startIndex..endIndex - 1) {
-            width += columnWidth(index)
+        if (myCharWidthProvider === CharWidthProvider.UNITY_PROVIDER) {
+            var width = 0
+            for (index in startIndex..endIndex - 1) {
+                width += columnWidth(index)
+            }
+            return width
         }
-        return width
+
+        var preWidth = 0
+        var spanWidth = 0
+        for (i in 0..endIndex - 1) {
+            val rawWidth = myColumnWidths[i] + myAdditionalColumnWidths[i]
+            if (i < startIndex) preWidth += rawWidth
+            if (i < endIndex) spanWidth += rawWidth
+        }
+
+        val spaceWidth = myCharWidthProvider.spaceWidth
+        return spanWidth - (((preWidth + spaceWidth / 2) / spaceWidth) * spaceWidth)
     }
 
-    internal fun columnWidth(index: Int) = myColumnWidths[index] + myAdditionalColumnWidths[index]
+    internal fun columnWidth(index: Int): Int {
+        // here due to uneven char widths we need to compute the delta of the width by converting previous column widths to spaceWidths, rounding and then back to full width
+        if (index == 0 || myCharWidthProvider === CharWidthProvider.UNITY_PROVIDER) {
+            return myColumnWidths[index] + myAdditionalColumnWidths[index]
+        }
+        var preWidth = 0
+        for (i in 0..index - 1) {
+            preWidth += myColumnWidths[i] + myAdditionalColumnWidths[i]
+        }
+
+        val spaceWidth = myCharWidthProvider.spaceWidth
+        return myColumnWidths[index] + myAdditionalColumnWidths[index] + preWidth - ((preWidth + spaceWidth / 2) / spaceWidth) * spaceWidth
+    }
 
     internal fun columnLength(index: Int): Int = myColumnWidths[index]
 

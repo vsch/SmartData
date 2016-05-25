@@ -49,7 +49,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     }
 
     fun formatTable(table: SmartCharSequence): SmartCharSequence {
-        return formatTable(table, -1)
+        return formatTable(table, -1, CharWidthProvider.UNITY_PROVIDER)
     }
 
     //    val rows: Int get() = myRows.size
@@ -62,7 +62,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     //        return myRowColumns[index]
     //    }
 
-    fun formatTable(tableChars: SmartCharSequence, caretOffset: Int): SmartCharSequence {
+    fun formatTable(tableChars: SmartCharSequence, caretOffset: Int, charWidthProvider: CharWidthProvider): SmartCharSequence {
         val table = parseTable(tableChars, caretOffset, !settings.TABLE_ADJUST_COLUMN_WIDTH && settings.TABLE_TRIM_CELLS)
 
         if (settings.TABLE_FILL_MISSING_COLUMNS) {
@@ -70,11 +70,11 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             if (unbalancedTable) table.fillMissingColumns(null)
         }
 
-        return formatTable(table, table.indentPrefix)
+        return formatTable(table, table.indentPrefix, charWidthProvider)
     }
 
-    fun formatTable(markdownTable: MarkdownTable, indentPrefix: CharSequence = EMPTY_SEQUENCE): SmartCharSequence {
-        val tableBalancer = SmartTableColumnBalancer()
+    fun formatTable(markdownTable: MarkdownTable, indentPrefix: CharSequence = EMPTY_SEQUENCE, charWidthProvider: CharWidthProvider): SmartCharSequence {
+        val tableBalancer = SmartTableColumnBalancer(charWidthProvider)
         var formattedTable = EditableCharSequence()
 
         val pipeSequence = RepeatedCharSequence('|')
@@ -111,7 +111,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 val headerParts = if (row == markdownTable.separatorRow) columnChars.extractGroupsSegmented(HEADER_COLUMN_PATTERN) else null
                 assert(row != markdownTable.separatorRow || headerParts != null, { "isSeparator but column does not match separator col" })
 
-                val formattedCol = SmartVariableCharSequence(columnChars, if (headerParts != null) EMPTY_SEQUENCE else columnChars)
+                val formattedCol = SmartVariableCharSequence(columnChars, if (headerParts != null) EMPTY_SEQUENCE else columnChars, charWidthProvider)
 
                 if (headerParts != null) {
                     val haveLeft = headerParts.segments[2] != NULL_SEQUENCE
