@@ -119,25 +119,27 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
         get() = myResultSequence.value
 
     protected fun computeResultSequence(): SmartCharArraySequence {
-        val paddingSize = (myWidth.value - myFixedLength.value + myCharWidthProvider.spaceWidth / 2) / myCharWidthProvider.spaceWidth
+        val leftPadWidth = myCharWidthProvider.getCharWidth(myLeftPadChar.value)
+        val rightPadWidth = myCharWidthProvider.getCharWidth(myRightPadChar.value)
+        val paddingSize = (myWidth.value - myFixedLength.value + myCharWidthProvider.spaceWidth / 2)
         var leftPadding = 0
         var rightPadding = 0
 
         if (paddingSize > 0) {
             when (myAlignment.value) {
-                TextAlignment.RIGHT -> leftPadding = paddingSize
+                TextAlignment.RIGHT -> leftPadding = paddingSize / leftPadWidth
                 TextAlignment.CENTER -> {
-                    var leftPrePad = myPrefix.value.countLeading(' ') + myVariableChars.value.countLeading(' ')
-                    var rightPrePad = mySuffix.value.countTrailing(' ') + myVariableChars.value.countTrailing(' ')
+                    var leftPrePad = myPrefix.value.countLeading(myLeftPadChar.value) + myVariableChars.value.countLeading(myLeftPadChar.value)
+                    var rightPrePad = mySuffix.value.countTrailing(myRightPadChar.value) + myVariableChars.value.countTrailing(myRightPadChar.value)
                     val commonPrePad = leftPrePad.min(rightPrePad)
                     rightPrePad -= commonPrePad
                     leftPrePad -= commonPrePad - rightPrePad
                     val even = paddingSize / 2
-                    if (even > leftPrePad) leftPadding = even - leftPrePad
-                    rightPadding = paddingSize - leftPadding
+                    if (even > leftPrePad) leftPadding = (even - leftPrePad) / leftPadWidth
+                    rightPadding = (paddingSize - leftPadding * leftPadWidth) / rightPadWidth
                 }
-                TextAlignment.LEFT -> rightPadding = paddingSize
-                TextAlignment.JUSTIFIED -> rightPadding = paddingSize
+                TextAlignment.LEFT -> rightPadding = paddingSize / rightPadWidth
+                TextAlignment.JUSTIFIED -> rightPadding = paddingSize / rightPadWidth
                 else -> throw IllegalArgumentException("Unrecognized TextAlignment value")
             }
         }
