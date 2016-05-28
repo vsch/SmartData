@@ -22,6 +22,7 @@
 package com.vladsch.smart;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface CharWidthProvider {
     int getCharWidth(@NotNull Character c);
@@ -43,5 +44,60 @@ public interface CharWidthProvider {
         public int getStringWidth(@NotNull CharSequence charSequence) {
             return charSequence.length();
         }
+
+        @Nullable
+        @Override
+        public CharSequence lineChars(int line) {
+            return EMPTY_SEQUENCE.INSTANCE;
+        }
+
+        @Nullable
+        @Override
+        public Integer lineStart(int line) {
+            return null;
+        }
+
+        @Nullable
+        @Override
+        public Integer lineEnd(int line) {
+            return null;
+        }
+
+        @Nullable
+        @Override
+        public Integer offsetLineStart(int offset) {
+            return null;
+        }
+
+        @Nullable
+        @Override
+        public Integer offsetLineEnd(int offset) {
+            return null;
+        }
+
+        @Nullable
+        @Override
+        public Integer offsetLineNumber(int offset) {
+            return null;
+        }
+
+        @Override
+        public void initCharWidths(int startOffset, int endOffset) {
+
+        }
     };
+
+    @Nullable
+    CharSequence lineChars(int line);
+    @Nullable
+    Integer lineStart(int line);
+    @Nullable
+    Integer lineEnd(int line);
+    @Nullable
+    Integer offsetLineStart(int offset);
+    @Nullable
+    Integer offsetLineEnd(int offset);
+    @Nullable
+    Integer offsetLineNumber(int offset);
+    void initCharWidths(int startOffset, int endOffset);
 }

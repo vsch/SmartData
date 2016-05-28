@@ -106,16 +106,17 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 val tableCell = segments[colIndex]
                 var columnChars = tableCell.charSequence
 
+                if (settings.TABLE_TRIM_CELLS) columnChars = columnChars.trim()
                 if (columnChars.isEmpty()) columnChars = columnChars.append(space)
 
-                val headerParts = if (row == markdownTable.separatorRow) columnChars.extractGroupsSegmented(HEADER_COLUMN_PATTERN) else null
-                assert(row != markdownTable.separatorRow || headerParts != null, { "isSeparator but column does not match separator col" })
+                val separatorParts = if (row == markdownTable.separatorRow) columnChars.extractGroupsSegmented(SEPARATOR_COLUMN_PATTERN) else null
+                assert(row != markdownTable.separatorRow || separatorParts != null, { "isSeparator but column does not match separator col" })
 
-                val formattedCol = SmartVariableCharSequence(columnChars, if (headerParts != null) EMPTY_SEQUENCE else columnChars, charWidthProvider)
+                val formattedCol = SmartVariableCharSequence(columnChars, if (separatorParts != null) MIN_SEPARATOR_COLUMN else columnChars, charWidthProvider)
 
-                if (headerParts != null) {
-                    val haveLeft = headerParts.segments[2] != NULL_SEQUENCE
-                    val haveRight = headerParts.segments[4] != NULL_SEQUENCE
+                if (separatorParts != null) {
+                    val haveLeft = separatorParts.segments[2] != NULL_SEQUENCE
+                    val haveRight = separatorParts.segments[4] != NULL_SEQUENCE
 
                     formattedCol.leftPadChar = '-'
                     formattedCol.rightPadChar = '-'
@@ -149,6 +150,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 val dataPoint = tableBalancer.width(col, formattedCol.lengthDataPoint, colSpan, widthOffset)
 
                 if (settings.TABLE_ADJUST_COLUMN_WIDTH) formattedCol.widthDataPoint = dataPoint
+                else if (settings.TABLE_TRIM_CELLS) formattedCol.width = columnChars.length
                 else formattedCol.width = tableCell.untrimmedWidth
 
                 if (settings.TABLE_APPLY_COLUMN_ALIGNMENT) formattedCol.alignmentDataPoint = tableBalancer.alignmentDataPoint(col)
@@ -179,9 +181,10 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     }
 
     companion object {
-        @JvmStatic val HEADER_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
-        @JvmStatic val HEADER_COLUMN_PATTERN_REGEX = HEADER_COLUMN_PATTERN.toRegex()
-        @JvmStatic val HEADER_COLUMN = SmartRepeatedCharSequence('-', 3)
+        @JvmStatic val SEPARATOR_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
+        @JvmStatic val SEPARATOR_COLUMN_PATTERN_REGEX = SEPARATOR_COLUMN_PATTERN.toRegex()
+        @JvmStatic val SEPARATOR_COLUMN = SmartRepeatedCharSequence('-', 3)
+        @JvmStatic val MIN_SEPARATOR_COLUMN = SmartRepeatedCharSequence('-', 1)
         @JvmStatic val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 1)
 
         fun parseTable(table: SmartCharSequence, caretOffset: Int, trimCells: Boolean): MarkdownTable {
@@ -261,7 +264,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
                     if (column.isEmpty()) column = column.append(origColumn.subSequence(0, 1))
 
-                    val headerParts = column.extractGroupsSegmented(HEADER_COLUMN_PATTERN)
+                    val headerParts = column.extractGroupsSegmented(SEPARATOR_COLUMN_PATTERN)
                     if (headerParts != null) {
                         hadSeparatorCols = true
                     } else {

@@ -34,7 +34,7 @@ data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: In
     }
 
     fun separatorParts(): SmartSegmentedCharSequence? {
-        return charSequence.extractGroupsSegmented(MarkdownTableFormatter.HEADER_COLUMN_PATTERN)
+        return charSequence.extractGroupsSegmented(MarkdownTableFormatter.SEPARATOR_COLUMN_PATTERN)
     }
 }
 
@@ -74,7 +74,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
 
     private fun addColumn(index: Int = rowCells.size) {
         if (isSeparator) {
-            rowCells.add(index, TableCell(MarkdownTableFormatter.HEADER_COLUMN, MarkdownTableFormatter.HEADER_COLUMN.length, 1))
+            rowCells.add(index, TableCell(MarkdownTableFormatter.SEPARATOR_COLUMN, MarkdownTableFormatter.SEPARATOR_COLUMN.length, 1))
         } else {
             rowCells.add(index, TableCell(MarkdownTableFormatter.EMPTY_COLUMN, MarkdownTableFormatter.EMPTY_COLUMN.length, 1))
         }
@@ -146,7 +146,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
             if (rowCells.isEmpty()) return false;
 
             for (cell in rowCells) {
-                if (!MarkdownTableFormatter.HEADER_COLUMN_PATTERN_REGEX.matches(cell.charSequence)) return false
+                if (!MarkdownTableFormatter.SEPARATOR_COLUMN_PATTERN_REGEX.matches(cell.charSequence)) return false
             }
             return true
         }
