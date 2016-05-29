@@ -12,5 +12,6 @@
     <orderEntry type="library" name="kotlin-test" level="application" />
     <orderEntry type="library" scope="TEST" name="junit-4.12" level="application" />
     <orderEntry type="library" scope="TEST" name="hamcrest-core-1.3" level="application" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>
