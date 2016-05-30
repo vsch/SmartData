@@ -301,6 +301,10 @@ fun CharSequence.asSmart(): SmartCharSequence {
     return SmartCharSequenceBase.smart(this)
 }
 
+fun String.asSmart(): SmartCharSequence {
+    return SmartCharArraySequence(this)
+}
+
 fun CharSequence.asEditable(): EditableCharSequence {
     return SmartCharSequenceBase.editableCharSequence(this)
 }

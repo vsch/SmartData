@@ -465,13 +465,14 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
                 TextType.MARKDOWN_BREAK -> {
                     // start a new line if not already new
-                    if (col > 0) {
-                        if (myKeepMarkdownHardBreaks.value) {
+                    if (myKeepMarkdownHardBreaks.value) {
+                        if (col > 0) {
                             addToken(token)
-                        } else if (myKeepLineBreaks.value) {
-                            addChars(lineBreak)
+                            afterLineBreak()
                         }
-                        afterLineBreak()
+                    } else {
+                        // treat as a space
+                        lastSpace = token
                     }
                     advance()
                 }

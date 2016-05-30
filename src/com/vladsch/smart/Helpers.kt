@@ -403,6 +403,12 @@ fun <K : Any, V : Any> MutableMap<K, V>.putIfMissing(key: K, value: () -> V): V 
     }
 }
 
+fun <T : Any> MutableList<T>.add(vararg items:T) {
+    for (item in items) {
+        this.add(item)
+    }
+}
+
 //fun <K : Any, V : Any> MutableMap<K, V>.putIfMissing(key: K, value: V): V {
 //    val elem = this[key]
 //    if (elem == null) {
