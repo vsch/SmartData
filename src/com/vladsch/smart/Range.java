@@ -173,9 +173,17 @@ public class Range {
         return withRange(myStart > that.myStart ? that.myStart : myStart, myEnd < that.myEnd ? that.myEnd : myEnd);
     }
 
+    public boolean equals(TextRange o) {
+        return myStart == o.getStartOffset() && myEnd == o.getEndOffset();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+        if (o instanceof TextRange) {
+            return myStart == ((TextRange) o).getStartOffset() && myEnd == ((TextRange) o).getEndOffset();
+        }
+
         if (!(o instanceof Range)) return false;
 
         Range range = (Range) o;
@@ -190,5 +198,4 @@ public class Range {
         result = 31 * result + myEnd;
         return result;
     }
-
 }
