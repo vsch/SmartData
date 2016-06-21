@@ -26,12 +26,14 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars: SafeCharSequence, i
 
     protected val myChars: SafeCharSequence = chars
     protected var myIndex: Int = myChars.safeIndex(index)
+    
+    val safeChars:SafeCharSequence get() = myChars
 
     override fun getIndex(): Int = myIndex
     override fun setIndex(index: Int) {
         myIndex = myChars.safeIndex(index)
     }
-
+    
     override fun toString(): String {
         return startOfLineToIndexChars.asString() + ">|<" + indexToEndOfLineChars.asString()
     }
