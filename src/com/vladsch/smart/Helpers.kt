@@ -171,6 +171,9 @@ fun String?.urlDecode(charSet: String? = null): String {
     } catch (e: UnsupportedEncodingException) {
         //e.printStackTrace()
         return orEmpty()
+    } catch (e: IllegalArgumentException) {
+//        e.printStackTrace()
+        return orEmpty()
     }
 }
 
