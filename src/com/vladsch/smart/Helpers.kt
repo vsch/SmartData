@@ -215,6 +215,10 @@ fun String?.removeStart(prefix: Char): String {
     return ""
 }
 
+fun <T> Collection<T>.stringSorted(stringer: DataValueComputable<T, String>):List<T> {
+    return this.sortedBy { stringer.compute(it) } 
+}
+
 fun String?.removeStart(prefix: String): String {
     if (this != null) {
         return removePrefix(prefix)
