@@ -112,11 +112,13 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 val separatorParts = if (row == markdownTable.separatorRow) columnChars.extractGroupsSegmented(SEPARATOR_COLUMN_PATTERN) else null
                 assert(row != markdownTable.separatorRow || separatorParts != null, { "isSeparator but column does not match separator col" })
 
-                val formattedCol = SmartVariableCharSequence(columnChars, if (separatorParts != null) MIN_SEPARATOR_COLUMN else columnChars, charWidthProvider)
+                val formattedCol:SmartVariableCharSequence
 
                 if (separatorParts != null) {
                     val haveLeft = separatorParts.segments[2] != NULL_SEQUENCE
                     val haveRight = separatorParts.segments[4] != NULL_SEQUENCE
+                    
+                    formattedCol = SmartVariableCharSequence(columnChars, SmartRepeatedCharSequence('-', 3 - haveLeft.ifElse(1,0) - haveRight.ifElse(1,0)), charWidthProvider)
 
                     formattedCol.leftPadChar = '-'
                     formattedCol.rightPadChar = '-'
@@ -136,6 +138,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                         }
                     }
                 } else {
+                    formattedCol = SmartVariableCharSequence(columnChars, columnChars, charWidthProvider)
                     if (addLeadTrailPipes || colIndex > 0) formattedCol.prefix = pipePadding
                     if (addLeadTrailPipes || colIndex < segments.size - 1) formattedCol.suffix = if (columnChars.length > 0 && columnChars[columnChars.length - 1] != ' ') pipePadding else EMPTY_SEQUENCE
                 }
@@ -184,7 +187,6 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         @JvmStatic val SEPARATOR_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
         @JvmStatic val SEPARATOR_COLUMN_PATTERN_REGEX = SEPARATOR_COLUMN_PATTERN.toRegex()
         @JvmStatic val SEPARATOR_COLUMN = SmartRepeatedCharSequence('-', 3)
-        @JvmStatic val MIN_SEPARATOR_COLUMN = SmartRepeatedCharSequence('-', 1)
         @JvmStatic val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 1)
 
         fun parseTable(table: SmartCharSequence, caretOffset: Int, trimCells: Boolean): MarkdownTable {
