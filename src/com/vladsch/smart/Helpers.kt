@@ -431,10 +431,6 @@ fun Double.rangeLimit(minBound: Double, maxBound: Double): Double {
     return if (this < minBound) minBound else if (this > maxBound) maxBound else this
 }
 
-inline fun com.intellij.openapi.diagnostic.Logger.debug(lazyMessage: () -> String) {
-    if (this.isDebugEnabled) this.debug(lazyMessage())
-}
-
 fun <K : Any, V : Any> Map<K, V>.withDefaults(defaults: Map<K, V>): Map<K, V> {
     val map = HashMap<K, V>()
     map.putAll(this)
