@@ -386,6 +386,51 @@ fun Int.rangeLimit(minBound: Int, maxBound: Int): Int {
     return if (this < minBound) minBound else if (this > maxBound) maxBound else this
 }
 
+@Suppress("NOTHING_TO_INLINE")
+fun Long.minLimit(minBound: Long): Long {
+    return if (this < minBound) minBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Long.maxLimit(maxBound: Long): Long {
+    return if (this > maxBound) maxBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Long.rangeLimit(minBound: Long, maxBound: Long): Long {
+    return if (this < minBound) minBound else if (this > maxBound) maxBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Float.minLimit(minBound: Float): Float {
+    return if (this < minBound) minBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Float.maxLimit(maxBound: Float): Float {
+    return if (this > maxBound) maxBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Float.rangeLimit(minBound: Float, maxBound: Float): Float {
+    return if (this < minBound) minBound else if (this > maxBound) maxBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Double.minLimit(minBound: Double): Double {
+    return if (this < minBound) minBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Double.maxLimit(maxBound: Double): Double {
+    return if (this > maxBound) maxBound else this
+}
+
+@Suppress("NOTHING_TO_INLINE")
+fun Double.rangeLimit(minBound: Double, maxBound: Double): Double {
+    return if (this < minBound) minBound else if (this > maxBound) maxBound else this
+}
+
 inline fun com.intellij.openapi.diagnostic.Logger.debug(lazyMessage: () -> String) {
     if (this.isDebugEnabled) this.debug(lazyMessage())
 }
