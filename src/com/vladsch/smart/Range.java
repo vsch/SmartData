@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Range {
     static final public Range EMPTY = new Range(0, 0);
+    static final public Range NULL = new Range(Integer.MAX_VALUE, Integer.MIN_VALUE);
 
     private final int myStart;
     private final int myEnd;
@@ -74,6 +75,10 @@ public class Range {
     public boolean doesProperlyContain(Range that) { return myEnd > that.myEnd && myStart < that.myStart; }
 
     public boolean isEmpty() { return myStart >= myEnd; }
+    public boolean isNotEmpty() { return myStart < myEnd; }
+
+    public boolean isNull() { return myStart > myEnd; }
+    public boolean isNotNull() { return myStart <= myEnd; }
 
     public boolean isContainedBy(int start, int end) { return end >= myEnd && start <= myStart; }
 
@@ -167,10 +172,15 @@ public class Range {
     public boolean isAdjacentAfter(Range that) {
         return myStart == that.myEnd;
     }
+    
+    @NotNull
+    public Range include(@NotNull Range other) {
+        return other.isNull() ? (this.isNull() ? NULL : this) : other;
+    }
 
     @NotNull
-    public Range expandToInclude(Range that) {
-        return withRange(myStart > that.myStart ? that.myStart : myStart, myEnd < that.myEnd ? that.myEnd : myEnd);
+    public Range expandToInclude(@NotNull Range other) {
+        return withRange(myStart > other.myStart ? other.myStart : myStart, myEnd < other.myEnd ? other.myEnd : myEnd);
     }
 
     public boolean equals(TextRange o) {
