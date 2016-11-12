@@ -371,6 +371,38 @@ fun Int.min(vararg others: Int): Int {
     return min;
 }
 
+fun Double.max(vararg others: Double): Double {
+    var max = this;
+    for (other in others) {
+        if (max < other) max = other
+    }
+    return max;
+}
+
+fun Double.min(vararg others: Double): Double {
+    var min = this;
+    for (other in others) {
+        if (min > other) min = other
+    }
+    return min;
+}
+
+fun Float.max(vararg others: Float): Float {
+    var max = this;
+    for (other in others) {
+        if (max < other) max = other
+    }
+    return max;
+}
+
+fun Float.min(vararg others: Float): Float {
+    var min = this;
+    for (other in others) {
+        if (min > other) min = other
+    }
+    return min;
+}
+
 @Suppress("NOTHING_TO_INLINE")
 fun Int.minLimit(minBound: Int): Int {
     return if (this < minBound) minBound else this
