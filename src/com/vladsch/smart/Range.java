@@ -175,7 +175,7 @@ public class Range {
     
     @NotNull
     public Range include(@NotNull Range other) {
-        return other.isNull() ? (this.isNull() ? NULL : this) : other;
+        return other.isNull() ? (this.isNull() ? NULL : this) : expandToInclude(other);
     }
 
     @NotNull
