@@ -75,9 +75,11 @@ public class Range {
     public boolean doesProperlyContain(Range that) { return myEnd > that.myEnd && myStart < that.myStart; }
 
     public boolean isEmpty() { return myStart >= myEnd; }
+
     public boolean isNotEmpty() { return myStart < myEnd; }
 
     public boolean isNull() { return myStart > myEnd; }
+
     public boolean isNotNull() { return myStart <= myEnd; }
 
     public boolean isContainedBy(int start, int end) { return end >= myEnd && start <= myStart; }
@@ -172,15 +174,30 @@ public class Range {
     public boolean isAdjacentAfter(Range that) {
         return myStart == that.myEnd;
     }
-    
+
     @NotNull
     public Range include(@NotNull Range other) {
         return other.isNull() ? (this.isNull() ? NULL : this) : expandToInclude(other);
     }
 
     @NotNull
+    public Range include(int pos) {
+        return include(pos, pos);
+    }
+
+    @NotNull
+    public Range include(int start, int end) {
+        return this.isNull() ? new Range(start, end) : expandToInclude(start, end);
+    }
+
+    @NotNull
     public Range expandToInclude(@NotNull Range other) {
-        return withRange(myStart > other.myStart ? other.myStart : myStart, myEnd < other.myEnd ? other.myEnd : myEnd);
+        return expandToInclude(other.myStart, other.myEnd);
+    }
+
+    @NotNull
+    public Range expandToInclude(int start, int end) {
+        return withRange(myStart > start ? start : myStart, myEnd < end ? end : myEnd);
     }
 
     public boolean equals(TextRange o) {
