@@ -29,6 +29,14 @@ object EOL_SEQUENCE : SmartCharArraySequence("\n") {
     override fun addStats(stats: SmartCharSequence.Stats) { stats.segments++; }
 }
 
+object SPACE_SEQUENCE : SmartCharArraySequence(" ") {
+    override fun addStats(stats: SmartCharSequence.Stats) { stats.segments++; }
+}
+
+object TAB_SEQUENCE : SmartCharArraySequence("\t") {
+    override fun addStats(stats: SmartCharSequence.Stats) { stats.segments++; }
+}
+
 object EMPTY_SEGMENTED_SEQUENCE : SmartSegmentedCharSequence(*arrayOf<SmartCharSequence>()) {
     override fun addStats(stats: SmartCharSequence.Stats) { stats.segments++; }
 }
