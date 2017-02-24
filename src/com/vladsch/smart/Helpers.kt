@@ -216,7 +216,7 @@ fun String?.removeStart(prefix: Char): String {
 }
 
 fun <T> Collection<T>.stringSorted(stringer: DataValueComputable<T, String>):List<T> {
-    return this.sortedBy { stringer.compute(it) } 
+    return this.sortedBy { stringer.compute(it) }
 }
 
 fun String?.removeStart(prefix: String): String {
@@ -233,9 +233,9 @@ fun String?.removeEnd(prefix: Char): String {
     return ""
 }
 
-fun String?.removeEnd(prefix: String): String {
+fun String?.removeEnd(suffix: String): String {
     if (this != null) {
-        return removeSuffix(prefix)
+        return removeSuffix(suffix)
     }
     return ""
 }
