@@ -12,7 +12,5 @@
     <orderEntry type="library" scope="TEST" name="junit-4.12" level="application" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="R User Library" level="project" />
-    <orderEntry type="library" name="R Skeletons" level="application" />
   </component>
 </module>
