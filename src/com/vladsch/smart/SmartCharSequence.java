@@ -42,7 +42,7 @@ public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMar
 
     /**
      * used for linear copy of contents for fast access to sequences that are pieced together from other segments. it is versioned data so you need to check its getVersion().isStale() method to know if you need to obtain a new copy via getCachedProxy()
-     *
+     * <p>
      * Proxy should return a fresh copy
      */
     @NotNull
@@ -142,4 +142,81 @@ public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMar
     SmartSegmentedCharSequence segmented();
     @NotNull
     SmartVariableCharSequence variable();
+
+    /**
+     * Query functions
+     */
+    default int countLeading(CharSequence chars) {
+        return countLeading(chars, 0, length());
+    }
+
+    default int countLeading(CharSequence chars, int startIndex) {
+        return countLeading(chars, startIndex, length());
+    }
+
+    default int countLeading(CharSequence chars, int startIndex, int endIndex) {
+        if (startIndex < 0) startIndex = 0;
+        if (endIndex > length()) endIndex = length();
+        if (startIndex >= endIndex) return 0;
+        int i = startIndex;
+        String charS = chars.toString();
+        while (i < endIndex) {
+            if (charS.indexOf(charAt(i)) == -1) break;
+            i++;
+        }
+        return i - startIndex;
+    }
+
+    default int countTrailing(CharSequence chars) {
+        return countTrailing(chars, 0, length());
+    }
+
+    default int countTrailing(CharSequence chars, int startIndex) {
+        return countTrailing(chars, 0, startIndex);
+    }
+
+    default int countTrailing(CharSequence chars, int startIndex, int endIndex) {
+        if (startIndex < 0) startIndex = 0;
+        if (endIndex > length()) endIndex = length();
+        if (startIndex >= endIndex) return 0;
+        int i = endIndex;
+        String charS = chars.toString();
+        while (i-- > startIndex) {
+            if (charS.indexOf(charAt(i)) == -1) break;
+        }
+        return endIndex - i - 1;
+    }
+
+    default SmartCharSequence replace(CharSequence find, CharSequence replace) {
+        if (find.length() == 0) return this;
+
+        int iMax = length();
+        int findPos = 0;
+        int findMax = find.length();
+
+        ArrayList<SmartCharSequence> result = null;
+        int lastPos = 0;
+
+        for (int i = 0; i < iMax; i++) {
+            char c = charAt(i);
+            if (find.charAt(findPos) == c) {
+                if (findPos + 1 == findMax) {
+                    // match, replace
+                    if (result == null) result = new ArrayList<>();
+
+                    if (lastPos < i - findPos) result.add(subSequence(lastPos, i - findPos));
+                    result.add(SmartCharSequenceWrapper.smart(replace));
+                    lastPos = i + 1;
+                    findPos = 0;
+                } else {
+                    findPos++;
+                }
+            } else {
+                findPos = 0;
+            }
+        }
+
+        if (result != null && lastPos < iMax) result.add(subSequence(lastPos, iMax));
+        return result != null ? SmartSegmentedCharSequence.smart(result) : this;
+    }
 }

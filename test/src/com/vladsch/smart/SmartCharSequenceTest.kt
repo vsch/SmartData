@@ -37,4 +37,37 @@ class SmartCharSequenceTest() {
         assertEquals(string.toUpperCase(), charSeqUpper.toString())
     }
 
+    @Test
+    fun test_leading() {
+        val string = "0123456789"
+        val charSeq = SmartCharArraySequence(string.toCharArray());
+
+        assertEquals(0, charSeq.countLeading("1"))
+        assertEquals(10, charSeq.countLeading("0123456789"))
+        assertEquals(2, charSeq.countLeading("01"))
+        assertEquals(3, charSeq.countLeading("01234", 2))
+        assertEquals(2, charSeq.countLeading("01234", 2, 4))
+    }
+
+    @Test
+    fun test_trailing() {
+        val string = "0123456789"
+        val charSeq = SmartCharArraySequence(string.toCharArray());
+
+        assertEquals(0, charSeq.countTrailing("1"))
+        assertEquals(10, charSeq.countTrailing("0123456789"))
+        assertEquals(2, charSeq.countTrailing("89"))
+        assertEquals(2, charSeq.countTrailing("01234", 2))
+        assertEquals(2, charSeq.countTrailing("01234", 2, 4))
+    }
+
+    @Test
+    fun test_replace() {
+        val string = "aabbbcdefa"
+        val charSeq = SmartCharArraySequence(string.toCharArray());
+
+        assertEquals("\\a\\abbbcdef\\a", charSeq.replace("a", "\\a").toString())
+        assertEquals("bbbcdef", charSeq.replace("a", "").toString())
+        assertEquals("aa.b..b..b.cdefa", charSeq.replace("b", ".b.").toString())
+    }
 }

@@ -167,7 +167,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     }
 }
 
-class MarkdownTable(val rows: ArrayList<TableRow>, val indentPrefix: CharSequence, val exactColumn: Int?, val offsetRow: Int?, val offsetColumn: Int?) {
+class MarkdownTable(val rows: ArrayList<TableRow>, val caption: String?, val indentPrefix: CharSequence, val exactColumn: Int?, val offsetRow: Int?, val offsetColumn: Int?) {
     private var mySeparatorRow: Int = 0
     private var mySeparatorRowCount: Int = 0
 

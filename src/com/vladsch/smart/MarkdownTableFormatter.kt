@@ -23,7 +23,6 @@ package com.vladsch.smart
 
 import java.util.*
 
-
 /**
  * markdown table formatter
  *
@@ -31,6 +30,7 @@ import java.util.*
  * discretionaryAlignMarker:Int - -1 to always remove, 0 to leave as is, 1 to always add
  */
 class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
+
     constructor() : this(MarkdownTableFormatSettings())
 
     private var myAlignmentDataPoints: List<SmartVersionedDataAlias<TextAlignment>> = listOf()
@@ -112,13 +112,13 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 val separatorParts = if (row == markdownTable.separatorRow) columnChars.extractGroupsSegmented(SEPARATOR_COLUMN_PATTERN) else null
                 assert(row != markdownTable.separatorRow || separatorParts != null, { "isSeparator but column does not match separator col" })
 
-                val formattedCol:SmartVariableCharSequence
+                val formattedCol: SmartVariableCharSequence
 
                 if (separatorParts != null) {
                     val haveLeft = separatorParts.segments[2] != NULL_SEQUENCE
                     val haveRight = separatorParts.segments[4] != NULL_SEQUENCE
-                    
-                    formattedCol = SmartVariableCharSequence(columnChars, SmartRepeatedCharSequence('-', 3 - haveLeft.ifElse(1,0) - haveRight.ifElse(1,0)), charWidthProvider)
+
+                    formattedCol = SmartVariableCharSequence(columnChars, SmartRepeatedCharSequence('-', 3 - haveLeft.ifElse(1, 0) - haveRight.ifElse(1, 0)), charWidthProvider)
 
                     formattedCol.leftPadChar = '-'
                     formattedCol.rightPadChar = '-'
@@ -176,6 +176,27 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
             row++
         }
 
+        // take care of caption
+        var caption = markdownTable.caption
+        when (settings.TABLE_CAPTION) {
+            MarkdownTableFormatSettings.TABLE_CAPTION_ADD -> if (caption == null) caption = ""
+            MarkdownTableFormatSettings.TABLE_CAPTION_REMOVE_EMPTY -> if (caption?.isBlank() == true) caption = null
+            MarkdownTableFormatSettings.TABLE_CAPTION_REMOVE -> caption = null
+            else -> {
+            }
+        }
+
+        if (caption != null) {
+            when (settings.TABLE_CAPTION_SPACES) {
+                MarkdownTableFormatSettings.TABLE_CAPTION_SPACES_REMOVE -> caption = caption.trim()
+                MarkdownTableFormatSettings.TABLE_CAPTION_SPACES_ADD -> caption = " ${caption.trim()} "
+                else -> {
+                }
+            }
+
+            formattedTable.append("[$caption]\n")
+        }
+
         tableBalancer.finalizeTable()
         myAlignmentDataPoints = tableBalancer.columnAlignmentDataPoints
         myColumnWidthDataPoints = tableBalancer.columnWidthDataPoints
@@ -184,10 +205,14 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     }
 
     companion object {
-        @JvmStatic val SEPARATOR_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
-        @JvmStatic val SEPARATOR_COLUMN_PATTERN_REGEX = SEPARATOR_COLUMN_PATTERN.toRegex()
-        @JvmStatic val SEPARATOR_COLUMN = SmartRepeatedCharSequence('-', 3)
-        @JvmStatic val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 1)
+        @JvmStatic
+        val SEPARATOR_COLUMN_PATTERN = "(\\s+)?(:)?(-{1,})(:)?(\\s+)?"
+        @JvmStatic
+        val SEPARATOR_COLUMN_PATTERN_REGEX = SEPARATOR_COLUMN_PATTERN.toRegex()
+        @JvmStatic
+        val SEPARATOR_COLUMN = SmartRepeatedCharSequence('-', 3)
+        @JvmStatic
+        val EMPTY_COLUMN = SmartRepeatedCharSequence(' ', 1)
 
         fun parseTable(table: SmartCharSequence, caretOffset: Int, trimCells: Boolean): MarkdownTable {
             val space = RepeatedCharSequence(' ')
@@ -286,8 +311,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 row++
             }
 
-            return MarkdownTable(tableRowCells, indentPrefix, null, offsetRow, offsetCol)
+            return MarkdownTable(tableRowCells, null, indentPrefix, null, offsetRow, offsetCol)
         }
     }
-
 }

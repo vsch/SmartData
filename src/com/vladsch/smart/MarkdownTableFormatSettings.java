@@ -22,6 +22,14 @@
 package com.vladsch.smart;
 
 public class MarkdownTableFormatSettings {
+    public static final int TABLE_CAPTION_AS_IS = 0;
+    public static final int TABLE_CAPTION_ADD = 2;
+    public static final int TABLE_CAPTION_REMOVE_EMPTY = 3;
+    public static final int TABLE_CAPTION_REMOVE = 4;
+    public static final int TABLE_CAPTION_SPACES_AS_IS = 0;
+    public static final int TABLE_CAPTION_SPACES_REMOVE = -1;
+    public static final int TABLE_CAPTION_SPACES_ADD = 1;
+
     public boolean TABLE_LEAD_TRAIL_PIPES = true;
     public boolean TABLE_SPACE_AROUND_PIPE = true;
     public boolean TABLE_ADJUST_COLUMN_WIDTH = true;
@@ -29,6 +37,8 @@ public class MarkdownTableFormatSettings {
     public boolean TABLE_FILL_MISSING_COLUMNS = true;
     public boolean TABLE_TRIM_CELLS = false;
     public int TABLE_LEFT_ALIGN_MARKER = 1;
+    public int TABLE_CAPTION = 0;
+    public int TABLE_CAPTION_SPACES = 0;
 
     public MarkdownTableFormatSettings() {
     }
@@ -39,7 +49,9 @@ public class MarkdownTableFormatSettings {
             boolean TABLE_APPLY_COLUMN_ALIGNMENT,
             int TABLE_LEFT_ALIGN_MARKER,
             boolean TABLE_FILL_MISSING_COLUMNS,
-            boolean TABLE_TRIM_CELLS
+            boolean TABLE_TRIM_CELLS,
+            int TABLE_CAPTION,
+            int TABLE_CAPTION_SPACES
     ) {
         this.TABLE_LEAD_TRAIL_PIPES = TABLE_LEAD_TRAIL_PIPES;
         this.TABLE_SPACE_AROUND_PIPE = TABLE_SPACE_AROUND_PIPE;
@@ -48,6 +60,7 @@ public class MarkdownTableFormatSettings {
         this.TABLE_LEFT_ALIGN_MARKER = TABLE_LEFT_ALIGN_MARKER;
         this.TABLE_FILL_MISSING_COLUMNS = TABLE_FILL_MISSING_COLUMNS;
         this.TABLE_TRIM_CELLS = TABLE_TRIM_CELLS;
-
+        this.TABLE_CAPTION = TABLE_CAPTION;
+        this.TABLE_CAPTION_SPACES = TABLE_CAPTION_SPACES;
     }
 }

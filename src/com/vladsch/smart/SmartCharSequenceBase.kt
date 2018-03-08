@@ -58,11 +58,12 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     /*
      *  use proxy if fresh otherwise raw access
      */
-    open val freshProxyOrNull: SmartCharSequence? get() {
-        var cachedProxy = myCachedProxy
-        if (cachedProxy == null || cachedProxy.version.isStale) return null
-        return cachedProxy
-    }
+    open val freshProxyOrNull: SmartCharSequence?
+        get() {
+            var cachedProxy = myCachedProxy
+            if (cachedProxy == null || cachedProxy.version.isStale) return null
+            return cachedProxy
+        }
 
     override fun get(index: Int): Char {
         return freshProxyOrNull?.get(index) ?: charAtImpl(index)
@@ -193,7 +194,6 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     /*
      * convenience type change functions
      */
-
     override fun mapped(mapper: CharSequenceMapper): SmartMappedCharSequence {
         val base = original
         return if (base is SmartMappedCharSequence && base.myMapper === mapper) base else SmartMappedCharSequence(base, mapper)
@@ -348,7 +348,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
     }
 
     companion object {
-        @JvmStatic fun segmentedFlat(vararg others: SmartCharSequence): SmartSegmentedCharSequence {
+        @JvmStatic
+        fun segmentedFlat(vararg others: SmartCharSequence): SmartSegmentedCharSequence {
             if (others.size == 0)
                 return EMPTY_SEGMENTED_SEQUENCE
             else {
@@ -360,7 +361,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             }
         }
 
-        @JvmStatic fun segmentedFlat(others: Iterable<SmartCharSequence>): SmartSegmentedCharSequence {
+        @JvmStatic
+        fun segmentedFlat(others: Iterable<SmartCharSequence>): SmartSegmentedCharSequence {
             val segments = ArrayList<SmartCharSequence>()
             for (other in others) {
                 other.flattened(segments)
@@ -368,11 +370,13 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return if (segments.isEmpty()) EMPTY_SEGMENTED_SEQUENCE else SmartSegmentedCharSequence(segments)
         }
 
-        @JvmStatic fun smart(other: CharSequence): SmartCharSequence {
+        @JvmStatic
+        fun smart(other: CharSequence): SmartCharSequence {
             return if (other is SmartCharSequenceContainer) other.contents else SmartCharSequenceWrapper(other, 0, other.length)
         }
 
-        @JvmStatic fun smartList(others: Collection<CharSequence>): List<SmartCharSequence> {
+        @JvmStatic
+        fun smartList(others: Collection<CharSequence>): List<SmartCharSequence> {
             val smartCharSequences = ArrayList<SmartCharSequence>(others.size)
             for (other in others) {
                 smartCharSequences.add(smart(other))
@@ -380,22 +384,26 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return smartCharSequences
         }
 
-        @JvmStatic fun smart(vararg others: SmartCharSequence): SmartCharSequence {
+        @JvmStatic
+        fun smart(vararg others: SmartCharSequence): SmartCharSequence {
             val list = spliceSequences(*others)
             return if (list.size == 1) list[0] else SmartSegmentedCharSequence(list)
         }
 
-        @JvmStatic fun smart(vararg others: CharSequence): SmartCharSequence {
+        @JvmStatic
+        fun smart(vararg others: CharSequence): SmartCharSequence {
             val list = spliceSequences(others.asList())
             return if (list.size == 1) list[0] else SmartSegmentedCharSequence(list)
         }
 
-        @JvmStatic fun smart(others: List<CharSequence>): SmartCharSequence {
+        @JvmStatic
+        fun smart(others: List<CharSequence>): SmartCharSequence {
             return if (others.size == 1) others[0].asSmart() else SmartSegmentedCharSequence(others)
         }
 
         @Suppress("NAME_SHADOWING")
-        @JvmStatic fun trackingSequences(charSequences: List<SmartCharSequence>, startIndex: Int, startOffset: Int, endIndex: Int, endOffset: Int): List<SmartCharSequence> {
+        @JvmStatic
+        fun trackingSequences(charSequences: List<SmartCharSequence>, startIndex: Int, startOffset: Int, endIndex: Int, endOffset: Int): List<SmartCharSequence> {
             var endIndex = endIndex
             var endOffset = endOffset
             // adjust parameters if endIndex is one past all sequences
@@ -418,7 +426,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             }
         }
 
-        @JvmStatic fun spliceSequences(vararg charSequences: SmartCharSequence): ArrayList<SmartCharSequence> {
+        @JvmStatic
+        fun spliceSequences(vararg charSequences: SmartCharSequence): ArrayList<SmartCharSequence> {
             if (charSequences.size == 0) {
                 return ArrayList()
             }
@@ -442,7 +451,8 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return smartCharSequences
         }
 
-        @JvmStatic fun spliceSequences(charSequences: Collection<CharSequence>): ArrayList<SmartCharSequence> {
+        @JvmStatic
+        fun spliceSequences(charSequences: Collection<CharSequence>): ArrayList<SmartCharSequence> {
             if (charSequences.size == 0) {
                 return ArrayList()
             }
@@ -470,12 +480,14 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
             return smartCharSequences
         }
 
-        @JvmStatic fun smartContents(charSequence: CharSequence): SmartCharSequence {
+        @JvmStatic
+        fun smartContents(charSequence: CharSequence): SmartCharSequence {
             if (charSequence !is SmartCharSequenceContainer) return SmartCharSequenceWrapper(charSequence)
             return charSequence.contents
         }
 
-        @JvmStatic fun editableCharSequence(charSequence: CharSequence): EditableCharSequence {
+        @JvmStatic
+        fun editableCharSequence(charSequence: CharSequence): EditableCharSequence {
             return if (charSequence is EditableCharSequence) charSequence else EditableCharSequence(charSequence)
         }
     }
