@@ -22,6 +22,7 @@
 package com.vladsch.smart;
 
 public enum TextAlignment {
+    DEFAULT,
     LEFT,
     RIGHT,
     CENTER,

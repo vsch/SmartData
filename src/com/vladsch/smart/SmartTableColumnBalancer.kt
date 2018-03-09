@@ -26,7 +26,8 @@ import java.util.*
 class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
     companion object {
         private val IMMUTABLE_ZERO = SmartImmutableData(0)
-        private val IMMUTABLE_LEFT_ALIGNMENT = SmartImmutableData(TextAlignment.LEFT)
+        private val IMMUTABLE_DEFAULT_ALIGNMENT = SmartImmutableData(TextAlignment.DEFAULT)
+        private val IMMUTABLE_CENTER_ALIGNMENT = SmartImmutableData(TextAlignment.CENTER)
     }
 
     protected val myCharWidthProvider = charWidthProvider ?: CharWidthProvider.UNITY_PROVIDER
@@ -97,7 +98,7 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
 
     protected fun ensureColumnDataPoints(index: Int) {
         while (myAlignmentDataPoints.size < index + 1) {
-            myAlignmentDataPoints.add(SmartVersionedDataAlias(IMMUTABLE_LEFT_ALIGNMENT))
+            myAlignmentDataPoints.add(SmartVersionedDataAlias(IMMUTABLE_DEFAULT_ALIGNMENT))
         }
 
         while (myColumnWidthDataPoints.size < index + 1) {
@@ -110,16 +111,47 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
         return myAlignmentDataPoints[index]
     }
 
+    class SmartVersionedDefaultTextAlignment(val delegate: SmartVersionedDataAlias<TextAlignment>, val isHeader: Boolean) : SmartVersionedDataHolder<TextAlignment> {
+        override fun getValue(): TextAlignment {
+            return if (delegate.value == TextAlignment.DEFAULT && isHeader) TextAlignment.CENTER else TextAlignment.LEFT
+        }
+
+        override val versionSerial: Int
+            get() = delegate.versionSerial
+        override val isStale: Boolean
+            get() = delegate.isStale
+        override val isMutable: Boolean
+            get() = delegate.isMutable
+        override val dependencies: Iterable<SmartVersion>
+            get() = delegate.dependencies
+
+        override fun nextVersion() {
+            delegate.nextVersion()
+        }
+
+        override var dataSnapshot: DataSnapshot<TextAlignment>
+            get() {
+                return if (isHeader && delegate.dataSnapshot.value == TextAlignment.DEFAULT) DataSnapshot(delegate.dataSnapshot.serial, TextAlignment.CENTER) else delegate.dataSnapshot
+            }
+            set(value) {
+                delegate.dataSnapshot = value
+            }
+    }
+
+    fun alignmentDataPoint(index: Int, isHeader: Boolean): SmartVersionedDataHolder<TextAlignment> {
+        ensureColumnDataPoints(index)
+        return SmartVersionedDefaultTextAlignment(myAlignmentDataPoints[index], isHeader);
+    }
+
     fun alignment(index: Int, alignment: SmartVersionedDataHolder<TextAlignment>): SmartVersionedDataHolder<TextAlignment> {
         ensureColumnDataPoints(index)
-        if (myAlignmentDataPoints[index].alias === IMMUTABLE_LEFT_ALIGNMENT) {
+        if (myAlignmentDataPoints[index].alias === IMMUTABLE_DEFAULT_ALIGNMENT) {
             //throw IllegalStateException("Alignment provider for index $index is already defined ${myAlignmentDataPoints[index]}, new one is in error $alignment")
             myAlignmentDataPoints[index].alias = alignment
         }
 
         return myAlignmentDataPoints[index].alias
     }
-
 
     // here is the meat of the wiring
     fun finalizeTable() {
@@ -226,7 +258,6 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
         for (columnSpan in myColumnSpans) {
             columnSpan.clearIterationData()
         }
-
     }
 
     internal fun spanWidth(startIndex: Int, endIndex: Int): Int {
@@ -247,7 +278,7 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
         }
 
         val spaceWidth = myCharWidthProvider.spaceWidth
-        return ((spanWidth + spaceWidth / 2)/spaceWidth)*spaceWidth - preWidth
+        return ((spanWidth + spaceWidth / 2) / spaceWidth) * spaceWidth - preWidth
     }
 
     internal fun columnWidth(index: Int): Int {
@@ -301,7 +332,8 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
         val textLengthDataPoint: SmartVersionedDataHolder<Int> get() = myTextLengthDataPoint
         val widthDataPoint: SmartVersionedDataAlias<Int> get() = myWidthDataPoint
         val additionalWidths: Array<Int> get() = myAddColumnWidth
-        var textLength: Int get() = myTextLength
+        var textLength: Int
+            get() = myTextLength
             set(value) {
                 myTextLength = value
             }
@@ -367,5 +399,4 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
             myUnfixedColumns = setOf()
         }
     }
-
 }

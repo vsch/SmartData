@@ -55,7 +55,7 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     })
 
     protected var myWidth = SmartVersionedProperty("varCharSeq:Width", 0)
-    protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment", TextAlignment.LEFT)
+    protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment", TextAlignment.DEFAULT)
 
     protected var myResultSequence = SmartDependentData(listOf(myFixedLength, myAlignment, myWidth, myLeftPadChar, myRightPadChar), DataComputable { computeResultSequence() })
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
@@ -138,7 +138,7 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
                     if (even > leftPrePad) leftPadding = (even - leftPrePad) / leftPadWidth
                     rightPadding = (paddingSize - leftPadding * leftPadWidth) / rightPadWidth
                 }
-                TextAlignment.LEFT -> rightPadding = paddingSize / rightPadWidth
+                TextAlignment.DEFAULT, TextAlignment.LEFT -> rightPadding = paddingSize / rightPadWidth
                 TextAlignment.JUSTIFIED -> rightPadding = paddingSize / rightPadWidth
                 else -> throw IllegalArgumentException("Unrecognized TextAlignment value")
             }

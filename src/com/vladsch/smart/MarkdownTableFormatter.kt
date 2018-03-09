@@ -133,7 +133,8 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                             formattedCol.suffix = alignMarker
                         }
                         else -> {
-                            if (settings.TABLE_APPLY_COLUMN_ALIGNMENT) tableBalancer.alignment(colIndex, SmartImmutableData(TextAlignment.LEFT))
+                            // when no alignment given use centered for header cells and left for body
+                            if (settings.TABLE_APPLY_COLUMN_ALIGNMENT) tableBalancer.alignment(colIndex, SmartImmutableData(if (!haveLeft) TextAlignment.DEFAULT else TextAlignment.LEFT))
                             if (settings.TABLE_LEFT_ALIGN_MARKER == 1 || settings.TABLE_LEFT_ALIGN_MARKER == 0 && haveLeft) formattedCol.prefix = alignMarker
                         }
                     }
@@ -156,7 +157,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                 else if (settings.TABLE_TRIM_CELLS) formattedCol.width = columnChars.length
                 else formattedCol.width = tableCell.untrimmedWidth
 
-                if (settings.TABLE_APPLY_COLUMN_ALIGNMENT) formattedCol.alignmentDataPoint = tableBalancer.alignmentDataPoint(col)
+                if (settings.TABLE_APPLY_COLUMN_ALIGNMENT) formattedCol.alignmentDataPoint = tableBalancer.alignmentDataPoint(col, row < markdownTable.separatorRow)
                 lastSpan = colSpan
 
                 colIndex++

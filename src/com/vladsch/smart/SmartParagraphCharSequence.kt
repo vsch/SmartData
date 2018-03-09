@@ -500,7 +500,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
         val indent = if (lineCount > 0) myIndent.value else myFirstIndent.value
         when (myAlignment.value) {
-            TextAlignment.LEFT -> {
+            TextAlignment.DEFAULT, TextAlignment.LEFT -> {
                 leadSpaces = indent
             }
             TextAlignment.RIGHT -> {
