@@ -86,7 +86,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
             var isHardBreakLine = lineCount == lines.lastIndex || trimmed.endsWith('.') && respectHardBreaks
 
             when (alignment) {
-                TextAlignment.LEFT -> {
+                TextAlignment.DEFAULT, TextAlignment.LEFT -> {
                     leftPad = 0
                     rightPad = padding - leftPad
                 }
@@ -115,6 +115,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
             val actualRightPad = width - leftPad - indentSize - trimmed.length
 
             when (testAlignment) {
+                TextAlignment.DEFAULT,
                 TextAlignment.LEFT,
                 TextAlignment.CENTER -> {
                     if (trimmed.contains(' ')) {
@@ -155,7 +156,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
         }
     }
 
-        @Test
+    @Test
     fun test_align() {
         val par = SmartParagraphCharSequence(simplePar)
         assertEquals(simplePar, par.asString())
@@ -180,7 +181,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
         }
     }
 
-        @Test
+    @Test
     fun test_alignMultiLine() {
         val par = SmartParagraphCharSequence(multiLinePar)
         assertEquals(multiLinePar, par.asString())
@@ -205,7 +206,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
         }
     }
 
-        @Test
+    @Test
     fun test_alignIndentedMultiLine() {
         val par = SmartParagraphCharSequence(indentedMultiLinePar)
         assertEquals(indentedMultiLinePar, par.asString())
@@ -230,7 +231,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
         }
     }
 
-//    @Test
+    //    @Test
     fun test_SingleDebug() {
         val par = SmartParagraphCharSequence(multiLineHardBreaksPar)
         assertEquals(multiLineHardBreaksPar, par.asString())
