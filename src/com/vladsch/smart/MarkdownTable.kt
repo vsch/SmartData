@@ -41,15 +41,23 @@ data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: In
 class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     constructor(rowCells: ArrayList<TableCell>) : this(rowCells, isSeparator(rowCells))
 
-    val totalColumns: Int get() {
-        return columnOf(rowCells.size)
-    }
+    val totalColumns: Int
+        get() {
+            return columnOf(rowCells.size)
+        }
 
-    val isUnterminated: Boolean get() {
-        return rowCells.size > 0 && rowCells[rowCells.size - 1].isUnterminated
-    }
+    val isUnterminated: Boolean
+        get() {
+            return rowCells.size > 0 && rowCells[rowCells.size - 1].isUnterminated
+        }
 
     fun columnOf(index: Int): Int {
+       return columnOfOrNull(index)!!
+    }
+
+    fun columnOfOrNull(index: Int?): Int? {
+        if (index == null) return null
+
         var columns = 0
 
         for (i in 0..(index - 1).maxLimit(rowCells.size - 1)) {
@@ -61,6 +69,12 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     }
 
     fun indexOf(column: Int): Int {
+       return indexOfOrNull(column)!!
+    }
+
+    fun indexOfOrNull(column: Int?): Int? {
+        if (column == null) return null
+
         var columns = 0
         var index = 0
         for (cell in rowCells) {
@@ -127,6 +141,57 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
         }
     }
 
+    private fun explicitColumns(): Array<TableCell?> {
+        val explicitColumns = Array<TableCell?>(totalColumns) { null }
+
+        var explicitIndex = 0
+        for (cell in rowCells) {
+            explicitColumns[explicitIndex] = cell
+            explicitIndex += cell.colSpan
+        }
+        return explicitColumns
+    }
+
+    private fun addExplicitColumns(explicitColumns: Array<TableCell?>, isUnterminated: Boolean) {
+        var lastCell: TableCell? = null
+
+        for (i in 0..explicitColumns.lastIndex) {
+            val cell = explicitColumns[i]
+            lastCell = if (cell == null) {
+                lastCell?.withColSpan(lastCell.colSpan + 1) ?: TableCell(EMPTY_SEQUENCE, 0, 1, i == explicitColumns.lastIndex && isUnterminated)
+            } else {
+                if (lastCell != null) rowCells.add(lastCell)
+                cell.withColSpan(1)
+            }
+        }
+
+        if (lastCell != null) {
+            rowCells.add(lastCell)
+        }
+    }
+
+    fun moveColumn(fromColumn: Int, toColumn: Int) {
+        val maxColumn = totalColumns
+        if (fromColumn != toColumn && fromColumn < maxColumn && toColumn < maxColumn) {
+            val isUnterminated = rowCells.last().isUnterminated
+            val explicitColumns = explicitColumns()
+
+            val fromCell = explicitColumns[fromColumn]
+            if (toColumn < fromColumn) {
+                // shift in between columns right
+                System.arraycopy(explicitColumns, toColumn, explicitColumns, toColumn + 1, fromColumn - toColumn)
+            } else {
+                // shift in between columns left
+                System.arraycopy(explicitColumns, fromColumn + 1, explicitColumns, fromColumn, toColumn - fromColumn)
+            }
+            explicitColumns[toColumn] = fromCell
+
+            // reconstruct cells
+            rowCells.clear()
+            addExplicitColumns(explicitColumns, isUnterminated)
+        }
+    }
+
     fun isEmptyColumn(column: Int): Boolean {
         val index = indexOf(column)
         return isSeparator || index >= rowCells.size || rowCells[index].charSequence.isBlank()
@@ -142,7 +207,8 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     }
 
     companion object {
-        @JvmStatic fun isSeparator(rowCells: ArrayList<TableCell>): Boolean {
+        @JvmStatic
+        fun isSeparator(rowCells: ArrayList<TableCell>): Boolean {
             if (rowCells.isEmpty()) return false;
 
             for (cell in rowCells) {
@@ -175,21 +241,24 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val caption: String?, val ind
         computeSeparatorRow()
     }
 
-    val isUnterminated: Boolean get() {
-        return rows.size > 0 && rows[rows.size - 1].isUnterminated
-    }
+    val isUnterminated: Boolean
+        get() {
+            return rows.size > 0 && rows[rows.size - 1].isUnterminated
+        }
 
     val separatorRow: Int get() = mySeparatorRow
 
     val separatorRowCount: Int get() = mySeparatorRowCount
 
-    val maxColumns: Int get() {
-        return maxColumnsWithout()
-    }
+    val maxColumns: Int
+        get() {
+            return maxColumnsWithout()
+        }
 
-    val minColumns: Int get() {
-        return minColumnsWithout()
-    }
+    val minColumns: Int
+        get() {
+            return minColumnsWithout()
+        }
 
     fun fillMissingColumns(column: Int?) {
         val maxColumns = this.maxColumns
@@ -230,6 +299,12 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val caption: String?, val ind
         }
 
         computeSeparatorRow()
+    }
+
+    fun moveColumn(fromColumn: Int, toColumn: Int) {
+        for (row in rows) {
+            row.moveColumn(fromColumn, toColumn)
+        }
     }
 
     fun computeSeparatorRow() {
