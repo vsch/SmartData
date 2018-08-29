@@ -52,7 +52,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
         }
 
     fun columnOf(index: Int): Int {
-       return columnOfOrNull(index)!!
+        return columnOfOrNull(index)!!
     }
 
     fun columnOfOrNull(index: Int?): Int? {
@@ -69,7 +69,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
     }
 
     fun indexOf(column: Int): Int {
-       return indexOfOrNull(column)!!
+        return indexOfOrNull(column)!!
     }
 
     fun indexOfOrNull(column: Int?): Int? {
@@ -78,10 +78,9 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
         var columns = 0
         var index = 0
         for (cell in rowCells) {
-            columns += cell.colSpan
-            if (columns > column) break
-            index++
             if (columns >= column) break
+            columns += cell.colSpan
+            index++
         }
         return index
     }
@@ -158,7 +157,8 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
         for (i in 0..explicitColumns.lastIndex) {
             val cell = explicitColumns[i]
             lastCell = if (cell == null) {
-                lastCell?.withColSpan(lastCell.colSpan + 1) ?: TableCell(EMPTY_SEQUENCE, 0, 1, i == explicitColumns.lastIndex && isUnterminated)
+                lastCell?.withColSpan(lastCell.colSpan + 1)
+                        ?: TableCell(EMPTY_SEQUENCE, 0, 1, i == explicitColumns.lastIndex && isUnterminated)
             } else {
                 if (lastCell != null) rowCells.add(lastCell)
                 cell.withColSpan(1)
@@ -225,7 +225,7 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
             val endColIndex = if (inColumnOffset < 0) index else index - 1
             for (i in 0..endColIndex) {
                 col += rowCells[i].untrimmedWidth
-                col += rowCells[i].colSpan
+                col += rowCells[i].colSpan - 1
             }
             return LogicalPosition(row, tableStartColumn + col + inColumnOffset)
         }
