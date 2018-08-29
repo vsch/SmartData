@@ -218,14 +218,12 @@ class TableRow(val rowCells: ArrayList<TableCell>, val isSeparator: Boolean) {
         }
     }
 
-    fun logicalPosition(tableStartColumn: Int, row: Int, column: Int, inColumnOffset: Int): LogicalPosition? {
-        val index = indexOf(column)
+    fun logicalPosition(tableStartColumn: Int, row: Int, index: Int, inColumnOffset: Int): LogicalPosition? {
         if (index < rowCells.size) {
             var col = 0
             val endColIndex = if (inColumnOffset < 0) index else index - 1
             for (i in 0..endColIndex) {
                 col += rowCells[i].untrimmedWidth
-                col += rowCells[i].colSpan - 1
             }
             return LogicalPosition(row, tableStartColumn + col + inColumnOffset)
         }
@@ -392,6 +390,14 @@ class MarkdownTable(val rows: ArrayList<TableRow>, val caption: String?, val ind
         }
 
         return if (columns == Int.MAX_VALUE) 0 else columns
+    }
+
+    fun logicalPositionFromColumnOffset(tableStartColumn: Int, row: Int, column: Int, firstRowOffset: Int, inColumnOffset: Int): LogicalPosition? {
+
+        if (row < rows.size) {
+            return rows[row].logicalPosition(tableStartColumn, row + firstRowOffset, rows[row].indexOf(column), inColumnOffset)
+        }
+        return null
     }
 
     fun logicalPosition(tableStartColumn: Int, row: Int, column: Int, firstRowOffset: Int, inColumnOffset: Int): LogicalPosition? {
