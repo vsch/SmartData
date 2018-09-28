@@ -135,6 +135,21 @@ fun String?.startsWith(ignoreCase: Boolean, vararg needles: String): Boolean {
     return false
 }
 
+fun String?.startsWithNotEqual(vararg needles: String): Boolean {
+    return startsWithNotEqual(false, *needles)
+}
+
+fun String?.startsWithNotEqual(ignoreCase: Boolean, vararg needles: String): Boolean {
+    if (this == null) return false
+
+    for (needle in needles) {
+        if (startsWith(needle, ignoreCase)) {
+            return !equals(needle, ignoreCase)
+        }
+    }
+    return false
+}
+
 fun String?.count(char: Char, startIndex: Int = 0, endIndex: Int = Integer.MAX_VALUE): Int {
     if (this == null) return 0
 
