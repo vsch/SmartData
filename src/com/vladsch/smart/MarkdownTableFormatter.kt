@@ -104,7 +104,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
 
             while (colIndex < segments.size) {
                 val tableCell = segments[colIndex]
-                var columnChars = tableCell.charSequence
+                var columnChars:SmartCharSequence = SmartCharSequenceWrapper(tableCell.charSequence)
 
                 if (settings.TABLE_TRIM_CELLS) columnChars = columnChars.trim()
                 if (columnChars.isEmpty()) columnChars = columnChars.append(space)
@@ -202,7 +202,7 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
         myAlignmentDataPoints = tableBalancer.columnAlignmentDataPoints
         myColumnWidthDataPoints = tableBalancer.columnWidthDataPoints
 
-        return formattedTable.contents//.cachedProxy
+        return formattedTable.contents //.cachedProxy
     }
 
     companion object {

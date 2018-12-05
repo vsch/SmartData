@@ -26,7 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 public interface CharWidthProvider {
     int getCharWidth(@NotNull Character c);
-    int getStringWidth(@NotNull CharSequence charSequence);
+    default int getStringWidth(@NotNull CharSequence charSequence) {
+        return getStringWidth(charSequence, null);
+    }
+    
+    int getStringWidth(@NotNull CharSequence charSequence, @Nullable CharSequence zeroWidth);
     int getSpaceWidth();
 
     public static CharWidthProvider UNITY_PROVIDER = new CharWidthProvider() {
@@ -41,7 +45,7 @@ public interface CharWidthProvider {
         }
 
         @Override
-        public int getStringWidth(@NotNull CharSequence charSequence) {
+        public int getStringWidth(@NotNull CharSequence charSequence, @Nullable CharSequence zeroWidth) {
             return charSequence.length();
         }
 

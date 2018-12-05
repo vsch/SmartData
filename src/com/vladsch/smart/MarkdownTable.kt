@@ -24,17 +24,13 @@ package com.vladsch.smart
 import com.intellij.openapi.editor.LogicalPosition
 import java.util.*
 
-data class TableCell(val charSequence: SmartCharSequence, val untrimmedWidth: Int, val colSpan: Int = 1, val isUnterminated: Boolean = false) {
+data class TableCell(val charSequence: CharSequence, val untrimmedWidth: Int, val colSpan: Int = 1, val isUnterminated: Boolean = false) {
     init {
         assert(colSpan >= 1)
     }
 
     fun withColSpan(colSpan: Int): TableCell {
         return TableCell(charSequence, untrimmedWidth, colSpan)
-    }
-
-    fun separatorParts(): SmartSegmentedCharSequence? {
-        return charSequence.extractGroupsSegmented(MarkdownTableFormatter.SEPARATOR_COLUMN_PATTERN)
     }
 }
 
