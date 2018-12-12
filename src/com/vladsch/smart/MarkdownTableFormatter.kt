@@ -134,7 +134,10 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
                         }
                         else -> {
                             // when no alignment given use centered for header cells and left for body
-                            if (settings.TABLE_APPLY_COLUMN_ALIGNMENT) tableBalancer.alignment(colIndex, SmartImmutableData(if (!haveLeft) TextAlignment.DEFAULT else TextAlignment.LEFT))
+                            if (settings.TABLE_APPLY_COLUMN_ALIGNMENT) {
+                                val tableHeadingDefaultAlignment = !haveLeft && settings.TABLE_LEFT_ALIGN_MARKER != 1 || haveLeft && !haveRight && settings.TABLE_LEFT_ALIGN_MARKER == -1
+                                tableBalancer.alignment(colIndex, SmartImmutableData(if (tableHeadingDefaultAlignment) TextAlignment.DEFAULT else TextAlignment.LEFT))
+                            }
                             if (settings.TABLE_LEFT_ALIGN_MARKER == 1 || settings.TABLE_LEFT_ALIGN_MARKER == 0 && haveLeft) formattedCol.prefix = alignMarker
                         }
                     }
