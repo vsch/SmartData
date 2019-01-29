@@ -40,6 +40,11 @@ public interface SmartCharSequence extends CharSequence, TrackingCharSequenceMar
     @Override
     SmartCharSequence subSequence(int start, int end);
 
+    @NotNull
+    default SmartCharSequence subSequence(int start) {
+        return subSequence(start, length());
+    }
+
     /**
      * used for linear copy of contents for fast access to sequences that are pieced together from other segments. it is versioned data so you need to check its getVersion().isStale() method to know if you need to obtain a new copy via getCachedProxy()
      * <p>
