@@ -288,12 +288,12 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         } else if (canEliminate) {
             // pure delete
             if (startIndex == 0) {
-                if (endIndex == length) {
+                if (endIndex >= length) {
                     return EMPTY_SEQUENCE
                 } else {
                     return subSequence(endIndex, length)
                 }
-            } else if (endIndex == length) {
+            } else if (endIndex >= length) {
                 return subSequence(0, startIndex)
             } else {
                 return segmentedFlat(subSequence(0, startIndex), subSequence(endIndex, length))
@@ -301,12 +301,12 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         } else {
             // a mix of delete and insert
             if (startIndex == 0) {
-                if (endIndex == length) {
+                if (endIndex >= length) {
                     return smart(charSequence)
                 } else {
                     return segmentedFlat(smart(charSequence), subSequence(endIndex, length))
                 }
-            } else if (startIndex == length) {
+            } else if (startIndex >= length) {
                 return segmentedFlat(this, smart(charSequence))
             } else {
                 return segmentedFlat(subSequence(0, startIndex), smart(charSequence), subSequence(endIndex, length))
