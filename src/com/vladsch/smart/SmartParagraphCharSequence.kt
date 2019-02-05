@@ -26,7 +26,7 @@ import java.util.*
 class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSequenceBase<SmartCharSequence>() {
 
     companion object {
-        @JvmField val MARKDOWN_START_LINE_CHAR = '\u2028'     // this one is not preserved but will cause a line break if not already at beginning of line
+        @JvmField val MARKDOWN_START_LINE_CHAR = '\u2028'     // https://www.fileformat.info/info/unicode/char/2028/index.htm LINE_SEPARATOR this one is not preserved but will cause a line break if not already at beginning of line
         @JvmField val MARKDOWN_START_LINE = SmartCharArraySequence(CharArray(1, { '\u2028' }))     // this one is not preserved but will cause a line break if not already at beginning of line
     }
 
