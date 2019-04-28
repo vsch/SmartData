@@ -31,28 +31,28 @@ class SmartSamples {
         val v3 = SmartVolatileData("v3", 0)
         val sum = SmartVectorData("sum", listOf(v1, v2, v3)) { val sum = it.sumBy { it }; println("computed sum: $sum"); sum }
 
-        println("v1: ${v1.value}, v2: ${v2.value}, v3: ${v3.value}")
-        println("sum: ${sum.value}")
-        println("sum: ${sum.value}")
-        v1.value = 10
-        println("v1: ${v1.value}, v2: ${v2.value}, v3: ${v3.value}")
-        println("sum: ${sum.value}")
-        println("sum: ${sum.value}")
-        v2.value = 20
-        println("v1: ${v1.value}, v2: ${v2.value}, v3: ${v3.value}")
-        println("sum: ${sum.value}")
-        println("sum: ${sum.value}")
-        v3.value = 30
-        println("v1: ${v1.value}, v2: ${v2.value}, v3: ${v3.value}")
-        println("sum: ${sum.value}")
-        println("sum: ${sum.value}")
+        println("v1: ${v1.get()}, v2: ${v2.get()}, v3: ${v3.get()}")
+        println("sum: ${sum.get()}")
+        println("sum: ${sum.get()}")
+        v1.set(10)
+        println("v1: ${v1.get()}, v2: ${v2.get()}, v3: ${v3.get()}")
+        println("sum: ${sum.get()}")
+        println("sum: ${sum.get()}")
+        v2.set(20)
+        println("v1: ${v1.get()}, v2: ${v2.get()}, v3: ${v3.get()}")
+        println("sum: ${sum.get()}")
+        println("sum: ${sum.get()}")
+        v3.set(30)
+        println("v1: ${v1.get()}, v2: ${v2.get()}, v3: ${v3.get()}")
+        println("sum: ${sum.get()}")
+        println("sum: ${sum.get()}")
 
-        v1.value = 100
-        v2.value = 200
-        v3.value = 300
-        println("v1: ${v1.value}, v2: ${v2.value}, v3: ${v3.value}")
-        println("sum: ${sum.value}")
-        println("sum: ${sum.value}")
+        v1.set(100)
+        v2.set(200)
+        v3.set(300)
+        println("v1: ${v1.get()}, v2: ${v2.get()}, v3: ${v3.get()}")
+        println("sum: ${sum.get()}")
+        println("sum: ${sum.get()}")
     }
 
     @Test
@@ -72,18 +72,18 @@ class SmartSamples {
             prod
         }
 
-        var t = prod.value
-        v1.value = 10
-        t = prod.value
-        v2.value = 20
-        t = prod.value
-        v3.value = 30
-        t = prod.value
+        var t = prod.get()
+        v1.set(10)
+        t = prod.get()
+        v2.set(20)
+        t = prod.get()
+        v3.set(30)
+        t = prod.get()
 
-        v1.value = 100
-        v2.value = 200
-        v3.value = 300
-        t = prod.value
+        v1.set(100)
+        v2.set(200)
+        v3.set(300)
+        t = prod.get()
     }
 
     @Test
@@ -108,16 +108,16 @@ class SmartSamples {
 
         topScope.finalizeAllScopes()
 
-        println("MAX_WIDTH: ${maxWidth.value}")
+        println("MAX_WIDTH: ${maxWidth.get()}")
 
         WIDTH[grandChild11, 0] = 12
         WIDTH[grandChild21, 0] = 17
 
-        println("MAX_WIDTH: ${maxWidth.value}")
+        println("MAX_WIDTH: ${maxWidth.get()}")
 
         WIDTH[grandChild21, 0] = 10
 
-        println("MAX_WIDTH: ${maxWidth.value}")
+        println("MAX_WIDTH: ${maxWidth.get()}")
     }
 
     @Test

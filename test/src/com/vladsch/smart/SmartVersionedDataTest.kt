@@ -32,7 +32,7 @@ class SmartVersionedDataTest {
 
             assertFalse(v1.isStale)
             assertFalse(v1.isMutable)
-            assertEquals(i, v1.value)
+            assertEquals(i, v1.get())
         }
     }
 
@@ -46,21 +46,21 @@ class SmartVersionedDataTest {
         assertTrue(v1.isMutable)
 
         assertTrue(v1.versionSerial < v2.versionSerial)
-        v1.value = 5
+        v1.set(5)
         assertFalse(v1.versionSerial < v2.versionSerial)
-        assertEquals(5, v1.value)
+        assertEquals(5, v1.get())
         val v1Serial = v1.versionSerial
-        v1.value = 5
+        v1.set(5)
         assertEquals(v1Serial, v1.versionSerial)
 
         SmartVersionManager.groupedUpdate(Runnable {
-            v1.value = 10
-            v2.value = 11
+            v1.set(10)
+            v2.set(11)
         })
 
         assertEquals(v1.versionSerial, v2.versionSerial)
-        assertEquals(10, v1.value)
-        assertEquals(11, v2.value)
+        assertEquals(10, v1.get())
+        assertEquals(11, v2.get())
 
         val v1Version = v1.versionSerial
         v1.nextVersion()
@@ -69,23 +69,23 @@ class SmartVersionedDataTest {
         v2.nextVersion()
         assertEquals(v2Version, v2.versionSerial)
 
-        v1.value = 2
-        v2.value = 3
+        v1.set(2)
+        v2.set(3)
         assertTrue(v1.versionSerial < v2.versionSerial)
 
         SmartVersionManager.groupedUpdate(Runnable {
-            v1.value = 4
-            v2.value = 5
+            v1.set(4)
+            v2.set(5)
         })
 
         assertEquals(v1.versionSerial, v2.versionSerial)
 
-        v1.value = 6
-        v2.value = 7
+        v1.set(6)
+        v2.set(7)
 
         SmartVersionManager.groupedCompute({
-            v1.value = 8
-            v2.value = 9
+            v1.set(8)
+            v2.set(9)
         })
 
         assertEquals(v1.versionSerial, v2.versionSerial)
@@ -96,9 +96,9 @@ class SmartVersionedDataTest {
         var v1 = SmartVolatileData(1)
         var v2 = SmartVolatileData(2)
         var v3 = SmartVolatileData(3)
-        var vc = SmartDependentData(v3, { v3.value })
-        val sum: () -> Int = { v1.value + v2.value + vc.value }
-        val sumEq = { v1.value + v2.value + v3.value }
+        var vc = SmartDependentData(v3, { v3.get() })
+        val sum: () -> Int = { v1.get() + v2.get() + vc.get() }
+        val sumEq = { v1.get() + v2.get() + v3.get() }
         var dv = SmartUpdateDependentData(listOf(v1, v2, vc), sum)
         var dv2 = SmartUpdateDependentData(listOf(vc), sum)
         var vi = SmartImmutableData(10)
@@ -106,37 +106,37 @@ class SmartVersionedDataTest {
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
-        v2.value = 21
+        v2.set(21)
         assertTrue(dv.isStale)
         dv.nextVersion()
         assertFalse(dv.isStale)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
         assertFalse(dvn.isMutable)
         assertFalse(dvn.isStale)
-        assertEquals(10, dvn.value)
+        assertEquals(10, dvn.get())
 
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
-        v3.value = 31
-        vc.value
+        v3.set(31)
+        vc.get()
         assertEquals(v3.versionSerial, vc.versionSerial)
-        assertEquals(v3.value, vc.value)
+        assertEquals(v3.get(), vc.get())
 
         //        println("v1: ${v1.versionSerial}, v2: ${v2.versionSerial}, v3: ${v3.versionSerial}, vc: ${vc.versionSerial} : dv: ${dv.versionSerial} ${dv.isStale}")
         assertTrue(dv.isStale)
         dv.nextVersion()
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
-        v3.value = 32
+        v3.set(32)
         assertTrue(dv.isStale)
         dv.nextVersion()
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
     }
 
     @Test
@@ -144,42 +144,42 @@ class SmartVersionedDataTest {
         var v1 = SmartVolatileData(1)
         var v2 = SmartVolatileData(2)
         var v3 = SmartVolatileData(3)
-        var vc = SmartDependentData(v3, { v3.value })
-        val sum = { v1.value + v2.value + vc.value }
-        val sumEq = { v1.value + v2.value + v3.value }
+        var vc = SmartDependentData(v3, { v3.get() })
+        val sum = { v1.get() + v2.get() + vc.get() }
+        val sumEq = { v1.get() + v2.get() + v3.get() }
         var dv = SmartDependentData(listOf(v1, v2, vc), sum)
         var vi = SmartImmutableData(10)
-        var dvn = SmartIterableData(listOf(vi), { it -> vi.value })
+        var dvn = SmartIterableData(listOf(vi), { it -> vi.get() })
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
-        v2.value = 21
-        dv.value
+        v2.set(21)
+        dv.get()
         assertFalse(dv.isStale)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
         assertFalse(dvn.isMutable)
         assertFalse(dvn.isStale)
-        assertEquals(10, dvn.value)
+        assertEquals(10, dvn.get())
 
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
-        v3.value = 31
-        dv.value
+        v3.set(31)
+        dv.get()
         assertEquals(v3.versionSerial, vc.versionSerial)
-        assertEquals(v3.value, vc.value)
+        assertEquals(v3.get(), vc.get())
 
         //        println("v1: ${v1.versionSerial}, v2: ${v2.versionSerial}, v3: ${v3.versionSerial}, vc: ${vc.versionSerial} : dv: ${dv.versionSerial} ${dv.isStale}")
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
-        v3.value = 32
-        dv.value
+        v3.set(32)
+        dv.get()
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
     }
 
     @Test
@@ -187,42 +187,42 @@ class SmartVersionedDataTest {
         var v1 = SmartVolatileData(1)
         var v2 = SmartVolatileData(2)
         var v3 = SmartVolatileData(3)
-        var vc = SmartDependentData(v3, { v3.value })
+        var vc = SmartDependentData(v3, { v3.get() })
         val sum = IterableDataComputable<Int> { it.sumBy { it } }
-        val sumEq = { v1.value + v2.value + v3.value }
+        val sumEq = { v1.get() + v2.get() + v3.get() }
         var dv = SmartVectorData(listOf(v1, v2, vc), sum)
         var vi = SmartImmutableData(10)
-        var dvn = SmartIterableData(listOf(vi), { it -> vi.value })
+        var dvn = SmartIterableData(listOf(vi), { it -> vi.get() })
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
-        v2.value = 21
-        dv.value
+        v2.set(21)
+        dv.get()
         assertFalse(dv.isStale)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
         assertFalse(dvn.isMutable)
         assertFalse(dvn.isStale)
-        assertEquals(10, dvn.value)
+        assertEquals(10, dvn.get())
 
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
-        v3.value = 31
-        dv.value
+        v3.set(31)
+        dv.get()
         assertEquals(v3.versionSerial, vc.versionSerial)
-        assertEquals(v3.value, vc.value)
+        assertEquals(v3.get(), vc.get())
 
         //        println("v1: ${v1.versionSerial}, v2: ${v2.versionSerial}, v3: ${v3.versionSerial}, vc: ${vc.versionSerial} : dv: ${dv.versionSerial} ${dv.isStale}")
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
 
-        v3.value = 32
-        dv.value
+        v3.set(32)
+        dv.get()
         assertFalse(dv.isStale)
         assertEquals(v1.versionSerial.max(v2.versionSerial, v3.versionSerial), dv.versionSerial)
-        assertEquals(sumEq(), dv.value)
+        assertEquals(sumEq(), dv.get())
     }
 
     @Test
@@ -238,19 +238,19 @@ class SmartVersionedDataTest {
 
         assertFalse(vs1.isStale)
         assertEquals(v1.versionSerial, vs1.versionSerial)
-        assertEquals(v1.value, vs1.value)
+        assertEquals(v1.get(), vs1.get())
 
         assertFalse(vs2.isMutable)
         assertFalse(vs2.isStale)
         assertEquals(v2.versionSerial, vs2.versionSerial)
-        assertEquals(v2.value, vs2.value)
+        assertEquals(v2.get(), vs2.get())
 
-        v2.value = 22
+        v2.set(22)
 
         assertFalse(vs2.isMutable)
         assertTrue(vs2.isStale)
         assertNotEquals(v2.versionSerial, vs2.versionSerial)
-        assertNotEquals(v2.value, vs2.value)
+        assertNotEquals(v2.get(), vs2.get())
     }
 
     @Test
@@ -267,25 +267,25 @@ class SmartVersionedDataTest {
         assertFalse(vs.isStale)
 
         assertEquals(va.versionSerial, vs.versionSerial)
-        assertEquals(va.value, vs.value)
+        assertEquals(va.get(), vs.get())
 
-        v2.value = 22
+        v2.set(22)
         va = v2
-        vs.value
+        vs.get()
         assertTrue(vs.isMutable)
         assertFalse(vs.isStale)
         //        println("$v1, $v2, $v3, $vs")
         assertEquals(va.versionSerial, vs.versionSerial)
-        assertEquals(va.value, vs.value)
+        assertEquals(va.get(), vs.get())
 
-        v3.value = 33
+        v3.set(33)
         va = v3
-        vs.value
+        vs.get()
         assertTrue(vs.isMutable)
         assertFalse(vs.isStale)
         //        println("$v1, $v2, $v3, $vs")
         assertEquals(va.versionSerial, vs.versionSerial)
-        assertEquals(va.value, vs.value)
+        assertEquals(va.get(), vs.get())
     }
 
     @Test
@@ -299,15 +299,15 @@ class SmartVersionedDataTest {
             prod
         })
 
-        var t = vd.value
-        v2.value = 2.0
-        t = vd.value
-        v1.value = 7.0
-        t = vd.value
-        v1.value = 7.0
-        v2.value = 7.0
-        v3.value = 7.0
-        t = vd.value
+        var t = vd.get()
+        v2.set(2.0)
+        t = vd.get()
+        v1.set(7.0)
+        t = vd.get()
+        v1.set(7.0)
+        v2.set(7.0)
+        v3.set(7.0)
+        t = vd.get()
     }
 
     @Test
@@ -324,23 +324,23 @@ class SmartVersionedDataTest {
         var vd2 = SmartVectorData<Double>(listOf(v1, v2, v3, vd), {
             val sumOf = it.sum()
             println(it.fold("sum of ") { a, b -> "$a $b" } + " = $sumOf")
-            v3.value = sumOf
+            v3.set(sumOf)
             sumOf
         })
 
-        var t = vd.value
-        var t2 = vd2.value
-        v2.value = 2.0
-        t = vd.value
-        t2 = vd2.value
-        v1.value = 7.0
-        t = vd.value
-        t2 = vd2.value
-        v1.value = 7.0
-        v2.value = 7.0
-        v3.value = 7.0
-        t = vd.value
-        t2 = vd2.value
+        var t = vd.get()
+        var t2 = vd2.get()
+        v2.set(2.0)
+        t = vd.get()
+        t2 = vd2.get()
+        v1.set(7.0)
+        t = vd.get()
+        t2 = vd2.get()
+        v1.set(7.0)
+        v2.set(7.0)
+        v3.set(7.0)
+        t = vd.get()
+        t2 = vd2.get()
     }
 
     @Test
@@ -360,38 +360,38 @@ class SmartVersionedDataTest {
 
         va = v1
         assertFalse(vd.isStale)
-        assertEquals(va.value, ad.value)
+        assertEquals(va.get(), ad.get())
         assertTrue(ad.isMutable)
         assertTrue(va.versionSerial <= ad.versionSerial)
 
         ad.alias = v2
         va = v2
-        vd.value
+        vd.get()
         assertFalse(vd.isStale)
-        assertEquals(va.value, ad.value)
+        assertEquals(va.get(), ad.get())
         assertTrue(ad.isMutable)
         assertTrue(va.versionSerial <= ad.versionSerial)
 
         ad.alias = v3
         va = v3
-        vd.value
+        vd.get()
         assertFalse(vd.isStale)
-        assertEquals(va.value, ad.value)
+        assertEquals(va.get(), ad.get())
         assertTrue(ad.isMutable)
         assertTrue(va.versionSerial <= ad.versionSerial)
 
         ad.alias = vd
         va = vd
-        vd.value
+        vd.get()
         assertFalse(vd.isStale)
-        assertEquals(va.value, ad.value)
+        assertEquals(va.get(), ad.get())
         assertTrue(ad.isMutable)
         assertTrue(va.versionSerial <= ad.versionSerial)
 
         ad.touchVersionSerial()
-        vd.value
+        vd.get()
         assertFalse(vd.isStale)
-        assertEquals(va.value, ad.value)
+        assertEquals(va.get(), ad.get())
         assertTrue(ad.isMutable)
         assertTrue(va.versionSerial <= ad.versionSerial)
     }
@@ -404,48 +404,48 @@ class SmartVersionedDataTest {
         val vp = SmartVersionedProperty("vp", 0)
 
         assertTrue(vp.isMutable)
-        assertEquals(0, vp.value)
+        assertEquals(0, vp.get())
 
-        va.value = 2
+        va.set(2)
         vp.connect(va)
         assertTrue(vp.isStale)
-        assertEquals(2, vp.value)
+        assertEquals(2, vp.get())
 
-        vp.value = 2
+        vp.set(2)
         assertTrue(vp.isStale)
-        assertEquals(2, vp.value)
+        assertEquals(2, vp.get())
 
         vp.disconnect()
         assertTrue(vp.isStale)
-        assertEquals(2, vp.value)
+        assertEquals(2, vp.get())
 
-        vp.value = 5
+        vp.set(5)
         assertTrue(vp.isStale)
-        assertEquals(5, vp.value)
+        assertEquals(5, vp.get())
 
         vp.connect(va)
         assertTrue(vp.isStale)
-        assertEquals(2, vp.value)
+        assertEquals(2, vp.get())
 
         va.alias = v2
-        assertEquals(20, va.value)
+        assertEquals(20, va.get())
         assertTrue(vp.isStale)
-        assertEquals(20, vp.value)
+        assertEquals(20, vp.get())
 
         println(vp)
         vp.connectionFinalized()
         println(vp)
         assertFalse(vp.isStale)
-        assertEquals(20, vp.value)
+        assertEquals(20, vp.get())
 
         va.alias = v1
-        v1.value = 100
+        v1.set(100)
         assertFalse(vp.isStale)
-        assertEquals(20, vp.value)
+        assertEquals(20, vp.get())
 
-        v2.value = 200
+        v2.set(200)
         assertTrue(vp.isStale)
-        assertEquals(200, vp.value)
+        assertEquals(200, vp.get())
     }
 
     @Test
@@ -487,14 +487,14 @@ class SmartVersionedDataTest {
         })
 
         // test as distributing
-        pa.value
-        assertEquals(0, pa.value)
+        pa.get()
+        assertEquals(0, pa.get())
         println("called: $called")
         //        println(pa)
 
         for (i in 0..10) {
-            pa.value = i
-            assertEquals(i, pa.value)
+            pa.set(i)
+            assertEquals(i, pa.get())
 //            print("i:$i ")
 //            for (c in 0..2) {
 //                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
@@ -504,10 +504,10 @@ class SmartVersionedDataTest {
 
             for (c in 0..2) {
                 val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
-                assertEquals(col, pa[c].value)
+                assertEquals(col, pa[c].get())
             }
             //            println(pa)
-            assertEquals(i, pa.value)
+            assertEquals(i, pa.get())
             //            println(pa)
             println("called: $called")
         }
@@ -515,8 +515,8 @@ class SmartVersionedDataTest {
         // test connected distribution
         pa.connect(v1)
         for (i in 0..10) {
-            v1.value = i
-            assertEquals(i, pa.value)
+            v1.set(i)
+            assertEquals(i, pa.get())
 //            print("i:$i ")
 //            for (c in 0..2) {
 //                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
@@ -526,10 +526,10 @@ class SmartVersionedDataTest {
 
             for (c in 0..2) {
                 val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
-                assertEquals(col, pa[c].value)
+                assertEquals(col, pa[c].get())
             }
             //            println(pa)
-            assertEquals(i, pa.value)
+            assertEquals(i, pa.get())
             //            println(pa)
             println("called: $called")
         }
@@ -572,80 +572,80 @@ class SmartVersionedDataTest {
         })
 
         // test as aggregating
-        pa.value
-        assertEquals(0, pa.value)
+        pa.get()
+        assertEquals(0, pa.get())
         println("called: $called")
 
-        pa[0].value = 1
-        pa.value
+        pa[0].set(1)
+        pa.get()
         println(pa)
-        assertEquals(1, pa.value)
+        assertEquals(1, pa.get())
         println("called: $called")
 
-        pa[1].value = 2
-        assertEquals(3, pa.value)
+        pa[1].set(2)
+        assertEquals(3, pa.get())
         println("called: $called")
 
-        pa[2].value = 3
-        assertEquals(6, pa.value)
+        pa[2].set(3)
+        assertEquals(6, pa.get())
         println("called: $called")
 
         for (a in 1..6) {
-            pa[0].value = a
+            pa[0].set(a)
             for (b in 1..6) {
-                pa[1].value = b
+                pa[1].set(b)
                 for (c in 1..6) {
-                    pa[2].value = c
-                    assertEquals(a + b + c, pa.value)
+                    pa[2].set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }
 
         // test a connected array property
         pa[0].connect(v1)
-        pa.value
+        pa.get()
         println(pa)
 
-        v1.value = 10
-        pa[1].value = 20
-        pa[2].value = 30
+        v1.set(10)
+        pa[1].set(20)
+        pa[2].set(30)
         println("about to value")
-        pa.value
+        pa.get()
         println(pa)
-        assertEquals(60, pa.value)
+        assertEquals(60, pa.get())
 
 
         for (a in 1..6) {
-            v1.value = a
+            v1.set(a)
             for (b in 1..6) {
-                pa[1].value = b
+                pa[1].set(b)
                 for (c in 1..6) {
-                    pa[2].value = c
-                    assertEquals(a + b + c, pa.value)
+                    pa[2].set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }
 
         pa[1].connect(v2)
         for (a in 1..6) {
-            v1.value = a
+            v1.set(a)
             for (b in 1..6) {
-                v2.value = b
+                v2.set(b)
                 for (c in 1..6) {
-                    pa[2].value = c
-                    assertEquals(a + b + c, pa.value)
+                    pa[2].set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }
 
         pa[2].connect(v3)
         for (a in 1..6) {
-            v1.value = a
+            v1.set(a)
             for (b in 1..6) {
-                v2.value = b
+                v2.set(b)
                 for (c in 1..6) {
-                    v3.value = c
-                    assertEquals(a + b + c, pa.value)
+                    v3.set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }
@@ -664,13 +664,13 @@ class SmartVersionedDataTest {
         val pa = SmartVersionedIntAggregatorDistributor("pa", 3, 0)
 
         // test as distributing
-        pa.value
-        assertEquals(0, pa.value)
+        pa.get()
+        assertEquals(0, pa.get())
         //        println(pa)
 
         for (i in 0..10) {
-            pa.value = i
-            assertEquals(i, pa.value)
+            pa.set(i)
+            assertEquals(i, pa.get())
 //            print("i:$i ")
 //            for (c in 0..2) {
 //                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
@@ -680,18 +680,18 @@ class SmartVersionedDataTest {
 
             for (c in 0..2) {
                 val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
-                assertEquals(col, pa[c].value)
+                assertEquals(col, pa[c].get())
             }
             //            println(pa)
-            assertEquals(i, pa.value)
+            assertEquals(i, pa.get())
             //            println(pa)
         }
 
         // test connected distribution
         pa.connect(v1)
         for (i in 0..10) {
-            v1.value = i
-            assertEquals(i, pa.value)
+            v1.set(i)
+            assertEquals(i, pa.get())
 //            print("i:$i ")
 //            for (c in 0..2) {
 //                val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
@@ -701,10 +701,10 @@ class SmartVersionedDataTest {
 
             for (c in 0..2) {
                 val col = (i / 3) + if (c < (i - (i / 3) * 3)) 1 else 0
-                assertEquals(col, pa[c].value)
+                assertEquals(col, pa[c].get())
             }
             //            println(pa)
-            assertEquals(i, pa.value)
+            assertEquals(i, pa.get())
             //            println(pa)
         }
     }
@@ -719,76 +719,76 @@ class SmartVersionedDataTest {
         val pa = SmartVersionedIntAggregatorDistributor("pa", 3, 0)
 
         // test as aggregating
-        pa.value
-        assertEquals(0, pa.value)
+        pa.get()
+        assertEquals(0, pa.get())
 
-        pa[0].value = 1
-        pa.value
+        pa[0].set(1)
+        pa.get()
         println(pa)
-        assertEquals(1, pa.value)
+        assertEquals(1, pa.get())
 
-        pa[1].value = 2
-        assertEquals(3, pa.value)
+        pa[1].set(2)
+        assertEquals(3, pa.get())
 
-        pa[2].value = 3
-        assertEquals(6, pa.value)
+        pa[2].set(3)
+        assertEquals(6, pa.get())
 
         for (a in 1..6) {
-            pa[0].value = a
+            pa[0].set(a)
             for (b in 1..6) {
-                pa[1].value = b
+                pa[1].set(b)
                 for (c in 1..6) {
-                    pa[2].value = c
-                    assertEquals(a + b + c, pa.value)
+                    pa[2].set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }
 
         // test a connected array property
         pa[0].connect(v1)
-        pa.value
+        pa.get()
         println(pa)
 
-        v1.value = 10
-        pa[1].value = 20
-        pa[2].value = 30
+        v1.set(10)
+        pa[1].set(20)
+        pa[2].set(30)
         println("about to value")
-        pa.value
+        pa.get()
         println(pa)
-        assertEquals(60, pa.value)
+        assertEquals(60, pa.get())
 
 
         for (a in 1..6) {
-            v1.value = a
+            v1.set(a)
             for (b in 1..6) {
-                pa[1].value = b
+                pa[1].set(b)
                 for (c in 1..6) {
-                    pa[2].value = c
-                    assertEquals(a + b + c, pa.value)
+                    pa[2].set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }
 
         pa[1].connect(v2)
         for (a in 1..6) {
-            v1.value = a
+            v1.set(a)
             for (b in 1..6) {
-                v2.value = b
+                v2.set(b)
                 for (c in 1..6) {
-                    pa[2].value = c
-                    assertEquals(a + b + c, pa.value)
+                    pa[2].set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }
 
         pa[2].connect(v3)
         for (a in 1..6) {
-            v1.value = a
+            v1.set(a)
             for (b in 1..6) {
-                v2.value = b
+                v2.set(b)
                 for (c in 1..6) {
-                    v3.value = c
-                    assertEquals(a + b + c, pa.value)
+                    v3.set(c)
+                    assertEquals(a + b + c, pa.get())
                 }
             }
         }

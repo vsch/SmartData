@@ -41,11 +41,11 @@ class MarkdownTableFormatter(val settings: MarkdownTableFormatSettings) {
     val columnCount: Int get() = myColumnWidthDataPoints.size
 
     fun columnWidth(index: Int): Int {
-        return myColumnWidthDataPoints[index].value
+        return myColumnWidthDataPoints[index].get()
     }
 
     fun columnAlignmentDataPoint(index: Int): TextAlignment {
-        return myAlignmentDataPoints[index].value
+        return myAlignmentDataPoints[index].get()
     }
 
     fun formatTable(table: SmartCharSequence): SmartCharSequence {

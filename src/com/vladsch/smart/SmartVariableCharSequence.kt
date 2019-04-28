@@ -22,6 +22,7 @@
 package com.vladsch.smart
 
 import java.util.*
+import java.util.function.Supplier
 
 class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSequence, charWidthProvider: CharWidthProvider?) : SmartCharSequenceBase<SmartCharSequence>() {
 
@@ -48,52 +49,58 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     protected val myVariableChars = SmartVolatileData(SmartReplacedCharSequence(myReplacedChars, chars))
     protected val myFixedLength = SmartDependentData(listOf(myPrefix, myVariableChars, mySuffix), {
         if (myCharWidthProvider === CharWidthProvider.UNITY_PROVIDER) {
-            myVariableChars.value.length + myPrefix.value.length + mySuffix.value.length
+            myVariableChars.get().length + myPrefix.get().length + mySuffix.get().length
         } else {
-            (myCharWidthProvider.getStringWidth(myVariableChars.value) + myCharWidthProvider.getStringWidth(myPrefix.value) + myCharWidthProvider.getStringWidth(mySuffix.value))
+            (myCharWidthProvider.getStringWidth(myVariableChars.get()) + myCharWidthProvider.getStringWidth(myPrefix.get()) + myCharWidthProvider.getStringWidth(mySuffix.get()))
         }
     })
 
     protected var myWidth = SmartVersionedProperty("varCharSeq:Width", 0)
     protected var myAlignment = SmartVersionedProperty("varCharSeq:Alignment", TextAlignment.DEFAULT)
 
-    protected var myResultSequence = SmartDependentData(listOf(myFixedLength, myAlignment, myWidth, myLeftPadChar, myRightPadChar), DataComputable { computeResultSequence() })
+    protected var myResultSequence = SmartDependentData(listOf(myFixedLength, myAlignment, myWidth, myLeftPadChar, myRightPadChar), Supplier { computeResultSequence() })
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
 
-    var alignment: TextAlignment get() = myAlignment.value
+    var alignment: TextAlignment
+        get() = myAlignment.get()
         set(value) {
-            myAlignment.value = value
+            myAlignment.set(value)
         }
 
-    var width: Int get() = myWidth.value
+    var width: Int
+        get() = myWidth.get()
         set(value) {
-            myWidth.value = value
+            myWidth.set(value)
         }
 
-    var prefix: CharSequence get() = myPrefix.value
+    var prefix: CharSequence
+        get() = myPrefix.get()
         set(value) {
-            myPrefix.value = value
+            myPrefix.set(value)
         }
 
-    var suffix: CharSequence get() = mySuffix.value
+    var suffix: CharSequence
+        get() = mySuffix.get()
         set(value) {
-            mySuffix.value = value
+            mySuffix.set(value)
         }
 
-    var leftPadChar: Char get() = myLeftPadChar.value
+    var leftPadChar: Char
+        get() = myLeftPadChar.get()
         set(value) {
-            myLeftPadChar.value = value
+            myLeftPadChar.set(value)
         }
 
-    var rightPadChar: Char get() = myRightPadChar.value
+    var rightPadChar: Char
+        get() = myRightPadChar.get()
         set(value) {
-            myRightPadChar.value = value
+            myRightPadChar.set(value)
         }
 
     var variableChars: CharSequence
-        get() = myVariableChars.value
+        get() = myVariableChars.get()
         set(chars) {
-            myVariableChars.value = SmartReplacedCharSequence(myReplacedChars, chars)
+            myVariableChars.set(SmartReplacedCharSequence(myReplacedChars, chars))
         }
 
     override fun getVersion(): SmartVersion {
@@ -116,21 +123,21 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
         get() = myFixedLength
 
     protected val resultSequence: SmartCharArraySequence
-        get() = myResultSequence.value
+        get() = myResultSequence.get()
 
     protected fun computeResultSequence(): SmartCharArraySequence {
-        val leftPadWidth = myCharWidthProvider.getCharWidth(myLeftPadChar.value)
-        val rightPadWidth = myCharWidthProvider.getCharWidth(myRightPadChar.value)
-        val paddingSize = (myWidth.value - myFixedLength.value + myCharWidthProvider.spaceWidth / 2)
+        val leftPadWidth = myCharWidthProvider.getCharWidth(myLeftPadChar.get())
+        val rightPadWidth = myCharWidthProvider.getCharWidth(myRightPadChar.get())
+        val paddingSize = (myWidth.get() - myFixedLength.get() + myCharWidthProvider.spaceWidth / 2)
         var leftPadding = 0
         var rightPadding = 0
 
         if (paddingSize > 0) {
-            when (myAlignment.value) {
+            when (myAlignment.get()) {
                 TextAlignment.RIGHT -> leftPadding = paddingSize / leftPadWidth
                 TextAlignment.CENTER -> {
-                    var leftPrePad = myPrefix.value.countLeading(myLeftPadChar.value) + myVariableChars.value.countLeading(myLeftPadChar.value)
-                    var rightPrePad = mySuffix.value.countTrailing(myRightPadChar.value) + myVariableChars.value.countTrailing(myRightPadChar.value)
+                    var leftPrePad = myPrefix.get().countLeading(myLeftPadChar.get()) + myVariableChars.get().countLeading(myLeftPadChar.get())
+                    var rightPrePad = mySuffix.get().countTrailing(myRightPadChar.get()) + myVariableChars.get().countTrailing(myRightPadChar.get())
                     val commonPrePad = leftPrePad.min(rightPrePad)
                     rightPrePad -= commonPrePad
                     leftPrePad -= commonPrePad - rightPrePad
@@ -144,13 +151,13 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
             }
         }
 
-        if (leftPadding > 0) myLeftPadding = RepeatedCharSequence(myLeftPadChar.value, leftPadding)
+        if (leftPadding > 0) myLeftPadding = RepeatedCharSequence(myLeftPadChar.get(), leftPadding)
         else myLeftPadding = EMPTY_SEQUENCE
 
-        if (rightPadding > 0) myRightPadding = RepeatedCharSequence(myRightPadChar.value, rightPadding)
+        if (rightPadding > 0) myRightPadding = RepeatedCharSequence(myRightPadChar.get(), rightPadding)
         else myRightPadding = EMPTY_SEQUENCE
 
-        return SmartSegmentedCharSequence(myPrefix.value, myLeftPadding, myVariableChars.value, myRightPadding, mySuffix.value).cachedProxy as SmartCharArraySequence
+        return SmartSegmentedCharSequence(myPrefix.get(), myLeftPadding, myVariableChars.get(), myRightPadding, mySuffix.get()).cachedProxy as SmartCharArraySequence
     }
 
     fun leftAlign(width: Int) {
@@ -168,9 +175,10 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
         this.width = width
     }
 
-    override val length: Int get() {
-        return resultSequence.length
-    }
+    override val length: Int
+        get() {
+            return resultSequence.length
+        }
 
     override fun getCharsImpl(dst: CharArray, dstOffset: Int) = resultSequence.getCharsImpl(dst, dstOffset)
     override fun charAtImpl(index: Int): Char = resultSequence[index]
@@ -190,7 +198,7 @@ class SmartVariableCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     }
 
     protected fun adjustTrackedLocation(location: TrackedLocation): TrackedLocation {
-        val leadPadding = myLeftPadding.length + myPrefix.value.length
+        val leadPadding = myLeftPadding.length + myPrefix.get().length
         if (leadPadding > 0) {
             return location.withIndex(leadPadding + location.index).withPrevClosest(leadPadding + location.prevIndex).withNextClosest(leadPadding + location.nextIndex)
         }

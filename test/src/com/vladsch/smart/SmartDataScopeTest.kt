@@ -56,8 +56,8 @@ class SmartDataScopeTest {
         assertFalse(scope.consumers[INDENT]?.contains(1) ?: false)
         assertFalse(scope.consumers[INDENT]?.contains(3) ?: false)
 
-        assertEquals(0, myIndent.value)
-        assertEquals(0, myIndent2.value)
+        assertEquals(0, myIndent.get())
+        assertEquals(0, myIndent2.get())
     }
 
     @Test
@@ -77,16 +77,16 @@ class SmartDataScopeTest {
         assertFalse(scope.consumers[INDENT]?.contains(1) ?: false)
         assertFalse(scope.consumers[INDENT]?.contains(3) ?: false)
 
-        assertEquals(0, indent.value)
-        assertEquals(0, myIndent.value)
+        assertEquals(0, indent.get())
+        assertEquals(0, myIndent.get())
 
-        indent.value = 1
-        assertEquals(1, myIndent.value)
-        assertEquals(1, indent.value)
+        indent.set(1)
+        assertEquals(1, myIndent.get())
+        assertEquals(1, indent.get())
 
-        indent.value = 10
-        assertEquals(10, myIndent.value)
-        assertEquals(10, indent.value)
+        indent.set(10)
+        assertEquals(10, myIndent.get())
+        assertEquals(10, indent.get())
 
     }
 
@@ -99,16 +99,16 @@ class SmartDataScopeTest {
         scope.setValue(INDENT, 0, indent)
         val myIndent = scope.dataPoint(INDENT, 0)
 
-        assertEquals(0, indent.value)
-        assertEquals(0, myIndent.value)
+        assertEquals(0, indent.get())
+        assertEquals(0, myIndent.get())
 
-        indent.value = 1
-        assertEquals(1, myIndent.value)
-        assertEquals(1, indent.value)
+        indent.set(1)
+        assertEquals(1, myIndent.get())
+        assertEquals(1, indent.get())
 
-        indent.value = 10
-        assertEquals(10, myIndent.value)
-        assertEquals(10, indent.value)
+        indent.set(10)
+        assertEquals(10, myIndent.get())
+        assertEquals(10, indent.get())
 
     }
 
@@ -130,26 +130,26 @@ class SmartDataScopeTest {
         assertFalse(child.consumers[INDENT]?.contains(1) ?: false)
         assertFalse(child.consumers[INDENT]?.contains(3) ?: false)
 
-        assertEquals(0, indent.value)
-        assertEquals(0, myIndent.value)
+        assertEquals(0, indent.get())
+        assertEquals(0, myIndent.get())
 
-        indent.value = 1
-        assertEquals(0, myIndent.value)
-        assertEquals(1, indent.value)
+        indent.set(1)
+        assertEquals(0, myIndent.get())
+        assertEquals(1, indent.get())
 
-        indent.value = 10
-        assertEquals(0, myIndent.value)
-        assertEquals(10, indent.value)
+        indent.set(10)
+        assertEquals(0, myIndent.get())
+        assertEquals(10, indent.get())
 
         scope.finalizeAllScopes()
 
-        indent.value = 1
-        assertEquals(1, myIndent.value)
-        assertEquals(1, indent.value)
+        indent.set(1)
+        assertEquals(1, myIndent.get())
+        assertEquals(1, indent.get())
 
-        indent.value = 10
-        assertEquals(10, myIndent.value)
-        assertEquals(10, indent.value)
+        indent.set(10)
+        assertEquals(10, myIndent.get())
+        assertEquals(10, indent.get())
     }
 
     @Test
@@ -164,19 +164,19 @@ class SmartDataScopeTest {
         child.setValue(INDENT, 0, childIndent)
         val myIndent = child.dataPoint(INDENT, 0)
 
-        assertEquals(0, indent.value)
-        assertEquals(0, childIndent.value)
-        assertEquals(0, myIndent.value)
+        assertEquals(0, indent.get())
+        assertEquals(0, childIndent.get())
+        assertEquals(0, myIndent.get())
 
-        indent.value = 1
-        assertEquals(0, myIndent.value)
-        assertEquals(0, childIndent.value)
-        assertEquals(1, indent.value)
+        indent.set(1)
+        assertEquals(0, myIndent.get())
+        assertEquals(0, childIndent.get())
+        assertEquals(1, indent.get())
 
-        childIndent.value = 10
-        assertEquals(10, myIndent.value)
-        assertEquals(10, childIndent.value)
-        assertEquals(1, indent.value)
+        childIndent.set(10)
+        assertEquals(10, myIndent.get())
+        assertEquals(10, childIndent.get())
+        assertEquals(1, indent.get())
     }
 
     @Test
@@ -201,19 +201,19 @@ class SmartDataScopeTest {
         assertEquals(indent, (myIndent2 as SmartVersionedDataAlias<*>).alias.dependencies.first())
         assertEquals(myIndent2.alias, (myIndent21 as SmartVersionedDataAlias<*>).alias.dependencies.first())
 
-        assertEquals(0, indent.value)
-        assertEquals(4, myIndent2.value)
-        assertEquals(8, myIndent21.value)
+        assertEquals(0, indent.get())
+        assertEquals(4, myIndent2.get())
+        assertEquals(8, myIndent21.get())
 
-        indent.value = 1
-        assertEquals(5, myIndent2.value)
-        assertEquals(9, myIndent21.value)
-        assertEquals(1, indent.value)
+        indent.set(1)
+        assertEquals(5, myIndent2.get())
+        assertEquals(9, myIndent21.get())
+        assertEquals(1, indent.get())
 
-        indent.value = 10
-        assertEquals(14, myIndent2.value)
-        assertEquals(18, myIndent21.value)
-        assertEquals(10, indent.value)
+        indent.set(10)
+        assertEquals(14, myIndent2.get())
+        assertEquals(18, myIndent21.get())
+        assertEquals(10, indent.get())
     }
 
     @Test
@@ -244,25 +244,25 @@ class SmartDataScopeTest {
         assertEquals(indent, (myIndent2 as SmartVersionedDataAlias<*>).alias.dependencies.first())
         assertEquals(myIndent2.alias, (myIndent21 as SmartVersionedDataAlias<*>).alias.dependencies.first())
 
-        assertEquals(0, indent.value)
-        assertEquals(0, myIndent1.value)
-        assertEquals(4, myIndent2.value)
-        assertEquals(4, myIndent11.value)
-        assertEquals(8, myIndent21.value)
+        assertEquals(0, indent.get())
+        assertEquals(0, myIndent1.get())
+        assertEquals(4, myIndent2.get())
+        assertEquals(4, myIndent11.get())
+        assertEquals(8, myIndent21.get())
 
-        indent.value = 1
-        assertEquals(1, myIndent1.value)
-        assertEquals(5, myIndent2.value)
-        assertEquals(5, myIndent11.value)
-        assertEquals(9, myIndent21.value)
-        assertEquals(1, indent.value)
+        indent.set(1)
+        assertEquals(1, myIndent1.get())
+        assertEquals(5, myIndent2.get())
+        assertEquals(5, myIndent11.get())
+        assertEquals(9, myIndent21.get())
+        assertEquals(1, indent.get())
 
-        indent.value = 10
-        assertEquals(10, myIndent1.value)
-        assertEquals(14, myIndent2.value)
-        assertEquals(14, myIndent11.value)
-        assertEquals(18, myIndent21.value)
-        assertEquals(10, indent.value)
+        indent.set(10)
+        assertEquals(10, myIndent1.get())
+        assertEquals(14, myIndent2.get())
+        assertEquals(14, myIndent11.get())
+        assertEquals(18, myIndent21.get())
+        assertEquals(10, indent.get())
     }
 
     @Test
@@ -293,15 +293,15 @@ class SmartDataScopeTest {
 
         topScope.finalizeAllScopes()
 
-        assertEquals(20, maxWidth.value)
+        assertEquals(20, maxWidth.get())
 
         WIDTH[grandChild11, 0] = 12
         WIDTH[grandChild21, 0] = 17
 
-        assertEquals(17, maxWidth.value)
+        assertEquals(17, maxWidth.get())
 
         WIDTH[grandChild21, 0] = 10
-        assertEquals(15, maxWidth.value)
+        assertEquals(15, maxWidth.get())
     }
 
     @Test
@@ -344,14 +344,14 @@ class SmartDataScopeTest {
         //        manager.trace = true
         topScope.finalizeAllScopes()
 
-        assertEquals(280, perimeterTotal.value)
+        assertEquals(280, perimeterTotal.get())
 
         WIDTH[grandChild11, 0] = 12
         LENGTH[grandChild11, 0] = 28
-        assertEquals(320, perimeterTotal.value)
+        assertEquals(320, perimeterTotal.get())
 
         WIDTH[child2, 0] = 10
-        assertEquals(310, perimeterTotal.value)
+        assertEquals(310, perimeterTotal.get())
     }
 
     //    @Test
@@ -469,7 +469,7 @@ Row 2 Col 0 Default Alignment|Row 2 Col 1 More Data|Row 2 Col 2 a lot more Data|
             val column = lastColumn
             if (column != null) {
                 println(column.widthDataPoint)
-                println("lastColumnWidth.widthDataPoint.value = ${column.widthDataPoint.value}")
+                println("lastColumnWidth.widthDataPoint.value = ${column.widthDataPoint.get()}")
                 println("lastColumnWidth.value = ${column.width}")
             }
             println("maxColumnWidth0: $maxColumnWidth0")

@@ -23,6 +23,7 @@ package com.vladsch.smart
 
 import org.junit.Assert.*
 import org.junit.Test
+import java.util.function.Supplier
 
 class SmartVersionTest {
     @Test
@@ -71,7 +72,7 @@ class SmartVersionTest {
         v1.nextVersion()
         v2.nextVersion()
 
-        SmartVersionManager.groupedCompute(DataComputable {
+        SmartVersionManager.groupedCompute(Supplier {
             v1.nextVersion()
             v2.nextVersion()
         })

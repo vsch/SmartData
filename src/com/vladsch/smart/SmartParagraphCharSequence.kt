@@ -22,6 +22,7 @@
 package com.vladsch.smart
 
 import java.util.*
+import java.util.function.Supplier
 
 class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSequenceBase<SmartCharSequence>() {
 
@@ -47,7 +48,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     protected var myKeepMarkdownHardBreaks = SmartVersionedProperty("varCharSeq:keepMarkdownHardBreaks", true)
     protected var myKeepLineBreaks = SmartVersionedProperty("varCharSeq:keepLineBreaks", false)
 
-    protected var myResultSequence = SmartDependentData(listOf(myFirstIndent, myIndent, myAlignment, myFirstWidthOffset, myWidth, myKeepMarkdownHardBreaks), DataComputable { computeResultSequence() })
+    protected var myResultSequence = SmartDependentData(listOf(myFirstIndent, myIndent, myAlignment, myFirstWidthOffset, myWidth, myKeepMarkdownHardBreaks), Supplier { computeResultSequence() })
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
     protected var myCharWidthProvider = CharWidthProvider.UNITY_PROVIDER
 
@@ -58,52 +59,52 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             if (myCharWidthProvider !== useValue) {
                 myCharWidthProvider = useValue
 
-                val indent = myIndent.value
+                val indent = myIndent.get()
                 this.indent = indent + 1
                 this.indent = indent
             }
         }
 
     override fun addStats(stats: SmartCharSequence.Stats) {
-        myResultSequence.value.addStats(stats)
+        myResultSequence.get().addStats(stats)
         stats.nesting++
     }
 
-    var alignment: TextAlignment get() = myAlignment.value
+    var alignment: TextAlignment get() = myAlignment.get()
         set(value) {
-            myAlignment.value = value
+            myAlignment.set(value)
         }
 
-    var width: Int get() = myWidth.value
+    var width: Int get() = myWidth.get()
         set(value) {
-            myWidth.value = value.minLimit(0)
+            myWidth.set( value.minLimit(0))
         }
 
-    val firstWidth: Int get() = if (myWidth.value == 0) 0 else (myWidth.value + myFirstWidthOffset.value).minLimit(0)
+    val firstWidth: Int get() = if (myWidth.get() == 0) 0 else (myWidth.get() + myFirstWidthOffset.get()).minLimit(0)
 
-    var firstWidthOffset: Int get() = myFirstWidthOffset.value
+    var firstWidthOffset: Int get() = myFirstWidthOffset.get()
         set(value) {
-            myFirstWidthOffset.value = value
+            myFirstWidthOffset.set(value)
         }
 
-    var indent: Int get() = myIndent.value
+    var indent: Int get() = myIndent.get()
         set(value) {
-            myIndent.value = value.minLimit(0)
+            myIndent.set(value.minLimit(0))
         }
 
-    var firstIndent: Int get() = myFirstIndent.value
+    var firstIndent: Int get() = myFirstIndent.get()
         set(value) {
-            myFirstIndent.value = value.minLimit(0)
+            myFirstIndent.set( value.minLimit(0))
         }
 
-    var keepMarkdownHardBreaks: Boolean get() = myKeepMarkdownHardBreaks.value
+    var keepMarkdownHardBreaks: Boolean get() = myKeepMarkdownHardBreaks.get()
         set(value) {
-            myKeepMarkdownHardBreaks.value = value
+            myKeepMarkdownHardBreaks.set(value)
         }
 
-    var keepLineBreaks: Boolean get() = myKeepLineBreaks.value
+    var keepLineBreaks: Boolean get() = myKeepLineBreaks.get()
         set(value) {
-            myKeepLineBreaks.value = value
+            myKeepLineBreaks.set(value)
         }
 
     override fun getVersion(): SmartVersion {
@@ -123,7 +124,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         }
 
     protected val resultSequence: SmartCharSequence
-        get() = myResultSequence.value
+        get() = myResultSequence.get()
 
     protected fun tokenizeSequence(chars: CharSequence): List<Token<TextType>> {
         var pos = 0
@@ -186,7 +187,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     protected fun computeResultSequence(): SmartCharSequence {
         if (firstWidth <= 0) return myReplacedChars//.cachedProxy
         val test = false
-        if (!test && myAlignment.value == TextAlignment.LEFT) return computeLeftAlignedSequence()
+        if (!test && myAlignment.get() == TextAlignment.LEFT) return computeLeftAlignedSequence()
 
         val startTime = System.nanoTime()
 
@@ -200,7 +201,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         var lineIndent = spaceWidth * firstIndent
         val nextIndent = spaceWidth * indent
         var lineWidth = spaceWidth * firstWidth
-        val nextWidth = if (myWidth.value <= 0) Integer.MAX_VALUE else spaceWidth * myWidth.value
+        val nextWidth = if (myWidth.get() <= 0) Integer.MAX_VALUE else spaceWidth * myWidth.get()
         var wordsOnLine = 0
 
         val chars = myReplacedChars//.cachedProxy
@@ -302,9 +303,9 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                 }
                 TextType.MARKDOWN_BREAK -> {
                     if (pos > 0) {
-                        if (myKeepMarkdownHardBreaks.value) {
+                        if (myKeepMarkdownHardBreaks.get()) {
                             lineBreak(token, hardBreak, true)
-                        } else if (myKeepLineBreaks.value) {
+                        } else if (myKeepLineBreaks.get()) {
                             lineWords.add(token)
                             lineBreak(token, lineBreak, true)
                         }
@@ -312,7 +313,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                     advance()
                 }
                 TextType.BREAK -> {
-                    if (pos > 0 && myKeepLineBreaks.value) {
+                    if (pos > 0 && myKeepLineBreaks.get()) {
                         lineBreak(token, lineBreak, true)
                     }
                     advance()
@@ -334,7 +335,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             val resultSeq = SmartCharSequenceBase.smart(result)//.cachedProxy
             var testTime = System.nanoTime() - startTime
 
-            if (test && myAlignment.value == TextAlignment.LEFT) {
+            if (test && myAlignment.get() == TextAlignment.LEFT) {
                 var leftStartTime = System.nanoTime()
                 val leftAligned = computeLeftAlignedSequence()
                 var leftTestTime = System.nanoTime() - leftStartTime
@@ -368,7 +369,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         var lineIndent = spaceWidth * firstIndent
         val nextIndent = spaceWidth * indent
         var lineWidth = spaceWidth * firstWidth
-        val nextWidth = if (myWidth.value <= 0) Integer.MAX_VALUE else spaceWidth * myWidth.value
+        val nextWidth = if (myWidth.get() <= 0) Integer.MAX_VALUE else spaceWidth * myWidth.get()
         var wordsOnLine = 0
         var leadingIndent: Token<TextType>? = null
         var lastRange: Range? = null
@@ -465,7 +466,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
                 TextType.MARKDOWN_BREAK -> {
                     // start a new line if not already new
-                    if (myKeepMarkdownHardBreaks.value) {
+                    if (myKeepMarkdownHardBreaks.get()) {
                         if (col > 0) {
                             addToken(token)
                             afterLineBreak()
@@ -478,7 +479,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                 }
 
                 TextType.BREAK -> {
-                    if (col > 0 && myKeepLineBreaks.value) {
+                    if (col > 0 && myKeepLineBreaks.get()) {
                         addToken(token)
                         afterLineBreak()
                     }
@@ -498,8 +499,8 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
         var remSpaces = 0
         val distributeSpaces = if (extraSpaces > 0) extraSpaces else 0
 
-        val indent = if (lineCount > 0) myIndent.value else myFirstIndent.value
-        when (myAlignment.value) {
+        val indent = if (lineCount > 0) myIndent.get() else myFirstIndent.get()
+        when (myAlignment.get()) {
             TextAlignment.DEFAULT, TextAlignment.LEFT -> {
                 leadSpaces = indent
             }

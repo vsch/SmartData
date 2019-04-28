@@ -22,5 +22,5 @@
 package com.vladsch.smart;
 
 public interface SmartVersionedVolatileDataHolder<V> extends SmartVersionedDataHolder<V> {
-    void setValue(V value);
+    void set(V value);
 }

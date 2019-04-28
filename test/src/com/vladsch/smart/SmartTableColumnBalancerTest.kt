@@ -56,60 +56,60 @@ class SmartTableColumnBalancerTest {
 
         tableBalancer.finalizeTable()
 
-        assertEquals(5, widthRow1Col1.value)
-        assertEquals(15, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
+        assertEquals(5, widthRow1Col1.get())
+        assertEquals(15, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
         // change some widths, should change results
-        row2col1.value = 6
+        row2col1.set(6)
 
-        assertEquals(6, widthRow1Col1.value)
-        assertEquals(15, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-
-        assertEquals(widthRow1Col1, widthRow2Col1)
-        assertEquals(widthRow1Col2, widthRow2Col2)
-        assertEquals(widthRow1Col3, widthRow2Col3)
-
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
-
-        row2col1.value = 3
-
-        assertEquals(5, widthRow1Col1.value)
-        assertEquals(15, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
+        assertEquals(6, widthRow1Col1.get())
+        assertEquals(15, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
-        row1col2.value = 17
+        row2col1.set(3)
 
-        assertEquals(5, widthRow1Col1.value)
-        assertEquals(17, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
+        assertEquals(5, widthRow1Col1.get())
+        assertEquals(15, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
+
+        row1col2.set(17)
+
+        assertEquals(5, widthRow1Col1.get())
+        assertEquals(17, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+
+        assertEquals(widthRow1Col1, widthRow2Col1)
+        assertEquals(widthRow1Col2, widthRow2Col2)
+        assertEquals(widthRow1Col3, widthRow2Col3)
+
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
     }
 
     @Test
@@ -148,68 +148,68 @@ class SmartTableColumnBalancerTest {
 
         tableBalancer.finalizeTable()
 
-        assertEquals(5, widthRow1Col1.value)
-        assertEquals(15, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(20, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
+        assertEquals(5, widthRow1Col1.get())
+        assertEquals(15, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(20, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
         // change some widths, should change results
-        row2col1.value = 6
+        row2col1.set(6)
 
-        assertEquals(6, widthRow1Col1.value)
-        assertEquals(15, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(21, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
-
-        assertEquals(widthRow1Col1, widthRow2Col1)
-        assertEquals(widthRow1Col2, widthRow2Col2)
-        assertEquals(widthRow1Col3, widthRow2Col3)
-
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
-
-        row2col1.value = 3
-
-        assertEquals(5, widthRow1Col1.value)
-        assertEquals(15, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(20, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
+        assertEquals(6, widthRow1Col1.get())
+        assertEquals(15, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(21, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
-        row1col2.value = 17
+        row2col1.set(3)
 
-        assertEquals(5, widthRow1Col1.value)
-        assertEquals(17, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(22, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
+        assertEquals(5, widthRow1Col1.get())
+        assertEquals(15, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(20, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
+
+        row1col2.set(17)
+
+        assertEquals(5, widthRow1Col1.get())
+        assertEquals(17, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(22, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
+
+        assertEquals(widthRow1Col1, widthRow2Col1)
+        assertEquals(widthRow1Col2, widthRow2Col2)
+        assertEquals(widthRow1Col3, widthRow2Col3)
+
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
     }
 
@@ -249,68 +249,68 @@ class SmartTableColumnBalancerTest {
 
         tableBalancer.finalizeTable()
 
-        assertEquals(10, widthRow1Col1.value)
-        assertEquals(20, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(30, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
+        assertEquals(10, widthRow1Col1.get())
+        assertEquals(20, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(30, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
         // change some widths, should change results
-        row2col1.value = 6
+        row2col1.set(6)
 
-        assertEquals(10, widthRow1Col1.value)
-        assertEquals(20, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(30, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
-
-        assertEquals(widthRow1Col1, widthRow2Col1)
-        assertEquals(widthRow1Col2, widthRow2Col2)
-        assertEquals(widthRow1Col3, widthRow2Col3)
-
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
-
-        row2col1.value = 3
-
-        assertEquals(10, widthRow1Col1.value)
-        assertEquals(20, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(30, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
+        assertEquals(10, widthRow1Col1.get())
+        assertEquals(20, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(30, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
-        row1col2.value = 21
+        row2col1.set(3)
 
-        assertEquals(7, widthRow1Col1.value)
-        assertEquals(23, widthRow1Col2.value)
-        assertEquals(20, widthRow1Col3.value)
-        assertEquals(30, widthRow3Col1.value)
-        assertEquals(20, widthRow3Col3.value)
+        assertEquals(10, widthRow1Col1.get())
+        assertEquals(20, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(30, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
 
         assertEquals(widthRow1Col1, widthRow2Col1)
         assertEquals(widthRow1Col2, widthRow2Col2)
         assertEquals(widthRow1Col3, widthRow2Col3)
 
-        assertEquals(col1Align.value, tableBalancer.alignmentDataPoint(0).value)
-        assertEquals(col2Align.value, tableBalancer.alignmentDataPoint(1).value)
-        assertEquals(col3Align.value, tableBalancer.alignmentDataPoint(2).value)
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
+
+        row1col2.set(21)
+
+        assertEquals(7, widthRow1Col1.get())
+        assertEquals(23, widthRow1Col2.get())
+        assertEquals(20, widthRow1Col3.get())
+        assertEquals(30, widthRow3Col1.get())
+        assertEquals(20, widthRow3Col3.get())
+
+        assertEquals(widthRow1Col1, widthRow2Col1)
+        assertEquals(widthRow1Col2, widthRow2Col2)
+        assertEquals(widthRow1Col3, widthRow2Col3)
+
+        assertEquals(col1Align.get(), tableBalancer.alignmentDataPoint(0).get())
+        assertEquals(col2Align.get(), tableBalancer.alignmentDataPoint(1).get())
+        assertEquals(col3Align.get(), tableBalancer.alignmentDataPoint(2).get())
 
     }
 }

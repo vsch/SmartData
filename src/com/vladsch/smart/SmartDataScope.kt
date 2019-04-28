@@ -166,14 +166,14 @@ open class SmartVolatileDataKey<V : Any>(id: String, nullValue: V) : SmartDataKe
         if (dataPoint == null) {
             scope.setValue(this, index, SmartVolatileData(myId, value))
         } else if (dataPoint is SmartVersionedVolatileDataHolder<*>) {
-            dataPoint.value = value
+            (dataPoint as SmartVersionedVolatileDataHolder<V>).set(value)
         } else {
             throw IllegalStateException("non alias or volatile data point for volatile data key")
         }
     }
 
     open operator fun get(scope: SmartDataScope, index: Int): V {
-        return ((scope.getRawValue(this, index) ?: myNullData) as SmartVersionedDataHolder<V>).value
+        return ((scope.getRawValue(this, index) ?: myNullData) as SmartVersionedDataHolder<V>).get()
     }
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
@@ -266,7 +266,7 @@ open class SmartDependentDataKey<V : Any>(id: String, nullValue: V, override val
         val iterator = it.iterator()
 
         for (depKey in dependencies) {
-            params[depKey] = iterator.next().value
+            params[depKey] = iterator.next().get()
         }
 
         if (iterator.hasNext()) throw IllegalStateException("iterator hasNext() is true after all parameters have been used up")
@@ -702,7 +702,7 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
             for ((dataKey, indices) in consumers) {
                 print("$name: consumer of ${dataKey.myId} ")
                 for (index in indices) {
-                    print("[$index: ${dataKey.value(this, index)?.value}] ")
+                    print("[$index: ${dataKey.value(this, index)?.get()}] ")
                 }
                 println()
             }

@@ -112,8 +112,8 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
     }
 
     class SmartVersionedDefaultTextAlignment(val delegate: SmartVersionedDataAlias<TextAlignment>, val isHeader: Boolean) : SmartVersionedDataHolder<TextAlignment> {
-        override fun getValue(): TextAlignment {
-            return if (delegate.value == TextAlignment.DEFAULT && isHeader) TextAlignment.CENTER else TextAlignment.LEFT
+        override fun get(): TextAlignment {
+            return if (delegate.get() == TextAlignment.DEFAULT && isHeader) TextAlignment.CENTER else TextAlignment.LEFT
         }
 
         override val versionSerial: Int
@@ -200,7 +200,7 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
             val lengths = myColumnLengths[index]
             if (lengths != null) {
                 for (length in lengths) {
-                    if (width < length.value) width = length.value
+                    if (width < length.get()) width = length.get()
                 }
             }
             myColumnWidths[index] = width
@@ -208,7 +208,7 @@ class SmartTableColumnBalancer(charWidthProvider: CharWidthProvider?) {
 
         // get all the span lengths
         for (columnSpan in myColumnSpans) {
-            columnSpan.textLength = columnSpan.textLengthDataPoint.value
+            columnSpan.textLength = columnSpan.textLengthDataPoint.get()
         }
 
         // compute unfixed columns, which are all columns at first

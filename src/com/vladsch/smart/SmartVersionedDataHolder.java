@@ -21,5 +21,7 @@
 
 package com.vladsch.smart;
 
-public interface SmartVersionedDataHolder<V> extends DataHolder<V>, SmartVersion, DataSnapshotHolder<V> {
+import java.util.function.Supplier;
+
+public interface SmartVersionedDataHolder<V> extends Supplier<V>, SmartVersion, DataSnapshotHolder<V> {
 }

@@ -22,6 +22,7 @@
 package com.vladsch.smart
 
 import java.util.*
+import java.util.function.Supplier
 
 class SmartRepeatedCharSequence(replacedChars: SmartCharSequence, chars: CharSequence, startIndex: Int, endIndex: Int) : SmartCharSequenceBase<SmartCharSequence>() {
 
@@ -57,25 +58,25 @@ class SmartRepeatedCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
     protected val myVariableChars = SmartVersionedProperty(chars)
     protected var myStartIndex = SmartVersionedProperty(startIndex)
     protected var myEndIndex = SmartVersionedProperty(endIndex)
-    protected var myResultSequence = SmartDependentData(listOf(myVariableChars, myStartIndex, myEndIndex), DataComputable { computeResultSequence() })
-    protected var myLength = SmartDependentData(myResultSequence, DataComputable { myResultSequence.value.length })
+    protected var myResultSequence = SmartDependentData(listOf(myVariableChars, myStartIndex, myEndIndex), Supplier { computeResultSequence() })
+    protected var myLength = SmartDependentData(myResultSequence, Supplier { myResultSequence.get().length })
 
     protected val myVersion = SmartDependentVersion(listOf(myResultSequence, myReplacedChars.version))
 
-    var startIndex: Int get() = myStartIndex.value
+    var startIndex: Int get() = myStartIndex.get()
         set(value) {
-            myStartIndex.value = value
+            myStartIndex.set(value)
         }
 
-    var endIndex: Int get() = myEndIndex.value
+    var endIndex: Int get() = myEndIndex.get()
         set(value) {
-            myEndIndex.value = value
+            myEndIndex.set(value)
         }
 
     var variableChars: CharSequence
-        get() = myVariableChars.value
+        get() = myVariableChars.get()
         set(chars) {
-            myVariableChars.value = SmartReplacedCharSequence(myReplacedChars, chars)
+            myVariableChars.set(SmartReplacedCharSequence(myReplacedChars, chars))
         }
 
     override fun getVersion(): SmartVersion {
@@ -104,18 +105,18 @@ class SmartRepeatedCharSequence(replacedChars: SmartCharSequence, chars: CharSeq
         }
 
     protected val resultSequence: SmartCharSequence
-        get() = myResultSequence.value
+        get() = myResultSequence.get()
 
     protected fun computeResultSequence(): SmartCharSequence {
-        val chars = StringBuilder().append(myVariableChars.value).toString().toCharArray()
+        val chars = StringBuilder().append(myVariableChars.get()).toString().toCharArray()
 //        return SmartCharSequenceWrapper(RepeatedCharSequence(chars, myStartIndex.value, myEndIndex.value)).cachedProxy
-        return SmartCharSequenceWrapper(RepeatedCharSequence(chars, myStartIndex.value, myEndIndex.value))
+        return SmartCharSequenceWrapper(RepeatedCharSequence(chars, myStartIndex.get(), myEndIndex.get()))
     }
 
-    override var length: Int get() = myLength.value
+    override var length: Int get() = myLength.get()
         set(value) {
-            if (value >= 0 && myStartIndex.value + value != myEndIndex.value) {
-                myEndIndex.value = myStartIndex.value + value
+            if (value >= 0 && myStartIndex.get() + value != myEndIndex.get()) {
+                myEndIndex.set(myStartIndex.get() + value)
             }
         }
 
