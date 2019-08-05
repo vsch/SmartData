@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Vladimir Schneider <vladimir.schneider@gmail.com>
+ * Copyright (c) 2015-2019 Vladimir Schneider <vladimir.schneider@gmail.com>
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -26,14 +26,14 @@ class SafeCharSequenceIndex @JvmOverloads constructor(chars: SafeCharSequence, i
 
     protected val myChars: SafeCharSequence = chars
     protected var myIndex: Int = myChars.safeIndex(index)
-    
+
     val safeChars:SafeCharSequence get() = myChars
 
     override fun getIndex(): Int = myIndex
     override fun setIndex(index: Int) {
         myIndex = myChars.safeIndex(index)
     }
-    
+
     override fun toString(): String {
         return startOfLineToIndexChars.asString() + ">|<" + indexToEndOfLineChars.asString()
     }

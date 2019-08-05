@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Vladimir Schneider <vladimir.schneider@gmail.com>
+ * Copyright (c) 2015-2019 Vladimir Schneider <vladimir.schneider@gmail.com>
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -29,7 +29,7 @@ public interface CharWidthProvider {
     default int getStringWidth(@NotNull CharSequence charSequence) {
         return getStringWidth(charSequence, null);
     }
-    
+
     int getStringWidth(@NotNull CharSequence charSequence, @Nullable CharSequence zeroWidth);
     int getSpaceWidth();
 
