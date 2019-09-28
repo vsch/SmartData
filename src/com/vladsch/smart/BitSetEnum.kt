@@ -93,12 +93,12 @@ open class BitSetEnum<T: Enum<T>>(enumClass: Class<T>, map: (T) -> Int) {
 
     init {
         for (enumConstant in enumClass.enumConstants) {
-            enumFlagMap.put(enumConstant as T, map(enumConstant))
+            enumFlagMap[enumConstant as T] = map(enumConstant)
         }
     }
 
     fun add(enumConstant: T, flags: Int) {
-        enumFlagMap.put(enumConstant, flags)
+        enumFlagMap[enumConstant] = flags
     }
 
     fun flags(enumConstant: T): Int {
@@ -126,12 +126,12 @@ open class BitSetEnum<T: Enum<T>>(enumClass: Class<T>, map: (T) -> Int) {
 
     fun T.isIn(flags: Int): Boolean = flags.contains(this)
 
-    fun asFlags(collection: Collection<T>): Int = collection.fold(0) { total, it -> total or (enumFlagMap.get(it) ?: 0) }
-    fun asFlags(collection: Array<T>): Int = collection.fold(0) { total, it -> total or (enumFlagMap.get(it) ?: 0) }
+    fun asFlags(collection: Collection<T>): Int = collection.fold(0) { total, it -> total or (enumFlagMap[it] ?: 0) }
+    fun asFlags(collection: Array<T>): Int = collection.fold(0) { total, it -> total or (enumFlagMap[it] ?: 0) }
     fun asFlags(collection: Map<T, Boolean>): Int {
         var flags = 0
 //        collection.forEach() { if (it.value) flags = flags or (enumFlagMap.get(it.key) ?: 0) }
-        for (it in collection) { if (it.value) flags = flags or (enumFlagMap.get(it.key) ?: 0) }
+        for (it in collection) { if (it.value) flags = flags or (enumFlagMap[it.key] ?: 0) }
         return flags
     }
 
