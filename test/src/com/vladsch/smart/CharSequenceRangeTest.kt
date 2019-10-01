@@ -38,24 +38,23 @@ class CharSequenceRangeTest {
     val threeFullLinesSeq = SmartCharArraySequence("0123456789\nabcdefghijklmnopqrstuvwxyz\nABCDEFGHIJKLMNOPQRSTUVWXYZ\n".toCharArray())
 
     val allCharTestSequences = listOf(
-            emptySeq,
-            blankSeq,
-            digitSeq,
-            digitBlankSeq,
-            letterSeq
+        emptySeq,
+        blankSeq,
+        digitSeq,
+        digitBlankSeq,
+        letterSeq
     )
 
     val allLineTestSequences = listOf(
-            emptySeq,
-            digitSeq,
-            letterSeq,
-            oneLineSeq,
-            twoPartialLinesSeq,
-            twoFullLinesSeq,
-            threePartialLinesSeq,
-            threeFullLinesSeq
+        emptySeq,
+        digitSeq,
+        letterSeq,
+        oneLineSeq,
+        twoPartialLinesSeq,
+        twoFullLinesSeq,
+        threePartialLinesSeq,
+        threeFullLinesSeq
     )
-
 
     @Test
     fun getErrors() {
@@ -156,13 +155,13 @@ class CharSequenceRangeTest {
     @Test
     fun safeRawIndex() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (i in start - 3..end + 3) {
+                    for (i in start - 3 .. end + 3) {
                         val safeRawIndex = seq.safeRawIndex(i)
                         var expStart = i.max(0).min(seq.length)
                         assertEquals("Testing: $i for [$start, $end) exp $expStart", expStart, safeRawIndex)
@@ -175,13 +174,13 @@ class CharSequenceRangeTest {
     @Test
     fun safeRawInclusiveIndex() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (i in start - 3..end + 3) {
+                    for (i in start - 3 .. end + 3) {
                         val safeRawIndex = seq.safeRawInclusiveIndex(i)
                         var expStart = i.max(0).min((seq.length - 1).max(0))
                         assertEquals("Testing: $i for [$start, $end) exp $expStart", expStart, safeRawIndex)
@@ -194,14 +193,14 @@ class CharSequenceRangeTest {
     @Test
     fun safeRawRange() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (i in start - 3..end + 3) {
-                        for (j in start - 3..end + 3) {
+                    for (i in start - 3 .. end + 3) {
+                        for (j in start - 3 .. end + 3) {
                             val safe = seq.safeRawRange(i, j)
                             var expEnd = j.max(0).min(seq.length)
                             var expStart = i.max(0).min(expEnd)
@@ -218,13 +217,13 @@ class CharSequenceRangeTest {
     @Test
     fun rawCharIndex() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (i in -3..seq.length + 3) {
+                    for (i in -3 .. seq.length + 3) {
                         val safeRawIndex = seq.safeRawCharIndex(i)
                         var expStart = start + i.max(0).min(seq.length)
                         assertEquals("Testing: $i for [$start, $end) exp $expStart", expStart, safeRawIndex)
@@ -237,14 +236,14 @@ class CharSequenceRangeTest {
     @Test
     fun setStartEndIndex() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in -3..seq.rawLength + 3) {
-                        for (seqEnd in seqStart - 3..seq.rawLength + 3) {
+                    for (seqStart in -3 .. seq.rawLength + 3) {
+                        for (seqEnd in seqStart - 3 .. seq.rawLength + 3) {
                             seq.endIndex = seqEnd
                             assertEquals("Testing $seqEnd in [0, ${seq.rawLength})", seqEnd.max(0).min(seq.rawLength), seq.endIndex)
 
@@ -276,18 +275,18 @@ class CharSequenceRangeTest {
     @Test
     fun safeIndex() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in -3..seq.rawLength + 3) {
-                        for (seqEnd in seqStart - 3..seq.rawLength + 3) {
+                    for (seqStart in -3 .. seq.rawLength + 3) {
+                        for (seqEnd in seqStart - 3 .. seq.rawLength + 3) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
-                            for (seqIndex in seq.startIndex - 3..seq.endIndex + 3) {
+                            for (seqIndex in seq.startIndex - 3 .. seq.endIndex + 3) {
                                 val expIndex = seqIndex.max(0).min(seq.length)
                                 assertEquals("Testing $seqIndex in [${seq.startIndex}, ${seq.endIndex}) exp $expIndex", expIndex, seq.safeIndex(seqIndex))
                             }
@@ -301,18 +300,18 @@ class CharSequenceRangeTest {
     @Test
     fun safeInclusiveIndex() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in -3..seq.rawLength + 3) {
-                        for (seqEnd in seqStart - 3..seq.rawLength + 3) {
+                    for (seqStart in -3 .. seq.rawLength + 3) {
+                        for (seqEnd in seqStart - 3 .. seq.rawLength + 3) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
-                            for (seqIndex in seq.startIndex - 3..seq.endIndex + 3) {
+                            for (seqIndex in seq.startIndex - 3 .. seq.endIndex + 3) {
                                 val expIndex = seqIndex.max(0).min((seq.length - 1).max(0))
                                 assertEquals("Testing $seqIndex in [${seq.startIndex}, ${seq.endIndex}) exp $expIndex", expIndex, seq.safeInclusiveIndex(seqIndex))
                             }
@@ -326,19 +325,19 @@ class CharSequenceRangeTest {
     @Test
     fun safeRange() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in 0..seq.rawLength) {
-                        for (seqEnd in seqStart..seq.rawLength) {
+                    for (seqStart in 0 .. seq.rawLength) {
+                        for (seqEnd in seqStart .. seq.rawLength) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
-                            for (seqIndexStart in -3..seq.length + 3) {
-                                for (seqIndexEnd in -3..seq.length + 3) {
+                            for (seqIndexStart in -3 .. seq.length + 3) {
+                                for (seqIndexEnd in -3 .. seq.length + 3) {
                                     val expIndexEnd = seqIndexEnd.max(0).min(seq.length)
                                     val expIndexStart = seqIndexStart.max(0).min(expIndexEnd)
                                     val range = seq.safeRange(seqIndexStart, seqIndexEnd)
@@ -412,23 +411,23 @@ class CharSequenceRangeTest {
     @Test
     fun getChar() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     seq.beforeStartNonChar = '!'
                     seq.afterEndNonChar = '*'
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in 0..seq.rawLength) {
-                        for (seqEnd in seqStart..seq.rawLength) {
+                    for (seqStart in 0 .. seq.rawLength) {
+                        for (seqEnd in seqStart .. seq.rawLength) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
                             assertEquals("Testing beforeStart in [${seq.startIndex}, ${seq.endIndex})", StringBuilder().append(rawSeq.subSequence(start, end).subSequence(0, seq.startIndex)).toString(), StringBuilder().append(seq.beforeStart).toString())
                             assertEquals("Testing afterEnd in [${seq.startIndex}, ${seq.endIndex})", StringBuilder().append(rawSeq.subSequence(start, end).subSequence(seq.endIndex, seq.rawLength)).toString(), StringBuilder().append(seq.afterEnd).toString())
 
-                            for (seqIndex in -3..seq.length + 3) {
+                            for (seqIndex in -3 .. seq.length + 3) {
                                 val expIndex = seqIndex.max(0).min(seq.length - 1)
                                 val expChar = if (seqIndex < 0) '!' else if (seqIndex >= seq.length) '*' else rawSeq[start + seq.startIndex + expIndex]
 
@@ -444,16 +443,16 @@ class CharSequenceRangeTest {
     @Test
     fun getFirstChar() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     seq.beforeStartNonChar = '!'
                     seq.afterEndNonChar = '*'
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in -3..seq.rawLength + 3) {
-                        for (seqEnd in seqStart - 3..seq.rawLength + 3) {
+                    for (seqStart in -3 .. seq.rawLength + 3) {
+                        for (seqEnd in seqStart - 3 .. seq.rawLength + 3) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
@@ -470,16 +469,16 @@ class CharSequenceRangeTest {
     @Test
     fun getLastChar() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     seq.beforeStartNonChar = '!'
                     seq.afterEndNonChar = '*'
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in -3..seq.rawLength + 3) {
-                        for (seqEnd in seqStart - 3..seq.rawLength + 3) {
+                    for (seqStart in -3 .. seq.rawLength + 3) {
+                        for (seqEnd in seqStart - 3 .. seq.rawLength + 3) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
@@ -496,8 +495,8 @@ class CharSequenceRangeTest {
     @Test
     fun isEmpty() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     seq.beforeStartNonChar = '!'
                     seq.afterEndNonChar = '*'
@@ -513,8 +512,8 @@ class CharSequenceRangeTest {
     @Test
     fun isBlank() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     seq.beforeStartNonChar = '!'
                     seq.afterEndNonChar = '*'
@@ -530,16 +529,16 @@ class CharSequenceRangeTest {
     @Test
     fun getRawChars() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     seq.beforeStartNonChar = '!'
                     seq.afterEndNonChar = '*'
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in -3..seq.rawLength + 3) {
-                        for (seqEnd in seqStart - 3..seq.rawLength + 3) {
+                    for (seqStart in -3 .. seq.rawLength + 3) {
+                        for (seqEnd in seqStart - 3 .. seq.rawLength + 3) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
@@ -555,19 +554,19 @@ class CharSequenceRangeTest {
     @Test
     fun rawSubSequence() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
 
-                    for (seqStart in 0..seq.rawLength) {
-                        for (seqEnd in seqStart..seq.rawLength) {
+                    for (seqStart in 0 .. seq.rawLength) {
+                        for (seqEnd in seqStart .. seq.rawLength) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
-                            for (rawSeqStart in seqStart - 3..seqEnd + 3) {
-                                for (rawSeqEnd in seqStart - 3..seqEnd + 3) {
+                            for (rawSeqStart in seqStart - 3 .. seqEnd + 3) {
+                                for (rawSeqEnd in seqStart - 3 .. seqEnd + 3) {
                                     val safe = seq.safeRawRange(rawSeqStart, rawSeqEnd)
                                     val expSeq = rawSeq.subSequence(start, end).subSequence(safe.start, safe.end)
                                     assertEquals("Testing rawSubSequence($rawSeqStart,$rawSeqEnd) in [${seq.startIndex}, ${seq.endIndex})", StringBuilder().append(expSeq).toString(), StringBuilder().append(seq.rawSubSequence(rawSeqStart, rawSeqEnd)).toString())
@@ -583,33 +582,33 @@ class CharSequenceRangeTest {
     @Test
     fun subSequence() {
         for (rawSeq in allCharTestSequences) {
-            for (start in 0..rawSeq.length) {
-                for (end in start..rawSeq.length) {
+            for (start in 0 .. rawSeq.length) {
+                for (end in start .. rawSeq.length) {
                     val seq = SafeCharSequenceRange(rawSeq, start, end)
                     val length = end - start
                     assertEquals("Testing length for $start, $end of ${rawSeq.length} exp ${end - start}", length, seq.rawLength)
-                    assertEquals("Testing content for $start, $end of string ${rawSeq.length} exp string of ${end - start}", StringBuilder().append(rawSeq.subSequence(start,end)).toString(), StringBuilder().append(seq).toString())
-                    assertEquals("Testing content subsequence for $start, $end of string ${rawSeq.length} exp string of ${end - start}", StringBuilder().append(rawSeq.subSequence(start,end)).toString(), StringBuilder().append(seq.subSequence(0,seq.length)).toString())
+                    assertEquals("Testing content for $start, $end of string ${rawSeq.length} exp string of ${end - start}", StringBuilder().append(rawSeq.subSequence(start, end)).toString(), StringBuilder().append(seq).toString())
+                    assertEquals("Testing content subsequence for $start, $end of string ${rawSeq.length} exp string of ${end - start}", StringBuilder().append(rawSeq.subSequence(start, end)).toString(), StringBuilder().append(seq.subSequence(0, seq.length)).toString())
 
-                    for (seqStart in 0..seq.rawLength) {
-                        for (seqEnd in seqStart..seq.rawLength) {
+                    for (seqStart in 0 .. seq.rawLength) {
+                        for (seqEnd in seqStart .. seq.rawLength) {
                             seq.startIndex = seqStart
                             seq.endIndex = seqEnd
 
                             val expSubSeq = rawSeq.subSequence(start, end).subSequence(seq.startIndex, seq.endIndex)
                             assertEquals("Testing subSequence in [${seq.startIndex}, ${seq.endIndex})", StringBuilder().append(expSubSeq).toString(), StringBuilder().append(seq.subSequence).toString())
 
-                            for (rawSeqStart in -3..seq.length + 3) {
-                                for (rawSeqEnd in -3..seq.length + 3) {
+                            for (rawSeqStart in -3 .. seq.length + 3) {
+                                for (rawSeqEnd in -3 .. seq.length + 3) {
                                     val safe = seq.safeRange(rawSeqStart, rawSeqEnd)
                                     val expSeq = rawSeq.subSequence(start, end).subSequence(seqStart, seqEnd).subSequence(safe.start, safe.end)
 
                                     val expToString = (expSeq).asString()
                                     val actToString = (seq.subSequence(rawSeqStart, rawSeqEnd)).asString()
-                                    if (!expToString.equals(actToString)) {
-                                         val testToString = seq.subSequence(rawSeqStart, rawSeqEnd);
-                                        val tmp = 0
-                                    }
+//                                    if (!expToString.equals(actToString)) {
+//                                        val testToString = seq.subSequence(rawSeqStart, rawSeqEnd);
+//                                        val tmp = 0
+//                                    }
                                     assertEquals("Testing subSequence($rawSeqStart,$rawSeqEnd) exp range [${safe.start}, ${safe.end}) in [${seq.startIndex}, ${seq.endIndex})", expToString, actToString)
                                 }
                             }

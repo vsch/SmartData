@@ -60,6 +60,7 @@ class SmartSamples {
         val v1 = SmartVolatileData("v1", 1)
         val v2 = SmartVolatileData("v2", 1)
         val v3 = SmartVolatileData("v3", 1)
+        @Suppress("UNUSED_VARIABLE")
         val prod = SmartVectorData("prod", listOf(v1, v2, v3)) {
             val iterator = it.iterator()
             var prod = iterator.next()
@@ -72,18 +73,18 @@ class SmartSamples {
             prod
         }
 
-        var t = prod.get()
+//        var t = prod.get()
         v1.set(10)
-        t = prod.get()
+//        t = prod.get()
         v2.set(20)
-        t = prod.get()
+//        t = prod.get()
         v3.set(30)
-        t = prod.get()
+//        t = prod.get()
 
         v1.set(100)
         v2.set(200)
         v3.set(300)
-        t = prod.get()
+//        t = prod.get()
     }
 
     @Test
@@ -91,6 +92,7 @@ class SmartSamples {
         val WIDTH = SmartVolatileDataKey("WIDTH", 0)
         val MAX_WIDTH = SmartAggregatedScopesDataKey("MAX_WIDTH", 0, WIDTH, setOf(SmartScopes.SELF, SmartScopes.CHILDREN, SmartScopes.DESCENDANTS), IterableDataComputable { it.max() })
         val ALIGNMENT = SmartVolatileDataKey("ALIGNMENT", TextAlignment.LEFT)
+        @Suppress("UNUSED_VARIABLE")
         val COLUMN_ALIGNMENT = SmartDependentDataKey("COLUMN_ALIGNMENT", TextColumnAlignment.NULL_VALUE, listOf(ALIGNMENT, MAX_WIDTH), SmartScopes.SELF, { TextColumnAlignment(WIDTH.value(it), ALIGNMENT.value(it)) })
 
         val topScope = SmartDataScopeManager.createDataScope("top")

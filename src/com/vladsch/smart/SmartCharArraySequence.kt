@@ -82,16 +82,16 @@ open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: Ch
     }
 
     override fun getChars(dst: CharArray, dstOffset: Int) {
-        if (dstOffset + length > dst.size) {
-            val tmp = 0
-        }
+//        if (dstOffset + length > dst.size) {
+//            val tmp = 0
+//        }
         System.arraycopy(myChars, myStart, dst, dstOffset, length)
     }
 
     override fun get(index: Int): Char = myChars[myStart + index]
 
     override fun subSequence(startIndex: Int, endIndex: Int): SmartCharArraySequence {
-        if (myOriginal != null) return super.subSequence(startIndex, endIndex) as SmartCharArraySequence
+        if (myOriginal != null) return super.subSequence(startIndex, endIndex)
 
         checkBounds(startIndex, endIndex)
         if (startIndex == 0 && endIndex == length) return this

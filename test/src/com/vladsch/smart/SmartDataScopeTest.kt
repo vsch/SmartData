@@ -32,9 +32,9 @@ class SmartDataScopeTest {
     @Test
     fun test_childScopes() {
         val scope = manager.createDataScope("top")
-        val child1 = scope.createDataScope("child1")
+//        val child1 = scope.createDataScope("child1")
         val child2 = scope.createDataScope("child2")
-        val grandChild21 = child2.createDataScope("grandChild21")
+//        val grandChild21 = child2.createDataScope("grandChild21")
 
         assertEquals(2, scope.children.size)
         assertEquals(1, scope.descendants.size)
@@ -67,7 +67,7 @@ class SmartDataScopeTest {
 
         val indent = SmartVolatileData(0)
         val myIndent = scope.dataPoint(INDENT, 0)
-        val myIndent2 = scope.dataPoint(INDENT, 2)
+//        val myIndent2 = scope.dataPoint(INDENT, 2)
         scope.setValue(INDENT, 0, indent)
 
         assertEquals(1, scope.consumers.size)

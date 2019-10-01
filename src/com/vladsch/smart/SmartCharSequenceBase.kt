@@ -60,7 +60,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
      */
     open val freshProxyOrNull: SmartCharSequence?
         get() {
-            var cachedProxy = myCachedProxy
+            val cachedProxy = myCachedProxy
             if (cachedProxy == null || cachedProxy.version.isStale) return null
             return cachedProxy
         }
@@ -71,6 +71,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
 
     override fun subSequence(startIndex: Int, endIndex: Int): T {
         checkBounds(startIndex, endIndex)
+        @Suppress("UNCHECKED_CAST")
         if (startIndex == 0 && endIndex == length) return original.contents as T
         val subSequence = original.properSubSequence(startIndex, endIndex)
 //        val cachedProxy = freshProxyOrNull
@@ -148,6 +149,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
 
     override fun splitParts(delimiter: Char, includeDelimiter: Boolean): List<SmartCharSequence> {
 //        return (cachedProxy as CharSequence).splitParts(delimiter, includeDelimiter) as List<SmartCharSequence>
+        @Suppress("UNCHECKED_CAST")
         return (this as CharSequence).splitParts(delimiter, includeDelimiter) as List<SmartCharSequence>
     }
 

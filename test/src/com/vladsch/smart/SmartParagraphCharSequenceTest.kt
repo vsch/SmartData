@@ -119,9 +119,9 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
                 TextAlignment.LEFT,
                 TextAlignment.CENTER -> {
                     if (trimmed.contains(' ')) {
-                        if (rightPad != actualRightPad) {
-                            val tmp = 0
-                        }
+//                        if (rightPad != actualRightPad) {
+//                            val tmp = 0
+//                        }
                         assertEquals(rightPad, actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
                         assertTrue(trimmed.length <= width - indentSize, "Testing fit on line $lineCount, '$trimmed'.length ${line.length} < $width")
                     } else if (trimmed.length < width - indentSize) {
@@ -130,9 +130,9 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
                 }
                 TextAlignment.RIGHT -> {
                     if (trimmed.contains(' ')) {
-                        if (rightPad != actualRightPad) {
-                            val tmp = 0
-                        }
+//                        if (rightPad != actualRightPad) {
+//                            val tmp = 0
+//                        }
                         assertEquals(rightPad, actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
                         assertTrue(trimmed.length <= width - indentSize, "Testing fit on line $lineCount, '$trimmed'.length ${line.length} < $width")
                     } else if (trimmed.length <= width - indentSize) {
@@ -141,9 +141,9 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
                 }
                 TextAlignment.JUSTIFIED -> {
                     if (trimmed.contains(' ')) {
-                        if (rightPad != actualRightPad) {
-                            val tmp = 0
-                        }
+//                        if (rightPad != actualRightPad) {
+//                            val tmp = 0
+//                        }
                         assertEquals(rightPad, actualRightPad, "Testing right padding on line '$line' $lineCount $rightPad")
                         assertTrue(trimmed.length <= width - indentSize, "Testing fit on line $lineCount, '$trimmed'.length ${line.length} < $width")
                     } else if (trimmed.length < width - indentSize) {

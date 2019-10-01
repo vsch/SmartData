@@ -67,7 +67,7 @@ open class SmartSegmentedCharSequence : SmartCharSequenceBase<SmartCharSequence>
         for (charSequence in segments) {
             length += charSequence.length
             lengths[i++] = length
-            if (!variableContent && charSequence is SmartCharSequence) {
+            if (!variableContent) {
                 variableContent = charSequence.version.isMutable
             }
         }

@@ -19,6 +19,8 @@
  * under the License.
  */
 
+@file:Suppress("UNUSED_VARIABLE", "UNUSED_ANONYMOUS_PARAMETER", "UNUSED_VALUE", "VARIABLE_WITH_REDUNDANT_INITIALIZER", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+
 package com.vladsch.smart
 
 import org.junit.Assert.*
@@ -83,26 +85,26 @@ class SmartVersionedDataTest {
         v1.set(6)
         v2.set(7)
 
-        SmartVersionManager.groupedCompute({
+        SmartVersionManager.groupedCompute {
             v1.set(8)
             v2.set(9)
-        })
+        }
 
         assertEquals(v1.versionSerial, v2.versionSerial)
     }
 
     @Test
     fun test_updateDependent() {
-        var v1 = SmartVolatileData(1)
-        var v2 = SmartVolatileData(2)
-        var v3 = SmartVolatileData(3)
-        var vc = SmartDependentData(v3, { v3.get() })
+        val v1 = SmartVolatileData(1)
+        val v2 = SmartVolatileData(2)
+        val v3 = SmartVolatileData(3)
+        val vc = SmartDependentData(v3) { v3.get() }
         val sum: () -> Int = { v1.get() + v2.get() + vc.get() }
         val sumEq = { v1.get() + v2.get() + v3.get() }
-        var dv = SmartUpdateDependentData(listOf(v1, v2, vc), sum)
+        val dv = SmartUpdateDependentData(listOf(v1, v2, vc), sum)
         var dv2 = SmartUpdateDependentData(listOf(vc), sum)
-        var vi = SmartImmutableData(10)
-        var dvn = SmartLatestDependentData(listOf(vi))
+        val vi = SmartImmutableData(10)
+        val dvn = SmartLatestDependentData(listOf(vi))
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
@@ -141,15 +143,15 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_dependent() {
-        var v1 = SmartVolatileData(1)
-        var v2 = SmartVolatileData(2)
-        var v3 = SmartVolatileData(3)
-        var vc = SmartDependentData(v3, { v3.get() })
+        val v1 = SmartVolatileData(1)
+        val v2 = SmartVolatileData(2)
+        val v3 = SmartVolatileData(3)
+        val vc = SmartDependentData(v3) { v3.get() }
         val sum = { v1.get() + v2.get() + vc.get() }
         val sumEq = { v1.get() + v2.get() + v3.get() }
-        var dv = SmartDependentData(listOf(v1, v2, vc), sum)
-        var vi = SmartImmutableData(10)
-        var dvn = SmartIterableData(listOf(vi), { it -> vi.get() })
+        val dv = SmartDependentData(listOf(v1, v2, vc), sum)
+        val vi = SmartImmutableData(10)
+        val dvn = SmartIterableData(listOf(vi)) { it -> vi.get() }
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
@@ -184,15 +186,15 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_dependentIterable() {
-        var v1 = SmartVolatileData(1)
-        var v2 = SmartVolatileData(2)
-        var v3 = SmartVolatileData(3)
-        var vc = SmartDependentData(v3, { v3.get() })
+        val v1 = SmartVolatileData(1)
+        val v2 = SmartVolatileData(2)
+        val v3 = SmartVolatileData(3)
+        val vc = SmartDependentData(v3) { v3.get() }
         val sum = IterableDataComputable<Int> { it.sumBy { it } }
         val sumEq = { v1.get() + v2.get() + v3.get() }
-        var dv = SmartVectorData(listOf(v1, v2, vc), sum)
-        var vi = SmartImmutableData(10)
-        var dvn = SmartIterableData(listOf(vi), { it -> vi.get() })
+        val dv = SmartVectorData(listOf(v1, v2, vc), sum)
+        val vi = SmartImmutableData(10)
+        val dvn = SmartIterableData(listOf(vi)) { it -> vi.get() }
 
         assertTrue(dv.isMutable)
         assertFalse(dv.isStale)
@@ -227,10 +229,10 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_snapshot() {
-        var v1 = SmartImmutableData("v1", 1)
-        var v2 = SmartVolatileData("v2", 2)
-        var vs1 = SmartCachedData("vs1", v1)
-        var vs2 = SmartCachedData("vs2", v2)
+        val v1 = SmartImmutableData("v1", 1)
+        val v2 = SmartVolatileData("v2", 2)
+        val vs1 = SmartCachedData("vs1", v1)
+        val vs2 = SmartCachedData("vs2", v2)
 
         println("$v1, $v2, $vs1, $vs2")
 
@@ -255,9 +257,9 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_latest() {
-        var v1 = SmartImmutableData("v1", 1)
-        var v2 = SmartVolatileData("v2", 2)
-        var v3 = SmartVolatileData("v3", 3)
+        val v1 = SmartImmutableData("v1", 1)
+        val v2 = SmartVolatileData("v2", 2)
+        val v3 = SmartVolatileData("v3", 3)
         var vs: SmartVersionedDataHolder<Int> = v1
         vs = SmartLatestDependentData("vs2", listOf(v1, v2, v3)) { println("$v1, $v2, $v3, $vs") }
         var va: SmartVersionedDataHolder<Int> = v1
@@ -290,14 +292,14 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_Fun() {
-        var v1 = SmartVolatileData(10.0)
-        var v2 = SmartVolatileData(5.0)
-        var v3 = SmartVolatileData(3.0)
-        var vd = SmartVectorData(listOf(v1, v2, v3), {
+        val v1 = SmartVolatileData(10.0)
+        val v2 = SmartVolatileData(5.0)
+        val v3 = SmartVolatileData(3.0)
+        val vd = SmartVectorData(listOf(v1, v2, v3)) {
             val prod = it.fold(1.0) { a, b -> a * b }
             println(it.fold("product of ") { a, b -> "$a $b" } + " = $prod")
             prod
-        })
+        }
 
         var t = vd.get()
         v2.set(2.0)
@@ -312,21 +314,21 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_Recursive() {
-        var v1 = SmartVolatileData(10.0)
-        var v2 = SmartVolatileData(5.0)
-        var v3 = SmartVolatileData(3.0)
-        var vd = SmartVectorData<Double>(listOf(v1, v2, v3), {
+        val v1 = SmartVolatileData(10.0)
+        val v2 = SmartVolatileData(5.0)
+        val v3 = SmartVolatileData(3.0)
+        val vd = SmartVectorData<Double>(listOf(v1, v2, v3)) {
             val prod = it.fold(1.0) { a, b -> a * b }
             println(it.fold("product of ") { a, b -> "$a $b" } + " = $prod")
             prod
-        })
+        }
 
-        var vd2 = SmartVectorData<Double>(listOf(v1, v2, v3, vd), {
+        val vd2 = SmartVectorData<Double>(listOf(v1, v2, v3, vd)) {
             val sumOf = it.sum()
             println(it.fold("sum of ") { a, b -> "$a $b" } + " = $sumOf")
             v3.set(sumOf)
             sumOf
-        })
+        }
 
         var t = vd.get()
         var t2 = vd2.get()
@@ -345,16 +347,16 @@ class SmartVersionedDataTest {
 
     @Test
     fun test_aliased() {
-        var v1 = SmartImmutableData(1)
-        var v2 = SmartVolatileData(5)
-        var v3 = SmartVolatileData(3)
-        var ad = SmartVersionedDataAlias(v1)
+        val v1 = SmartImmutableData(1)
+        val v2 = SmartVolatileData(5)
+        val v3 = SmartVolatileData(3)
+        val ad = SmartVersionedDataAlias(v1)
         var va: SmartVersionedDataHolder<Int> = v1
-        var vd = SmartVectorData<Int>(listOf(v1, v2, v3, ad), {
+        val vd = SmartVectorData<Int>(listOf(v1, v2, v3, ad)) {
             val prod = it.fold(1) { a, b -> a * b }
             println(it.fold("product of ") { a, b -> "$a $b" } + " = $prod")
             prod
-        })
+        }
 
         assertTrue(vd.isMutable)
 

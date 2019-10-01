@@ -28,7 +28,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
     companion object {
         @JvmField val MARKDOWN_START_LINE_CHAR = '\u2028'     // https://www.fileformat.info/info/unicode/char/2028/index.htm LINE_SEPARATOR this one is not preserved but will cause a line break if not already at beginning of line
-        @JvmField val MARKDOWN_START_LINE = SmartCharArraySequence(CharArray(1, { '\u2028' }))     // this one is not preserved but will cause a line break if not already at beginning of line
+        @JvmField val MARKDOWN_START_LINE = SmartCharArraySequence(CharArray(1) { '\u2028' })     // this one is not preserved but will cause a line break if not already at beginning of line
     }
 
     constructor(chars: CharSequence) : this(SmartCharSequenceWrapper(chars))
@@ -55,7 +55,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     var charWidthProvider: CharWidthProvider
         get() = myCharWidthProvider
         set(value) {
-            val useValue = value ?: CharWidthProvider.UNITY_PROVIDER
+            val useValue = value
             if (myCharWidthProvider !== useValue) {
                 myCharWidthProvider = useValue
 
@@ -128,7 +128,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
     protected fun tokenizeSequence(chars: CharSequence): List<Token<TextType>> {
         var pos = 0
-        var maxPos = chars.length
+        val maxPos = chars.length
         var lastPos = 0
         var inWord = false
         val tokenList = ArrayList<Token<TextType>>()
@@ -210,15 +210,15 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
         // compare tokens
         if (test) {
-            var iMax = tokens.size
+//            var iMax = tokens.size
             val tokenized = tokenizer.asList()
 
             if (tokens.size != tokenized.size) {
                 println("tokens size differs ${tokens.size} != ${tokenized.size}")
-                assert(tokens.size == tokenized.size, { "tokens size differs ${tokens.size} != ${tokenized.size}" })
+                assert(tokens.size == tokenized.size) { "tokens size differs ${tokens.size} != ${tokenized.size}" }
             } else {
-                var diffs = ArrayList<Int>()
-                for (i in 0..tokens.size - 1) {
+                val diffs = ArrayList<Int>()
+                for (i in 0 until tokens.size) {
                     if (tokens[i] != tokenized[i]) {
                         println("tokens[$i] differs ${tokens[i]} != ${tokenized[i]}")
                         diffs.add(i)
@@ -226,7 +226,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                 }
 
                 if (diffs.size > 0) {
-                    assert(diffs.size == 0, { "tokens differ at indices ${diffs}" })
+                    assert(diffs.size == 0) { "tokens differ at indices $diffs" }
                 }
             }
 
@@ -333,14 +333,14 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
         if (test) {
             val resultSeq = SmartCharSequenceBase.smart(result)//.cachedProxy
-            var testTime = System.nanoTime() - startTime
+            val testTime = System.nanoTime() - startTime
 
             if (test && myAlignment.get() == TextAlignment.LEFT) {
-                var leftStartTime = System.nanoTime()
+                val leftStartTime = System.nanoTime()
                 val leftAligned = computeLeftAlignedSequence()
-                var leftTestTime = System.nanoTime() - leftStartTime
-                var genericStats = SmartCharSequence.Stats()
-                var leftAlignedStats = SmartCharSequence.Stats()
+                val leftTestTime = System.nanoTime() - leftStartTime
+                val genericStats = SmartCharSequence.Stats()
+                val leftAlignedStats = SmartCharSequence.Stats()
                 resultSeq.addStats(genericStats)
                 leftAligned.addStats(leftAlignedStats)
 
@@ -515,9 +515,9 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                 if (!lastLine && wordsOnLine > 1 && distributeSpaces > 0) {
                     addSpaces = distributeSpaces / (wordsOnLine - 1)
                     remSpaces = distributeSpaces - addSpaces * (wordsOnLine - 1)
-                    if (addSpaces * (wordsOnLine - 1) + remSpaces != distributeSpaces) {
-                        val tmp = 0
-                    }
+//                    if (addSpaces * (wordsOnLine - 1) + remSpaces != distributeSpaces) {
+//                        val tmp = 0
+//                    }
                 }
             }
         }
@@ -530,12 +530,12 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
             if (word.type == TextType.WORD) {
                 if (firstWord) firstWord = false
                 else if (lastSpace == null) {
-                    var spcSize = if (remSpaces > 0) 1 else 0
+                    val spcSize = if (remSpaces > 0) 1 else 0
                     val spcCount = addSpaces + 1 + spcSize
                     result.add(RepeatedCharSequence(' ', spcCount))
                     remSpaces -= spcSize
                 } else {
-                    var spcSize = if (remSpaces > 0) 1 else 0
+                    val spcSize = if (remSpaces > 0) 1 else 0
                     val spcCount = addSpaces + 1 + spcSize
                     result.add(SmartReplacedCharSequence(lastSpace.subSequence(charSequence), RepeatedCharSequence(' ', spcCount)))
                     //                result.add(SmartRepeatedCharSequence(word.subSequence(charSequence), 0, spcCount))
@@ -548,10 +548,9 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
                 lastSpace = word
             }
         }
-
-        if (remSpaces > 0) {
-            val tmp = 0
-        }
+//        if (remSpaces > 0) {
+//            val tmp = 0
+//        }
     }
 
     fun leftAlign(width: Int) {

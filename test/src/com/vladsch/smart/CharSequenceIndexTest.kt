@@ -209,9 +209,9 @@ class CharSequenceIndexTest {
 
                                 val expToString = (rawSeq.subSequence(start, end).subSequence(seq.startIndex + expIndex, seq.endIndex)).asString()
                                 val actualToString = (seqInd.afterIndexChars).asString()
-                                if (!expToString.equals(actualToString)) {
-                                    val testToString = (seqInd.afterIndexChars).asString()
-                                }
+//                                if (!expToString.equals(actualToString)) {
+//                                    val testToString = (seqInd.afterIndexChars).asString()
+//                                }
                                 assertEquals("Testing afterIndex ${seqInd.index} in [${seq.startIndex}, ${seq.endIndex})", expToString, actualToString)
                             }
                         }
@@ -326,8 +326,8 @@ Partial Line"""
 
     @Test
     fun getEndOfPreviousSkipLines() {
-        val csInfoTest = SafeCharSequenceIndex(charLines.getSequence(1), 6)
-        val prevEnd = csInfoTest.endOfPreviousSkipLines(1)
+//        val csInfoTest = SafeCharSequenceIndex(charLines.getSequence(1), 6)
+//        val prevEnd = csInfoTest.endOfPreviousSkipLines(1)
 
         val csInfo = SafeCharSequenceIndex(charLines)
         for (i in 0..charLines.segments.lastIndex) {
@@ -337,10 +337,10 @@ Partial Line"""
                 for (skip in 0..i + 3) {
                     val skipped = if (i - skip - 1 < 0) 0 else (charLines.endIndex(i - skip - 1) - 1).minLimit(0)
                     val endOfPreviousSkipLines = csInfo2.endOfPreviousSkipLines(skip)
-                    if (skipped != endOfPreviousSkipLines) {
-                        val test = csInfo2.endOfPreviousSkipLines(skip)
-                        val tmp = 0
-                    }
+//                    if (skipped != endOfPreviousSkipLines) {
+//                        val test = csInfo2.endOfPreviousSkipLines(skip)
+//                        val tmp = 0
+//                    }
                     assertEquals("i:$i, j:$j skip:$skip index:${csInfo2.index} start:${csInfo2.startOfLine} end:${csInfo2.endOfLine} first:${csInfo2.firstNonBlank} last:${csInfo2.lastNonBlank}", skipped, endOfPreviousSkipLines)
 
                     csInfo.index = charLines.startIndex(i) + j
@@ -352,8 +352,8 @@ Partial Line"""
 
     @Test
     fun getEndOfPreviousSkipLinesSingle() {
-        val csInfoTest = SafeCharSequenceIndex(charLines.getSequence(0), 0)
-        val prevEnd = csInfoTest.endOfPreviousSkipLines(1)
+//        val csInfoTest = SafeCharSequenceIndex(charLines.getSequence(0), 0)
+//        val prevEnd = csInfoTest.endOfPreviousSkipLines(1)
 
         for (i in 0..charLines.segments.lastIndex) {
             val csInfo = SafeCharSequenceIndex(charLines.getSequence(i), 0)
@@ -699,7 +699,7 @@ Partial Line"""
         val csInfo = SafeCharSequenceIndex(charLines)
         for (i in 0..charLines.segments.lastIndex) {
             val lastNonBlank = charLines.endIndex(i) - charLines.startIndex(i) - charLines.segments[i].countTrailing(' ')
-            val firstNonBlank = charLines.segments[i].countLeading(' ', '\t')
+//            val firstNonBlank = charLines.segments[i].countLeading(' ', '\t')
 
             for (j in 0..(charLines.lastIndex(i) - charLines.startIndex(i))) {
                 val csInfo2 = SafeCharSequenceIndex(charLines, charLines.startIndex(i) + j)
@@ -718,7 +718,7 @@ Partial Line"""
         for (i in 0..charLines.segments.lastIndex) {
             val csInfo = SafeCharSequenceIndex(charLines.getSequence(i))
             val lastNonBlank = charLines.endIndex(i) - charLines.startIndex(i) - charLines.segments[i].countTrailing(' ')
-            val firstNonBlank = charLines.segments[i].countLeading(' ', '\t')
+//            val firstNonBlank = charLines.segments[i].countLeading(' ', '\t')
 
             for (j in 0..(charLines.lastIndex(i) - charLines.startIndex(i))) {
                 val csInfo2 = SafeCharSequenceIndex(charLines.getSequence(i), j)

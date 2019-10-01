@@ -68,8 +68,8 @@ class BitSetEnumTest() {
 
     @Test
     fun testTest_isIn() {
-        val enumSet = MyEnum.asArray<MyEnum>(7)
-        val manualEnumSet = arrayOf(MyEnum.MEMBER_1, MyEnum.MEMBER_2, MyEnum.MEMBER_3)
+//        val enumSet = MyEnum.asArray<MyEnum>(7)
+//        val manualEnumSet = arrayOf(MyEnum.MEMBER_1, MyEnum.MEMBER_2, MyEnum.MEMBER_3)
 
         assertEqualsMessage("", true, MyEnum.MEMBER_1.isIn(7))
         assertEqualsMessage("", true, MyEnum.MEMBER_1.isIn(5))
@@ -80,8 +80,8 @@ class BitSetEnumTest() {
 
     @Test
     fun testTest_containsSome() {
-        val enumSet = MyEnum.asArray<MyEnum>(7)
-        val manualEnumSet = arrayOf(MyEnum.MEMBER_1, MyEnum.MEMBER_2, MyEnum.MEMBER_3)
+//        val enumSet = MyEnum.asArray<MyEnum>(7)
+//        val manualEnumSet = arrayOf(MyEnum.MEMBER_1, MyEnum.MEMBER_2, MyEnum.MEMBER_3)
 
         assertEqualsMessage("", true, MyEnum.containsSome(7, MyEnum.MEMBER_1, MyEnum.MEMBER_3))
         assertEqualsMessage("", true, MyEnum.containsSome(5, MyEnum.MEMBER_1, MyEnum.MEMBER_3))
@@ -91,8 +91,8 @@ class BitSetEnumTest() {
 
     @Test
     fun testTest_containsAll() {
-        val enumSet = MyEnum.asArray<MyEnum>(7)
-        val manualEnumSet = arrayOf(MyEnum.MEMBER_1, MyEnum.MEMBER_2, MyEnum.MEMBER_3)
+//        val enumSet = MyEnum.asArray<MyEnum>(7)
+//        val manualEnumSet = arrayOf(MyEnum.MEMBER_1, MyEnum.MEMBER_2, MyEnum.MEMBER_3)
 
         assertEqualsMessage("", true, MyEnum.containsAll(7, MyEnum.MEMBER_1, MyEnum.MEMBER_3))
         assertEqualsMessage("", true, MyEnum.containsAll(5, MyEnum.MEMBER_1, MyEnum.MEMBER_3))

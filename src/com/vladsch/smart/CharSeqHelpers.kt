@@ -213,7 +213,7 @@ fun CharSequence.removePrefix(strip: Regex?): CharSequence {
 fun CharSequence.removeSuffix(strip: Regex?): CharSequence {
     var range = strip?.find(this, 0)?.range ?: return this
     while (range.start + range.endInclusive + 1 < length) {
-        range = strip?.find(this, range.start + range.endInclusive + 1)?.range ?: return this
+        range = strip.find(this, range.start + range.endInclusive + 1)?.range ?: return this
     }
     return subSequence(0, range.start)
 }
@@ -231,7 +231,7 @@ fun CharSequence.smart(): SmartCharSequence {
 }
 
 fun CharSequence.extractGroups(regex: String): ArrayList<CharSequence>? {
-    var matchResult = regex.toRegex().matchEntire(this)
+    val matchResult = regex.toRegex().matchEntire(this)
     if (matchResult != null) {
         val segments = ArrayList<CharSequence>(matchResult.groups.size)
         var group = 0
@@ -249,11 +249,10 @@ fun CharSequence.extractGroups(regex: String): ArrayList<CharSequence>? {
 }
 
 fun CharSequence.wrapParts(char: Char, includeDelimiter: Boolean, prefix: CharSequence, suffix: CharSequence): ArrayList<CharSequence> {
-    var pos = 0;
     var lastPos = 0;
     val segments = ArrayList<CharSequence>()
     while (lastPos < length) {
-        pos = this.indexOf(char, lastPos)
+        val pos = this.indexOf(char, lastPos)
         if (pos < 0) {
             segments.add(this.subSequence(lastPos, this.length))
             break;

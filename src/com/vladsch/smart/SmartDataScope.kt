@@ -19,6 +19,8 @@
  * under the License.
  */
 
+@file:Suppress("UNCHECKED_CAST")
+
 package com.vladsch.smart
 
 import java.util.*
@@ -54,18 +56,12 @@ enum class SmartScopes(val flags: Int) {
     }
 }
 
-abstract class SmartDataKey<V : Any> {
-    val myId: String
-    val myNullValue: V
+@Suppress("UNCHECKED_CAST")
+abstract class SmartDataKey<V : Any>(id: String, nullValue: V, scopes: Set<SmartScopes>) {
+    val myId: String = id
+    val myNullValue: V = nullValue
     val myNullData: SmartImmutableData<V>
     val myScopes: Int
-
-    constructor(id: String, nullValue: V, scopes: Set<SmartScopes>) {
-        this.myId = id
-        this.myNullValue = nullValue
-        this.myNullData = SmartImmutableData("$myId.nullValue", nullValue)
-        this.myScopes = SmartScopes.asFlags(scopes)
-    }
 
     fun onInit() {
         SmartDataScopeManager.registerKey(this)
@@ -150,6 +146,11 @@ abstract class SmartDataKey<V : Any> {
     fun dataPoint(scope: SmartDataScope, index: Int): SmartVersionedDataAlias<V> {
         return scope.dataPoint(this, index) as SmartVersionedDataAlias<V>
     }
+
+    init {
+        this.myNullData = SmartImmutableData("$myId.nullValue", nullValue)
+        this.myScopes = SmartScopes.asFlags(scopes)
+    }
 }
 
 // values computed from corresponding parent values
@@ -207,7 +208,7 @@ open class SmartParentComputedDataKey<V : Any>(id: String, nullValue: V, val com
         for (source in sources) {
             for (index in indices) {
                 val dependent = value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
-                val resultItem = result.getValue(this, index)
+//                val resultItem = result.getValue(this, index)
                 result.setValue(this, index, SmartVectorData(listOf(dependent), myComputable))
             }
 
@@ -242,7 +243,7 @@ open class SmartComputedDataKey<V : Any>(id: String, nullValue: V, override val 
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
-            var dependents = ArrayList<SmartVersionedDataHolder<*>>()
+            val dependents = ArrayList<SmartVersionedDataHolder<*>>()
 
             for (dependencyKey in dependencies) {
                 for (source in sources) {
@@ -281,7 +282,7 @@ open class SmartDependentDataKey<V : Any>(id: String, nullValue: V, override val
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
-            var dependents = ArrayList<SmartVersionedDataHolder<*>>()
+            val dependents = ArrayList<SmartVersionedDataHolder<*>>()
 
             for (dependencyKey in dependencies) {
                 for (source in sources) {
@@ -302,7 +303,7 @@ open class SmartTransformedDataKey<V : Any, R : Any>(id: String, nullValue: V, d
     constructor(id: String, nullValue: V, dependency: SmartDataKey<R>, scope: SmartScopes, computable: (R) -> V) : this(id, nullValue, dependency, scope, DataValueComputable { computable(it) })
 }
 
-open class SmartVectorDataKey<V : Any>(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, scopes: Set<SmartScopes>, val computable: IterableDataComputable<V>) : SmartDataKey<V>(id, nullValue, scopes) {
+open class SmartVectorDataKey<V : Any>(id: String, nullValue: V, override val dependencies: List<SmartDataKey<V>>, scopes: Set<SmartScopes>, computable: IterableDataComputable<V>) : SmartDataKey<V>(id, nullValue, scopes) {
 
     constructor(id: String, nullValue: V, dependencies: List<SmartDataKey<V>>, scope: SmartScopes, computable: IterableDataComputable<V>) : this(id, nullValue, dependencies, setOf(scope, SmartScopes.SELF), computable)
 
@@ -314,9 +315,7 @@ open class SmartVectorDataKey<V : Any>(id: String, nullValue: V, dependencies: L
 
     constructor(id: String, nullValue: V, dependency: SmartDataKey<V>, scopes: Set<SmartScopes>, computable: (Iterable<V>) -> V) : this(id, nullValue, listOf(dependency), scopes, computable)
 
-    override val dependencies: List<SmartDataKey<V>> = dependencies
-
-    val myComputable = computable
+    private val myComputable = computable
 
     init {
         onInit()
@@ -325,7 +324,7 @@ open class SmartVectorDataKey<V : Any>(id: String, nullValue: V, dependencies: L
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
             if (SmartDataScopeManager.INSTANCE.trace) println("creating connections for $myId[$index] on scope: ${result.name}")
-            var dependents = ArrayList<SmartVersionedDataHolder<V>>()
+            val dependents = ArrayList<SmartVersionedDataHolder<V>>()
 
             for (source in sources) {
                 for (dataKey in dependencies) {
@@ -361,7 +360,7 @@ class SmartLatestDataKey<V : Any>(id: String, nullValue: V, val dataKey: SmartDa
 
     override fun createData(result: SmartDataScope, sources: Set<SmartDataScope>, indices: Set<Int>) {
         for (index in indices) {
-            var dependents = ArrayList<SmartVersionedDataHolder<V>>()
+            val dependents = ArrayList<SmartVersionedDataHolder<V>>()
 
             for (source in sources) {
                 val dependent = dataKey.value(source, index) ?: throw IllegalStateException("Dependent data for dataKey $this for $source[$index] is missing")
@@ -471,6 +470,7 @@ class SmartDataScopeManager {
         return SmartDataScope(name, null)
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun resolveDependencies() {
         // compute dependency levels so that we can take a consumer key and get a list of keys that must be computed, sorted by order
         // of these computations
@@ -768,6 +768,7 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun finalizeKeyScope(dataKey: SmartDataKey<*>, consumedKeys: Set<SmartDataKey<*>>, allScopeSet: Set<SmartDataScope>, allIndicesSet: Set<Int>) {
         val scopesSet = HashSet<SmartDataScope>()
 

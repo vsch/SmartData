@@ -351,8 +351,8 @@ fun <T : String?> T.nullIfEmpty(): T? = if (this != null && !this.isEmpty()) thi
 fun <T : Any?> T.nullIf(nullIfValue: T): T? = if (this == null || this == nullIfValue) null else this
 fun <T : Any?> T.nullIf(nullIfValue: Boolean): T? = if (this == null || nullIfValue) null else this
 
-inline fun <T : Any?> Boolean.ifElseNull(ifTrue: T): T? = if (this) ifTrue else null
-inline fun <T : Any?> Boolean.ifElse(ifTrue: T, ifFalse: T): T = if (this) ifTrue else ifFalse
+fun <T : Any?> Boolean.ifElseNull(ifTrue: T): T? = if (this) ifTrue else null
+fun <T : Any?> Boolean.ifElse(ifTrue: T, ifFalse: T): T = if (this) ifTrue else ifFalse
 inline fun <T : Any?> Boolean.ifElse(ifTrue: () -> T, ifFalse: () -> T): T = if (this) ifTrue() else ifFalse()
 inline fun <T : Any?> Boolean.ifElse(ifTrue: T, ifFalse: () -> T): T = if (this) ifTrue else ifFalse()
 inline fun <T : Any?> Boolean.ifElse(ifTrue: () -> T, ifFalse: T): T = if (this) ifTrue() else ifFalse

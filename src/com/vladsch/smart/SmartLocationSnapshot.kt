@@ -23,7 +23,7 @@ package com.vladsch.smart
 
 import java.util.*
 
-internal class SmartSourceLocation(val source: Any, val locations: ArrayList<Range>, val sourceLocations: ArrayList<Range>) : SmartSourceLocationTracker {
+class SmartSourceLocation(val source: Any, val locations: ArrayList<Range>, val sourceLocations: ArrayList<Range>) : SmartSourceLocationTracker {
     var optimizedSource: Boolean = false
     var sourceIndices = IntArray(0)
 

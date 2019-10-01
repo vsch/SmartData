@@ -431,6 +431,7 @@ open class SmartImmutableData<V>(name: String, value: V, versionSerial: Int) : S
 
     protected val myValue = value
     override fun get(): V = myValue
+    @Suppress("UNUSED_PARAMETER")
     override var dataSnapshot: DataSnapshot<V>
         get() = DataSnapshot(myVersion, myValue)
         set(value) {
@@ -496,6 +497,7 @@ open class SmartCachedData<V>(name: String, dependency: SmartVersionedDataHolder
         onDataSnapshotInit()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     override var dataSnapshot: DataSnapshot<V>
         get() = DataSnapshot(mySnapshot.dependenciesSerial, myValue)
         set(value) {
@@ -597,6 +599,7 @@ open class SmartUpdateDependentData<V>(name: String, dependencies: Iterable<Smar
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     open val dataDependencies: Iterable<SmartVersionedDataHolder<*>> get() = dependencies as Iterable<SmartVersionedDataHolder<*>>
 
     override var dataSnapshot: DataSnapshot<V>
@@ -678,6 +681,7 @@ open class SmartUpdateIterableData<V>(name: String, dependencies: Iterable<Smart
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     open val dataDependencies: Iterable<SmartVersionedDataHolder<*>> get() = dependencies as Iterable<SmartVersionedDataHolder<*>>
 
     override var dataSnapshot: DataSnapshot<V>
@@ -777,6 +781,7 @@ open class SmartUpdateVectorData<V>(name: String, dependencies: Iterable<SmartVe
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     val valueDependencies: Iterable<V>
         get() = IterableValueDependenciesAdapter(super.dependencies as Iterable<SmartVersionedDataHolder<V>>)
 
@@ -852,6 +857,7 @@ open class SmartLatestDependentData<V>(name: String, dependencies: Iterable<Smar
 
     val myName = name
     protected val myRunnable = runnable
+    @Suppress("UNCHECKED_CAST")
     protected val myComputable = Supplier<DataSnapshot<V>> {
         DataSnapshot(mySnapshot.snapshotSerial, (mySnapshot.latestVersion as SmartVersionedDataHolder<V>).dataSnapshot.value)
     }
@@ -954,6 +960,7 @@ open class SmartVersionedDataAlias<V>(name: String, aliased: SmartVersionedDataH
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     override var dataSnapshot: DataSnapshot<V>
         get() {
             updateDataSnapshot()
