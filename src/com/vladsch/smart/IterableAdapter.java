@@ -21,6 +21,8 @@
 
 package com.vladsch.smart;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Iterator;
 
 class IterableAdapter<V, R> implements Iterable<R> {
@@ -32,6 +34,7 @@ class IterableAdapter<V, R> implements Iterable<R> {
         this.adapter = adapter;
     }
 
+    @NotNull
     @Override
     public Iterator<R> iterator() {
         return new IteratorAdapter<V,R>(iterable.iterator(), adapter);
