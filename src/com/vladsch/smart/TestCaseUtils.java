@@ -25,7 +25,7 @@ import java.util.List;
 
 import static org.junit.Assert.fail;
 
-public class TestUtils {
+public class TestCaseUtils {
     public static void compareOrderedLists(String message, String[] expected, String[] actual) {
         new OrderedStringComparison().arrayEquals(message, expected, actual);
     }

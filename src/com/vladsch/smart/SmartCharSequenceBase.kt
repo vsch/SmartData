@@ -188,7 +188,7 @@ abstract class SmartCharSequenceBase<T : SmartCharSequence> : SmartCharSequence 
         return SmartSegmentedCharSequence(parts)
     }
 
-    // IMPORTANT: if overriding getCachedProxy or freshProxyOrNull to return `this` then need to override this method otherwise will get infinite recursion
+    // NOTE: if overriding getCachedProxy or freshProxyOrNull to return `this` then need to override this method otherwise will get infinite recursion
     override fun toString(): String {
         return cachedProxy.toString()
     }

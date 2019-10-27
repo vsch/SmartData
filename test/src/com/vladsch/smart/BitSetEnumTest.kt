@@ -20,8 +20,8 @@
  */
 package com.vladsch.smart
 
-import com.vladsch.smart.TestUtils.assertEqualsMessage
-import com.vladsch.smart.TestUtils.compareUnorderedLists
+import com.vladsch.smart.TestCaseUtils.assertEqualsMessage
+import com.vladsch.smart.TestCaseUtils.compareUnorderedLists
 import org.junit.Test
 
 

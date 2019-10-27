@@ -25,18 +25,21 @@ import com.intellij.openapi.util.text.CharSequenceWithStringHash
 import com.intellij.util.text.CharSequenceBackedByArray
 
 /**
- * IMPORTANT: if original is not null then editing and non-raw access is directed to it though super class calls so that this
- * class doubles as a fast access proxy with tracking preserved because all affected requests will be directed to the original
+ * NOTE: if original is not null then editing and non-raw access is directed to it though super class calls so that this
+ *       class doubles as a fast access proxy with tracking preserved because all affected requests will be directed to the original
  *
  */
 
 open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: CharArray, startIndex: Int = 0, endIndex: Int = chars.size) : SmartCharSequenceBase<SmartCharArraySequence>(), CharSequenceBackedByArray, CharSequenceWithStringHash {
 
-    @JvmOverloads constructor(chars: CharArray, start: Int = 0, end: Int = chars.size) : this(null, chars, start, end)
-    @JvmOverloads constructor(chars: String, start: Int = 0, end: Int = chars.length) : this(null, chars.toCharArray(), start, end)
+    @JvmOverloads
+    constructor(chars: CharArray, start: Int = 0, end: Int = chars.size) : this(null, chars, start, end)
+
+    @JvmOverloads
+    constructor(chars: String, start: Int = 0, end: Int = chars.length) : this(null, chars.toCharArray(), start, end)
 
     final protected val myOriginal: SmartCharSequenceBase<*>? = original
-    final protected val myVersion: SmartVersion = if (original != null ) SmartCacheVersion(original.version) else SmartImmutableVersion()
+    final protected val myVersion: SmartVersion = if (original != null) SmartCacheVersion(original.version) else SmartImmutableVersion()
     final protected val myChars: CharArray = chars
     final protected val myStart: Int = startIndex
     final protected val myEnd: Int = endIndex
@@ -111,8 +114,8 @@ open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: Ch
             val trackedLocation = myOriginal.trackedSourceLocation(index + myStart)
             if (myStart == 0) return trackedLocation
             return trackedLocation.withIndex(trackedLocation.index - myStart)
-                    .withPrevClosest(trackedLocation.prevIndex - myStart)
-                    .withNextClosest(trackedLocation.nextIndex - myStart)
+                .withPrevClosest(trackedLocation.prevIndex - myStart)
+                .withNextClosest(trackedLocation.nextIndex - myStart)
         }
         return TrackedLocation(index, myStart + index, myChars)
     }
@@ -123,8 +126,8 @@ open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: Ch
             if (trackedLocation != null && trackedLocation.index >= myStart && trackedLocation.index < myEnd) {
                 if (myStart == 0) return trackedLocation
                 return trackedLocation.withIndex(trackedLocation.index - myStart)
-                        .withPrevClosest(trackedLocation.prevIndex - myStart)
-                        .withNextClosest(trackedLocation.nextIndex - myStart)
+                    .withPrevClosest(trackedLocation.prevIndex - myStart)
+                    .withNextClosest(trackedLocation.nextIndex - myStart)
             }
         }
         return if ((source == null || source === myChars) && offset >= myStart && offset < myEnd) TrackedLocation(offset - myStart, offset, myChars) else null
@@ -152,5 +155,4 @@ open class SmartCharArraySequence(original: SmartCharSequenceBase<*>?, chars: Ch
 
         return SmartReversedCharSequence(myChars, myStart, myEnd)
     }
-
 }
