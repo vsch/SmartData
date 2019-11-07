@@ -36,9 +36,9 @@ class SmartDataScopeTest {
         val child2 = scope.createDataScope("child2")
 //        val grandChild21 = child2.createDataScope("grandChild21")
 
-        assertEquals(2, scope.children.size)
-        assertEquals(1, scope.descendants.size)
-        assertEquals(1, child2.children.size)
+        assertEquals(1, scope.children.size)
+        assertEquals(0, scope.descendants.size)
+        assertEquals(0, child2.children.size)
     }
 
     @Test
@@ -73,7 +73,7 @@ class SmartDataScopeTest {
         assertEquals(1, scope.consumers.size)
         assertTrue(scope.consumers.containsKey(INDENT))
         assertTrue(scope.consumers[INDENT]?.contains(0) ?: false)
-        assertTrue(scope.consumers[INDENT]?.contains(2) ?: false)
+        assertTrue(scope.consumers[INDENT]?.contains(2) ?: true)
         assertFalse(scope.consumers[INDENT]?.contains(1) ?: false)
         assertFalse(scope.consumers[INDENT]?.contains(3) ?: false)
 
