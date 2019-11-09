@@ -83,7 +83,7 @@ Duis aute in voluptate velit esse cillum dolore eu fugiat nulla pariatur."""
             val leftPad: Int
             val rightPad: Int
             var testAlignment = alignment
-            var isHardBreakLine = lineCount == lines.lastIndex || trimmed.endsWith('.') && respectHardBreaks
+            val isHardBreakLine = lineCount == lines.lastIndex || trimmed.endsWith('.') && respectHardBreaks
 
             when (alignment) {
                 TextAlignment.DEFAULT, TextAlignment.LEFT -> {
