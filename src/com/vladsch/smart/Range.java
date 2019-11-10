@@ -50,9 +50,9 @@ public class Range {
         myEnd = end;
     }
 
-    public Range(Range that) {
-        myStart = that.myStart;
-        myEnd = that.myEnd;
+    public Range(Range other) {
+        myStart = other.myStart;
+        myEnd = other.myEnd;
     }
 
     @NotNull
@@ -70,23 +70,19 @@ public class Range {
         return start == myStart && end == myEnd ? this : new Range(start, end);
     }
 
-    public boolean doesNotOverlap(Range that) { return that.myEnd <= myStart || that.myStart >= myEnd; }
+    public boolean doesNotOverlap(Range other) { return other.myEnd <= myStart || other.myStart >= myEnd; }
 
-    public boolean doesOverlap(Range that) { return !(that.myEnd <= myStart || that.myStart >= myEnd); }
+    public boolean doesOverlap(Range other) { return !(other.myEnd <= myStart || other.myStart >= myEnd); }
 
-    public boolean isEqual(Range that) { return myEnd == that.myEnd && myStart == that.myStart; }
+    public boolean isEqual(Range other) { return myEnd == other.myEnd && myStart == other.myStart; }
 
-    public boolean doesContain(Range that) { return myEnd >= that.myEnd && myStart <= that.myStart; }
+    public boolean doesContain(Range other) { return myEnd >= other.myEnd && myStart <= other.myStart; }
 
-    public boolean doesProperlyContain(Range that) { return myEnd > that.myEnd && myStart < that.myStart; }
+    public boolean doesProperlyContain(Range other) { return myEnd > other.myEnd && myStart < other.myStart; }
 
     public boolean isEmpty() { return myStart >= myEnd; }
 
     public boolean isNotEmpty() { return myStart < myEnd; }
-
-    public boolean isNull() { return myStart > myEnd; }
-
-    public boolean isNotNull() { return myStart <= myEnd; }
 
     public boolean isContainedBy(int start, int end) { return end >= myEnd && start <= myStart; }
 
@@ -125,36 +121,36 @@ public class Range {
     }
 
     @NotNull
-    public Range intersect(Range that) {
+    public Range intersect(Range other) {
         int thisStart = myStart;
-        if (thisStart < that.myStart) thisStart = that.myStart;
+        if (thisStart < other.myStart) thisStart = other.myStart;
         int thisEnd = myEnd;
-        if (thisEnd > that.myEnd) thisEnd = that.myEnd;
+        if (thisEnd > other.myEnd) thisEnd = other.myEnd;
 
         if (thisStart >= thisEnd) thisStart = thisEnd = 0;
         return withRange(thisStart, thisEnd);
     }
 
     @NotNull
-    public Range exclude(Range that) {
+    public Range exclude(Range other) {
         int thisStart = myStart;
-        if (thisStart >= that.myStart && thisStart < that.myEnd) thisStart = that.myEnd;
+        if (thisStart >= other.myStart && thisStart < other.myEnd) thisStart = other.myEnd;
 
         int thisEnd = myEnd;
-        if (thisEnd <= that.myEnd && thisEnd > that.myStart) thisEnd = that.myStart;
+        if (thisEnd <= other.myEnd && thisEnd > other.myStart) thisEnd = other.myStart;
 
         if (thisStart >= thisEnd) thisStart = thisEnd = 0;
         return withRange(thisStart, thisEnd);
     }
 
-    public int compare(Range that) {
-        if (myStart < that.myStart) {
+    public int compare(Range other) {
+        if (myStart < other.myStart) {
             return -1;
-        } else if (myStart > that.myStart) {
+        } else if (myStart > other.myStart) {
             return 1;
-        } else if (myEnd > that.myEnd) {
+        } else if (myEnd > other.myEnd) {
             return -1;
-        } else if (myEnd < that.myEnd) {
+        } else if (myEnd < other.myEnd) {
             return 1;
         }
         return 0;
@@ -164,21 +160,25 @@ public class Range {
         return myEnd - myStart;
     }
 
+    public boolean isNull() { return this == NULL /*myStart > myEnd*/; }
+
+    public boolean isNotNull() { return this != NULL/*myStart <= myEnd*/; }
+
     @Override
     public String toString() {
         return "[" + myStart + ", " + myEnd + ")";
     }
 
-    public boolean isAdjacent(Range that) {
-        return myStart == that.myEnd || myEnd == that.myStart;
+    public boolean isAdjacent(Range other) {
+        return myStart == other.myEnd || myEnd == other.myStart;
     }
 
-    public boolean isAdjacentBefore(Range that) {
-        return myEnd == that.myStart;
+    public boolean isAdjacentBefore(Range other) {
+        return myEnd == other.myStart;
     }
 
-    public boolean isAdjacentAfter(Range that) {
-        return myStart == that.myEnd;
+    public boolean isAdjacentAfter(Range other) {
+        return myStart == other.myEnd;
     }
 
     @NotNull
@@ -203,7 +203,7 @@ public class Range {
 
     @NotNull
     public Range expandToInclude(int start, int end) {
-        return withRange(myStart > start ? start : myStart, myEnd < end ? end : myEnd);
+        return withRange(Math.min(myStart, start), Math.max(myEnd, end));
     }
 
     public boolean equals(TextRange o) {
