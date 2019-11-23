@@ -73,7 +73,7 @@ class SmartDataScopeTest {
         assertEquals(1, scope.consumers.size)
         assertTrue(scope.consumers.containsKey(INDENT))
         assertTrue(scope.consumers[INDENT]?.contains(0) ?: false)
-        assertTrue(scope.consumers[INDENT]?.contains(2) ?: true)
+        assertFalse(scope.consumers[INDENT]?.contains(2) ?: false)
         assertFalse(scope.consumers[INDENT]?.contains(1) ?: false)
         assertFalse(scope.consumers[INDENT]?.contains(3) ?: false)
 
