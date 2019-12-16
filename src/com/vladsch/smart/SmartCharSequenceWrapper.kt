@@ -23,10 +23,10 @@ package com.vladsch.smart
 
 open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, endIndex: Int = chars.length) : SmartCharSequenceBase<SmartCharSequenceWrapper>() {
 
-    final protected val myVersion: SmartVersion = if (chars is SmartCharSequence) chars.version else SmartImmutableVersion()
-    final protected val myChars: CharSequence = chars
-    final protected val myStart: Int = startIndex
-    final protected val myEnd: Int = endIndex
+    val myVersion: SmartVersion = if (chars is SmartCharSequence) chars.version else SmartImmutableVersion()
+    val myChars: CharSequence = chars
+    val myStart: Int = startIndex
+    val myEnd: Int = endIndex
 
     init {
         if (myStart < 0 || myEnd > myChars.length) {
@@ -55,7 +55,7 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
         if (myChars is SmartCharSequence) myChars.subSequence(myStart, myEnd).getChars(dst, dstOffset)
         else {
             val iMax = length
-            for (i in 0..iMax - 1) {
+            for (i in 0 .. iMax - 1) {
                 dst[dstOffset + i] = charAtImpl(i)
             }
         }
@@ -85,8 +85,8 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
             if (myStart == 0) return trackedLocation
 
             return trackedLocation.withIndex(trackedLocation.index - myStart)
-                    .withPrevClosest(trackedLocation.prevIndex - myStart)
-                    .withNextClosest(trackedLocation.nextIndex - myStart)
+                .withPrevClosest(trackedLocation.prevIndex - myStart)
+                .withNextClosest(trackedLocation.nextIndex - myStart)
         }
         checkIndex(index)
         return TrackedLocation(index, myStart + index, myChars)
@@ -98,8 +98,8 @@ open class SmartCharSequenceWrapper(chars: CharSequence, startIndex: Int = 0, en
 
             if (trackedLocation != null && trackedLocation.index >= myStart && trackedLocation.index < myEnd) {
                 return trackedLocation.withIndex(trackedLocation.index - myStart)
-                        .withPrevClosest(trackedLocation.prevIndex - myStart)
-                        .withNextClosest(trackedLocation.nextIndex - myStart)
+                    .withPrevClosest(trackedLocation.prevIndex - myStart)
+                    .withNextClosest(trackedLocation.nextIndex - myStart)
             }
         }
         return if ((source == null || source === myChars) && offset >= myStart && offset < myEnd) TrackedLocation(offset - myStart, offset, myChars) else null
