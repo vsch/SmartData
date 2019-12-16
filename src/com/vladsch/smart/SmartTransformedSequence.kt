@@ -22,7 +22,7 @@
 package com.vladsch.smart
 
 abstract class SmartTransformedSequence<T : SmartCharSequenceBase<T>>(replacedChars: SmartCharSequence) : SmartCharSequenceBase<T>() {
-    protected val myReplacedChars = replacedChars
+    val myReplacedChars = replacedChars
 
     override fun addStats(stats: SmartCharSequence.Stats) {
         myReplacedChars.addStats(stats)
