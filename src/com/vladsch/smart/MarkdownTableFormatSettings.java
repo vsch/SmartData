@@ -43,7 +43,8 @@ public class MarkdownTableFormatSettings {
     public MarkdownTableFormatSettings() {
     }
 
-    public MarkdownTableFormatSettings(boolean TABLE_LEAD_TRAIL_PIPES,
+    public MarkdownTableFormatSettings(
+            boolean TABLE_LEAD_TRAIL_PIPES,
             boolean TABLE_SPACE_AROUND_PIPE,
             boolean TABLE_ADJUST_COLUMN_WIDTH,
             boolean TABLE_APPLY_COLUMN_ALIGNMENT,
