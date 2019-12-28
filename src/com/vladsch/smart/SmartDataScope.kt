@@ -689,7 +689,7 @@ open class SmartDataScope(val name: String, val parent: SmartDataScope?) {
         // copy parent values to child consumers that have defaults
         finalizeParentProvided()
 
-        // TODO: validate that all have been computed before clearing consumers for possible next batch
+        // FIX: validate that all have been computed before clearing consumers for possible next batch
         traceAndClear()
 
         for (scope in keyScopes) {

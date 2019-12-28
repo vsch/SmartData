@@ -29,7 +29,7 @@ class SmartSourceLocation(val source: Any, val locations: ArrayList<Range>, val 
 
     fun optimizeSource() {
         // optimize smart source locations
-        // TODO: sort ranges by sourceLocation
+        // FIX: sort ranges by sourceLocation
         // now we remove any contained and overlapped ranges
         if (sourceLocations.size > 0) {
             val sortIndices = IntArray(sourceLocations.size, { it })
@@ -55,7 +55,7 @@ class SmartSourceLocation(val source: Any, val locations: ArrayList<Range>, val 
         if (source != this.source) return null
         if (!optimizedSource) optimizeSource()
 
-        // TODO: find source and return TrackedLocation
+        // FIX: find source and return TrackedLocation
         var span = (sourceIndices.size + 1) / 2
         var pos = span
         var found: Int? = null
@@ -115,13 +115,13 @@ class SmartLocationSnapshot private constructor(val sources: Map<Any, SmartSourc
         throw UnsupportedOperationException()
         //        if (!optimizedDestination) optimizeDestination()
         //
-        //        // TODO: find location and return TrackedLocation
+        //        // FIX: find location and return TrackedLocation
         //        return TrackedLocation(0,0,this)
     }
 
     //    fun optimizeDestination() {
     //        // optimize smart source locations
-    //        // TODO: sort ranges by location
+    //        // FIX: sort ranges by location
     //
     //        optimizedDestination = true
     //    }

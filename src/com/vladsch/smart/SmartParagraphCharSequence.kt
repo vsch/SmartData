@@ -37,7 +37,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
 
     constructor(chars: String) : this(SmartCharArraySequence(chars.toCharArray()))
 
-    // TODO: need a SmartDependentVersionHolder to SmartVersionedDataHolder adapter class so that smar sequences can be included
+    // FIX: need a SmartDependentVersionHolder to SmartVersionedDataHolder adapter class so that smar sequences can be included
     // in list of dependents of properties
     protected val myReplacedChars = replacedChars
     protected var myFirstIndent = SmartVersionedProperty("paraCharSeq:FirstIndent", 0)
@@ -587,7 +587,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     }
 
     protected fun adjustTrackedLocation(location: TrackedLocation?): TrackedLocation? {
-        // TODO: adjust tracking location as needed
+        // FIX: adjust tracking location as needed
         //        if (location != null) {
         //            val leadPadding = myLeftPadding.length + myPrefix.value.length
         //            if (leadPadding > 0) {
@@ -598,7 +598,7 @@ class SmartParagraphCharSequence(replacedChars: SmartCharSequence) : SmartCharSe
     }
 
     protected fun adjustTrackedSourceLocation(location: TrackedLocation): TrackedLocation {
-        // TODO: adjust tracking location as needed
+        // FIX: adjust tracking location as needed
         //        val leadPadding = myLeftPadding.length + myPrefix.value.length
         //        if (leadPadding > 0) {
         //            return location.withIndex(leadPadding + location.index).withPrevClosest(leadPadding + location.prevIndex).withNextClosest(leadPadding + location.nextIndex)
